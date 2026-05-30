@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -26,23 +27,28 @@ class DownloadRepository {
     required MediaFile file,
     required void Function(double progress) onProgress,
   }) async {
-    final response = await dio.post<List<int>>(
-      '${edgeFunctionService.supabaseService.env.supabaseUrl}/functions/v1/download-original-file',
-      data: {'media_file_id': file.id},
-      options: Options(
-        contentType: Headers.jsonContentType,
-        headers: {
-          'Authorization':
-              'Bearer ${edgeFunctionService.supabaseService.currentSession?.accessToken}',
-          'apikey': edgeFunctionService.supabaseService.env.supabaseAnonKey,
+    final Response<List<int>> response;
+    try {
+      response = await dio.post<List<int>>(
+        '${edgeFunctionService.supabaseService.env.supabaseUrl}/functions/v1/download-original-file',
+        data: {'media_file_id': file.id},
+        options: Options(
+          contentType: Headers.jsonContentType,
+          headers: {
+            'Authorization':
+                'Bearer ${edgeFunctionService.supabaseService.currentSession?.accessToken}',
+            'apikey': edgeFunctionService.supabaseService.env.supabaseAnonKey,
+          },
+          responseType: ResponseType.bytes,
+        ),
+        onReceiveProgress: (received, total) {
+          if (total <= 0) return;
+          onProgress(received / total);
         },
-        responseType: ResponseType.bytes,
-      ),
-      onReceiveProgress: (received, total) {
-        if (total <= 0) return;
-        onProgress(received / total);
-      },
-    );
+      );
+    } on DioException catch (error) {
+      throw _appErrorFromDio(error);
+    }
 
     final bytes = response.data;
     if (bytes == null || bytes.isEmpty) {
@@ -94,5 +100,36 @@ class DownloadRepository {
     final values = headers[name];
     if (values == null || values.isEmpty) return null;
     return values.first;
+  }
+
+  AppError _appErrorFromDio(DioException error) {
+    final data = error.response?.data;
+
+    if (data is Map) {
+      return AppError(
+        data['message']?.toString() ?? 'Download failed. Please try again.',
+        code: data['error_code']?.toString(),
+      );
+    }
+
+    if (data is List<int> && data.isNotEmpty) {
+      final decoded = utf8.decode(data, allowMalformed: true);
+      try {
+        final payload = jsonDecode(decoded);
+        if (payload is Map) {
+          return AppError(
+            payload['message']?.toString() ??
+                'Download failed. Please try again.',
+            code: payload['error_code']?.toString(),
+          );
+        }
+      } catch (_) {
+        if (decoded.trim().isNotEmpty) {
+          return AppError(decoded.trim());
+        }
+      }
+    }
+
+    return const AppError('Download failed. Please try again.');
   }
 }
