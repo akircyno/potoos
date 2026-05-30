@@ -13,6 +13,10 @@ type UploadSessionParams = {
   fileSizeBytes: number;
 };
 
+type UploadFileParams = UploadSessionParams & {
+  bytes: Uint8Array;
+};
+
 export async function getGoogleAccessToken() {
   const clientId = Deno.env.get("GOOGLE_DRIVE_CLIENT_ID");
   const clientSecret = Deno.env.get("GOOGLE_DRIVE_CLIENT_SECRET");
@@ -165,6 +169,31 @@ export async function createResumableUploadSession(params: UploadSessionParams) 
   }
 
   return uploadUrl;
+}
+
+export async function uploadFileBytesToDrive(params: UploadFileParams): Promise<DriveFileMetadata> {
+  const uploadUrl = await createResumableUploadSession(params);
+
+  const response = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": params.mimeType,
+      "Content-Length": String(params.fileSizeBytes),
+    },
+    body: params.bytes,
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to upload file bytes to Google Drive.");
+  }
+
+  const metadata = await response.json();
+
+  if (typeof metadata.id !== "string") {
+    throw new Error("Google Drive upload response missing file id.");
+  }
+
+  return metadata as DriveFileMetadata;
 }
 
 function escapeDriveQueryValue(value: string) {
