@@ -74,6 +74,26 @@ export async function getDriveFileMetadata(fileId: string): Promise<DriveFileMet
   return await response.json();
 }
 
+export async function downloadDriveFileBytes(fileId: string) {
+  const accessToken = await getGoogleAccessToken();
+  const encodedFileId = encodeURIComponent(fileId);
+
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${encodedFileId}?alt=media`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to download Google Drive file bytes.");
+  }
+
+  return new Uint8Array(await response.arrayBuffer());
+}
+
 export async function createDriveFolder(name: string, parentId: string): Promise<DriveFileMetadata> {
   const accessToken = await getGoogleAccessToken();
 

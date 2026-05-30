@@ -25,7 +25,8 @@ class AlbumDetailsScreen extends ConsumerWidget {
               title: 'Album unavailable',
               message: 'Open an album from your album list.',
               actionLabel: 'Back to Albums',
-              onAction: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
+              onAction: () =>
+                  Navigator.pushReplacementNamed(context, AppRoutes.home),
             ),
           ],
         ),
@@ -34,6 +35,8 @@ class AlbumDetailsScreen extends ConsumerWidget {
 
     final album = routeAlbum;
     final filesAsync = ref.watch(albumMediaFilesProvider(album.id));
+    final loadedFiles = filesAsync.asData?.value;
+    final visibleFileCount = loadedFiles?.length ?? album.fileCount;
 
     return Scaffold(
       appBar: AppBar(
@@ -66,26 +69,39 @@ class AlbumDetailsScreen extends ConsumerWidget {
                           color: AppColors.white.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.chevron_left, color: AppColors.white, size: 18),
+                        child: const Icon(Icons.chevron_left,
+                            color: AppColors.white, size: 18),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text('Albums', style: TextStyle(color: AppColors.white.withValues(alpha: 0.70), fontSize: 13)),
+                    Text('Albums',
+                        style: TextStyle(
+                            color: AppColors.white.withValues(alpha: 0.70),
+                            fontSize: 13)),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(
                   album.name,
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: AppColors.warmCream),
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineLarge
+                      ?.copyWith(color: AppColors.warmCream),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 12,
                   runSpacing: 6,
                   children: [
-                    _HeaderMeta(icon: Icons.photo_outlined, label: '${album.fileCount} files'),
-                    _HeaderMeta(icon: Icons.group_outlined, label: '${album.memberCount} members'),
-                    _HeaderMeta(icon: Icons.verified_user_outlined, label: 'Your role: ${album.role}'),
+                    _HeaderMeta(
+                        icon: Icons.photo_outlined,
+                        label: '$visibleFileCount files'),
+                    _HeaderMeta(
+                        icon: Icons.group_outlined,
+                        label: '${album.memberCount} members'),
+                    _HeaderMeta(
+                        icon: Icons.verified_user_outlined,
+                        label: 'Your role: ${album.role}'),
                   ],
                 ),
               ],
@@ -102,7 +118,9 @@ class AlbumDetailsScreen extends ConsumerWidget {
                       icon: Icons.upload,
                       color: AppColors.maroon,
                       foreground: AppColors.white,
-                      onTap: () => Navigator.pushNamed(context, AppRoutes.upload, arguments: album),
+                      onTap: () => Navigator.pushNamed(
+                          context, AppRoutes.upload,
+                          arguments: album),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -113,7 +131,8 @@ class AlbumDetailsScreen extends ConsumerWidget {
                     icon: Icons.save_alt,
                     color: AppColors.goldFaint,
                     foreground: AppColors.softGold,
-                    onTap: () => Navigator.pushNamed(context, AppRoutes.saveAll),
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.saveAll),
                   ),
                 ),
               ],
@@ -125,13 +144,18 @@ class AlbumDetailsScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '${album.fileCount} memories',
-                    style: TextStyle(color: AppColors.mutedInk, fontSize: 11, fontWeight: FontWeight.w500),
+                    '$visibleFileCount memories',
+                    style: TextStyle(
+                        color: AppColors.mutedInk,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500),
                   ),
                 ),
                 TextButton(
                   onPressed: () {},
-                  child: const Text('Select', style: TextStyle(color: AppColors.softGold, fontSize: 11)),
+                  child: const Text('Select',
+                      style:
+                          TextStyle(color: AppColors.softGold, fontSize: 11)),
                 ),
               ],
             ),
@@ -149,7 +173,8 @@ class AlbumDetailsScreen extends ConsumerWidget {
                 title: 'Files unavailable',
                 message: error.toString(),
                 actionLabel: 'Try Again',
-                onAction: () => ref.invalidate(albumMediaFilesProvider(album.id)),
+                onAction: () =>
+                    ref.invalidate(albumMediaFilesProvider(album.id)),
               ),
               data: (files) => files.isEmpty
                   ? AlbumEmptyState(
@@ -159,7 +184,8 @@ class AlbumDetailsScreen extends ConsumerWidget {
                           : 'Completed uploads will appear here.',
                       actionLabel: album.canUpload ? 'Upload' : null,
                       onAction: album.canUpload
-                          ? () => Navigator.pushNamed(context, AppRoutes.upload, arguments: album)
+                          ? () => Navigator.pushNamed(context, AppRoutes.upload,
+                              arguments: album)
                           : null,
                     )
                   : Column(
@@ -170,7 +196,8 @@ class AlbumDetailsScreen extends ConsumerWidget {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: files.length,
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 3,
                               crossAxisSpacing: 3,
                               mainAxisSpacing: 3,
@@ -179,7 +206,9 @@ class AlbumDetailsScreen extends ConsumerWidget {
                             itemBuilder: (context, index) {
                               return GalleryTile(
                                 file: files[index],
-                                onTap: () => Navigator.pushNamed(context, AppRoutes.filePreview, arguments: files[index]),
+                                onTap: () => Navigator.pushNamed(
+                                    context, AppRoutes.filePreview,
+                                    arguments: files[index]),
                               );
                             },
                           ),
@@ -188,7 +217,9 @@ class AlbumDetailsScreen extends ConsumerWidget {
                         for (final file in files) ...[
                           _FileMetadataRow(
                             file: file,
-                            onTap: () => Navigator.pushNamed(context, AppRoutes.filePreview, arguments: file),
+                            onTap: () => Navigator.pushNamed(
+                                context, AppRoutes.filePreview,
+                                arguments: file),
                           ),
                           const SizedBox(height: 8),
                         ],
@@ -242,19 +273,22 @@ class _FileMetadataRow extends StatelessWidget {
                       file.originalFilename,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 12),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       '${file.fileSizeLabel} - ${file.mimeType} - ${file.uploadedLabel}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppColors.mutedInk, fontSize: 11),
+                      style: const TextStyle(
+                          color: AppColors.mutedInk, fontSize: 11),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.mutedInk, size: 18),
+              const Icon(Icons.chevron_right,
+                  color: AppColors.mutedInk, size: 18),
             ],
           ),
         ),
@@ -274,9 +308,13 @@ class _HeaderMeta extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: AppColors.warmCream.withValues(alpha: 0.60), size: 12),
+        Icon(icon,
+            color: AppColors.warmCream.withValues(alpha: 0.60), size: 12),
         const SizedBox(width: 4),
-        Text(label, style: TextStyle(color: AppColors.warmCream.withValues(alpha: 0.60), fontSize: 11)),
+        Text(label,
+            style: TextStyle(
+                color: AppColors.warmCream.withValues(alpha: 0.60),
+                fontSize: 11)),
       ],
     );
   }
@@ -309,7 +347,8 @@ class _ActionButton extends StatelessWidget {
           height: 40,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.maroon.withValues(alpha: 0.12), width: 0.5),
+            border: Border.all(
+                color: AppColors.maroon.withValues(alpha: 0.12), width: 0.5),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -317,7 +356,11 @@ class _ActionButton extends StatelessWidget {
             children: [
               Icon(icon, color: foreground, size: 14),
               const SizedBox(width: 6),
-              Text(label, style: TextStyle(color: foreground, fontSize: 12, fontWeight: FontWeight.w500)),
+              Text(label,
+                  style: TextStyle(
+                      color: foreground,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500)),
             ],
           ),
         ),
