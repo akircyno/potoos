@@ -5,7 +5,8 @@ import '../data/upload_repository.dart';
 import '../models/upload_file.dart';
 import '../models/upload_session.dart';
 
-final uploadControllerProvider = NotifierProvider<UploadController, UploadState>(
+final uploadControllerProvider =
+    NotifierProvider.autoDispose<UploadController, UploadState>(
   UploadController.new,
 );
 
@@ -49,13 +50,14 @@ class UploadController extends Notifier<UploadState> {
     state = const UploadState(isUploading: true);
 
     try {
-      final completed = await ref.read(uploadRepositoryProvider).uploadOriginalFile(
-            albumId: albumId,
-            file: file,
-            onProgress: (progress) {
-              state = state.copyWith(progress: progress.clamp(0, 1));
-            },
-          );
+      final completed =
+          await ref.read(uploadRepositoryProvider).uploadOriginalFile(
+                albumId: albumId,
+                file: file,
+                onProgress: (progress) {
+                  state = state.copyWith(progress: progress.clamp(0, 1));
+                },
+              );
 
       ref.invalidate(albumMediaFilesProvider(albumId));
       ref.invalidate(albumListProvider);

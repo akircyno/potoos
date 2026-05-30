@@ -5,7 +5,7 @@ import '../data/download_repository.dart';
 import '../models/downloaded_file.dart';
 
 final downloadControllerProvider =
-    NotifierProvider<DownloadController, DownloadState>(
+    NotifierProvider.autoDispose<DownloadController, DownloadState>(
   DownloadController.new,
 );
 
