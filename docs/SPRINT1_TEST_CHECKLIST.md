@@ -25,6 +25,7 @@ Use this checklist when manually verifying the Sprint 1 original-quality flow.
 - Confirm the app shows: `Ask this person to sign in to LitratoLink once before inviting them.`
 - Sign in once with a second real account.
 - Invite that account as `Viewer`.
+- Confirm both accounts can see each member's name/email in the member list.
 - Confirm Viewer can open the album and download originals.
 - Confirm Viewer cannot upload.
 - Change or re-invite the second account as `Contributor`.
