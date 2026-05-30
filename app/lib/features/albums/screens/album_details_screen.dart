@@ -7,6 +7,7 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_screen.dart';
 import '../../../core/widgets/invite_form.dart';
 import '../../../core/widgets/role_chip.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../downloads/screens/save_all_screen.dart';
 import '../models/album.dart';
 import '../models/album_member.dart';
@@ -42,6 +43,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
     final filesAsync = ref.watch(albumMediaFilesProvider(album.id));
     final membersAsync = ref.watch(albumMembersProvider(album.id));
     final inviteState = ref.watch(inviteMemberControllerProvider);
+    final currentProfile = ref.watch(currentUserProfileProvider);
     final loadedFiles = filesAsync.asData?.value;
     final visibleFileCount = loadedFiles?.length ?? album.fileCount;
     final loadedMembers = membersAsync.asData?.value;
@@ -268,7 +270,24 @@ class AlbumDetailsScreen extends ConsumerWidget {
                   data: (members) => Column(
                     children: [
                       for (final member in members) ...[
-                        _MemberRow(member: member),
+                        _MemberRow(
+                          member: member,
+                          canEditRole: isAdmin &&
+                              currentProfile?.id != member.userId &&
+                              member.email?.isNotEmpty == true,
+                          isSaving: inviteState.isSending,
+                          onRoleSelected: (role) {
+                            final email = member.email;
+                            if (email == null || email.isEmpty) return;
+                            ref
+                                .read(inviteMemberControllerProvider.notifier)
+                                .invite(
+                                  albumId: album.id,
+                                  email: email,
+                                  role: role,
+                                );
+                          },
+                        ),
                         const SizedBox(height: 8),
                       ],
                     ],
@@ -367,12 +386,22 @@ class _FileMetadataRow extends StatelessWidget {
 }
 
 class _MemberRow extends StatelessWidget {
-  const _MemberRow({required this.member});
+  const _MemberRow({
+    required this.member,
+    this.canEditRole = false,
+    this.isSaving = false,
+    this.onRoleSelected,
+  });
 
   final AlbumMember member;
+  final bool canEditRole;
+  final bool isSaving;
+  final ValueChanged<String>? onRoleSelected;
 
   @override
   Widget build(BuildContext context) {
+    final normalizedRole = member.role.toLowerCase();
+
     return AppCard(
       padding: const EdgeInsets.all(12),
       child: Row(
@@ -410,6 +439,27 @@ class _MemberRow extends StatelessWidget {
             ),
           ),
           RoleChip(label: member.roleLabel, selected: true),
+          if (canEditRole) ...[
+            const SizedBox(width: 4),
+            PopupMenuButton<String>(
+              enabled: !isSaving,
+              tooltip: 'Change role',
+              icon: const Icon(
+                Icons.more_horiz,
+                color: AppColors.mutedInk,
+                size: 18,
+              ),
+              onSelected: (role) {
+                if (role == normalizedRole) return;
+                onRoleSelected?.call(role);
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'admin', child: Text('Admin')),
+                PopupMenuItem(value: 'contributor', child: Text('Contributor')),
+                PopupMenuItem(value: 'viewer', child: Text('Viewer')),
+              ],
+            ),
+          ],
         ],
       ),
     );

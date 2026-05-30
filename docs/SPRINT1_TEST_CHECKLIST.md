@@ -31,6 +31,7 @@ Use this checklist when manually verifying the Sprint 1 original-quality flow.
 - Change or re-invite the second account as `Contributor`.
 - Confirm Contributor can upload.
 - Confirm the Admin can use the invite form to change an existing member's role.
+- Confirm the Admin can use the member row menu to change an existing member's role.
 - Confirm only Admin can invite members.
 
 ## Save All

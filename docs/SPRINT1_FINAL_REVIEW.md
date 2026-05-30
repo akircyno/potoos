@@ -18,6 +18,7 @@ Sprint 1 now supports the core private original-quality flow:
 - Save All uses real album files and downloads originals through the same backend path.
 - Admins can invite existing LitratoLink users by email and role.
 - Admins can update an existing member's role from the same invite form.
+- Admins can update another member's role from the member row menu.
 - Unregistered invite emails show a friendly action message.
 
 ## Verified Locally
