@@ -100,6 +100,7 @@ Use this file as the short working agreement for future Codex sessions so we do 
 - Save All screen uses real album files and downloads originals through `download-original-file`.
 - File Preview shows a tester-friendly downloaded-size vs expected-original-size check.
 - Download permission/file errors are mapped to friendly app messages instead of raw Dio errors.
+- Activity tab is driven by real album data instead of fake placeholder notifications.
 - Live test file `IMG_3778.JPG` uploaded and downloaded at original size.
 - Stale pending test upload rows were cleaned from Supabase.
 

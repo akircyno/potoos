@@ -253,11 +253,13 @@ class _InvitesTab extends StatelessWidget {
   }
 }
 
-class _NotificationsTab extends StatelessWidget {
+class _NotificationsTab extends ConsumerWidget {
   const _NotificationsTab();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final albumsAsync = ref.watch(albumListProvider);
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
       children: [
@@ -267,30 +269,45 @@ class _NotificationsTab extends StatelessWidget {
           showAvatar: false,
         ),
         const SizedBox(height: 14),
-        const NotificationItem(
-          title: 'Sofia added 12 new photos',
-          message: 'New memories were added to Me & Sofia.',
-          time: '2 minutes ago',
-          unread: true,
-        ),
-        const SizedBox(height: 10),
-        const NotificationItem(
-          title: 'Album invite',
-          message: 'Carlo invited you to Barkada Boracay.',
-          time: '1 hour ago',
-          unread: true,
-        ),
-        const SizedBox(height: 10),
-        const NotificationItem(
-          title: 'Upload complete',
-          message: 'Your original-quality files were added to Family - Baguio.',
-          time: 'Just now',
-        ),
-        const SizedBox(height: 10),
-        const NotificationItem(
-          title: 'Album invite',
-          message: 'You were invited to Family Trip as a Contributor.',
-          time: 'Yesterday',
+        albumsAsync.when(
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: CircularProgressIndicator(color: AppColors.softGold),
+            ),
+          ),
+          error: (error, _) => AlbumEmptyState(
+            title: 'Activity unavailable',
+            message: error.toString(),
+            actionLabel: 'Try Again',
+            onAction: () => ref.invalidate(albumListProvider),
+          ),
+          data: (albums) {
+            if (albums.isEmpty) {
+              return const AlbumEmptyState(
+                title: 'No activity yet',
+                message:
+                    'Create an album and upload originals to start building activity.',
+              );
+            }
+
+            return Column(
+              children: [
+                for (final album in albums) ...[
+                  NotificationItem(
+                    title: album.fileCount > 0
+                        ? '${album.fileCount} originals protected'
+                        : 'Album ready',
+                    message:
+                        '${album.name} has ${album.memberCount} member${album.memberCount == 1 ? '' : 's'}. Your role is ${album.role}.',
+                    time: album.updatedLabel,
+                    unread: album.fileCount > 0,
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ],
+            );
+          },
         ),
       ],
     );
