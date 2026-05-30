@@ -112,6 +112,7 @@ Use this file as the short working agreement for future Codex sessions so we do 
 - Save All screen uses real album files and downloads originals through `download-original-file`.
 - Save All fetches album files itself and uses Album Details data only as a fallback.
 - Save All shows a retryable error if its file fetch fails with no fallback data.
+- Save All disables cancel navigation while a batch download is active.
 - Direct Upload route now explains that uploads must start from an album.
 - File Preview shows a tester-friendly downloaded-size vs expected-original-size check.
 - Download permission/file errors are mapped to friendly app messages instead of raw Dio errors.

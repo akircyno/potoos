@@ -75,7 +75,12 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
       body: AppScreen(
         padding: EdgeInsets.zero,
         children: [
-          _SaveHeader(album: album, fileCount: totalFiles),
+          _SaveHeader(
+            album: album,
+            fileCount: totalFiles,
+            canCancel: !isSaving,
+            onCancel: () => Navigator.pop(context),
+          ),
           const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -248,10 +253,14 @@ class _SaveHeader extends StatelessWidget {
   const _SaveHeader({
     required this.album,
     required this.fileCount,
+    required this.canCancel,
+    required this.onCancel,
   });
 
   final Album album;
   final int fileCount;
+  final bool canCancel;
+  final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -265,7 +274,7 @@ class _SaveHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InkWell(
-            onTap: () => Navigator.pop(context),
+            onTap: canCancel ? onCancel : null,
             borderRadius: BorderRadius.circular(8),
             child: Row(
               mainAxisSize: MainAxisSize.min,
