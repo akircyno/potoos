@@ -7,6 +7,7 @@ Use this file as the short working agreement for future Codex sessions so we do 
 - UI reference: `docs/ui-reference/litratolink_mobile_ui.html`
 - Product/backend direction: `docs/# LitratoLink Master Product Plan v.md`
 - Sprint execution order: `docs/# LitratoLink Sprint 1 Build Prompt.md`
+- Manual Sprint 1 QA checklist: `docs/SPRINT1_TEST_CHECKLIST.md`
 - Do not redesign the UI unless explicitly requested.
 - Flutter screens should closely match the HTML mockup layout, navigation, colors, component hierarchy, and user flow.
 

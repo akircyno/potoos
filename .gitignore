@@ -1,0 +1,11 @@
+# Local tool/cache folders
+awesome-codex-skills/
+supabase/.temp/
+
+# Flutter generated output
+app/build/
+app/.dart_tool/
+
+# Local environment files
+app/.env
+.env
