@@ -85,6 +85,7 @@ class DownloadRepository {
       filename: Uri.decodeComponent(originalFilename),
       mimeType: mimeType,
       sizeBytes: bytes.length,
+      expectedSizeBytes: expectedSize,
       savedPath: savedPath ?? 'Browser downloads',
     );
   }

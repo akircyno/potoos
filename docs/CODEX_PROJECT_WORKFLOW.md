@@ -94,6 +94,7 @@ Use this file as the short working agreement for future Codex sessions so we do 
 - Invite form shows a friendly message when the email has not signed in yet.
 - Viewer upload controls are blocked in the Flutter UI.
 - Save All screen uses real album files and downloads originals through `download-original-file`.
+- File Preview shows a tester-friendly downloaded-size vs expected-original-size check.
 - Live test file `IMG_3778.JPG` uploaded and downloaded at original size.
 - Stale pending test upload rows were cleaned from Supabase.
 
