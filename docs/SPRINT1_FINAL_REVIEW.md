@@ -13,6 +13,7 @@ Sprint 1 now supports the core private original-quality flow:
 - Viewers are blocked from upload in the UI and backend.
 - Completed files appear in the album gallery and file list.
 - Album, media, and member reads refresh when the signed-in profile changes.
+- Album Details and Save All stop showing stale content if membership is removed.
 - Original files download through the `download-original-file` Edge Function.
 - File Preview displays a downloaded-size vs expected-original-size quality check.
 - Upload progress keeps users on the upload screen until the active upload finishes or fails.

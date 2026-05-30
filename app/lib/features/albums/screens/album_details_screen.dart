@@ -47,6 +47,24 @@ class AlbumDetailsScreen extends ConsumerWidget {
     final loadedFiles = filesAsync.asData?.value;
     final visibleFileCount = loadedFiles?.length ?? album.fileCount;
     final loadedMembers = membersAsync.asData?.value;
+    if (loadedMembers != null && loadedMembers.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Album Details')),
+        body: AppScreen(
+          children: [
+            AlbumEmptyState(
+              title: 'Album access unavailable',
+              message:
+                  'You may have been removed from this album, or your access changed. Open Albums to refresh your private spaces.',
+              actionLabel: 'Back to Albums',
+              onAction: () =>
+                  Navigator.pushReplacementNamed(context, AppRoutes.home),
+            ),
+          ],
+        ),
+      );
+    }
+
     final visibleMemberCount = loadedMembers?.length ?? album.memberCount;
     final isAdmin = album.canManageMembers;
 

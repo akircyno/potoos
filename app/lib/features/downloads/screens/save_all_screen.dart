@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/routes.dart';
 import '../../../app/theme.dart';
 import '../../../core/errors/app_error.dart';
 import '../../../core/utils/quality_test_log.dart';
@@ -66,6 +67,28 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
     }
 
     final filesAsync = ref.watch(albumMediaFilesProvider(album.id));
+    final membersAsync = ref.watch(albumMembersProvider(album.id));
+    final loadedMembers = membersAsync.asData?.value;
+    final accessUnavailable = membersAsync.hasError ||
+        (loadedMembers != null && loadedMembers.isEmpty);
+    if (accessUnavailable) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Save All')),
+        body: AppScreen(
+          children: [
+            AppEmptyState(
+              title: 'Album access unavailable',
+              message:
+                  'You may have been removed from this album, or your access changed. Open Albums to refresh your private spaces.',
+              actionLabel: 'Back to Albums',
+              onAction: () =>
+                  Navigator.pushReplacementNamed(context, AppRoutes.home),
+            ),
+          ],
+        ),
+      );
+    }
+
     final resolvedFiles = filesAsync.asData?.value ?? files;
     final isLoadingFiles = filesAsync.isLoading && resolvedFiles.isEmpty;
     final totalFiles = resolvedFiles.length;
