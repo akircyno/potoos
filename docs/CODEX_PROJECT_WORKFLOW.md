@@ -90,6 +90,7 @@ Use this file as the short working agreement for future Codex sessions so we do 
 - Profile creation normalizes email casing and refreshes `last_active_at`.
 - Album creation creates `albums` and admin `album_members`.
 - Original upload works through `upload-original-file`.
+- Failed upload paths are marked as `failed` instead of being left as `uploading`.
 - Download Original works through `download-original-file`.
 - Album details show uploaded media and current members.
 - Admin-only invite form validates album admin permission.

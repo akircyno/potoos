@@ -77,6 +77,7 @@ Deno.serve(async (req) => {
   }
 
   if (fileBytes.byteLength !== mediaFile.file_size_bytes) {
+    await markUploadFailed(mediaFileId);
     return error("UPLOAD_FAILED", "Upload size did not match. Please try again.", 400);
   }
 
@@ -103,6 +104,7 @@ Deno.serve(async (req) => {
 
     const googleSize = parseGoogleDriveSize(driveFile.size);
     if (googleSize !== null && googleSize !== mediaFile.file_size_bytes) {
+      await markUploadFailed(mediaFileId);
       return error("UPLOAD_FAILED", "Upload size did not match. Please try again.", 400);
     }
 
@@ -116,6 +118,7 @@ Deno.serve(async (req) => {
 
     if (storageUpdateError) {
       console.error("upload-original-file storage update failed", storageUpdateError.message);
+      await markUploadFailed(mediaFileId);
       return error("SERVER_ERROR", "Could not save the uploaded file. Please try again.", 500);
     }
 
@@ -132,6 +135,7 @@ Deno.serve(async (req) => {
 
     if (mediaUpdateError || !completedFile) {
       console.error("upload-original-file media update failed", mediaUpdateError?.message);
+      await markUploadFailed(mediaFileId);
       return error("SERVER_ERROR", "Could not finish the upload. Please try again.", 500);
     }
 
@@ -142,13 +146,21 @@ Deno.serve(async (req) => {
     });
   } catch (uploadError) {
     console.error("upload-original-file Google Drive upload failed", uploadError);
-    await supabaseAdmin
-      .from("media_files")
-      .update({ upload_status: "failed" })
-      .eq("id", mediaFileId);
+    await markUploadFailed(mediaFileId);
     return error("STORAGE_ERROR", "Could not upload to Google Drive. Please try again.", 500);
   }
 });
+
+async function markUploadFailed(mediaFileId: string) {
+  const { error: updateError } = await supabaseAdmin
+    .from("media_files")
+    .update({ upload_status: "failed" })
+    .eq("id", mediaFileId);
+
+  if (updateError) {
+    console.error("upload-original-file failed status update failed", updateError.message);
+  }
+}
 
 function parseGoogleDriveSize(size: string | undefined) {
   if (!size) return null;
