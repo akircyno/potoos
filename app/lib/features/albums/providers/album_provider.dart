@@ -20,8 +20,9 @@ final albumMembersProvider =
 });
 
 final inviteMemberControllerProvider =
-    NotifierProvider<InviteMemberController, InviteMemberState>(
-        InviteMemberController.new);
+    NotifierProvider.autoDispose<InviteMemberController, InviteMemberState>(
+  InviteMemberController.new,
+);
 
 class InviteMemberState {
   const InviteMemberState({
