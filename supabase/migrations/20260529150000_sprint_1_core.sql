@@ -430,6 +430,22 @@ with check (
   and upload_status in ('pending', 'uploading', 'failed')
 );
 
+grant usage on schema public to authenticated, service_role;
+
+grant select, insert, update on public.user_profiles to authenticated;
+grant select on public.storage_providers to authenticated;
+grant select, insert, update on public.albums to authenticated;
+grant select, insert, update on public.album_members to authenticated;
+grant select on public.storage_objects to authenticated;
+grant select, insert, update on public.media_files to authenticated;
+
+grant all privileges on public.user_profiles to service_role;
+grant all privileges on public.storage_providers to service_role;
+grant all privileges on public.albums to service_role;
+grant all privileges on public.album_members to service_role;
+grant all privileges on public.storage_objects to service_role;
+grant all privileges on public.media_files to service_role;
+
 insert into public.storage_providers (name, type, is_active)
 select 'Google Drive Main', 'google_drive', true
 where not exists (
