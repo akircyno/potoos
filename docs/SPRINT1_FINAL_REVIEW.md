@@ -55,7 +55,7 @@ Sprint 1 now supports the core private original-quality flow:
 - Google Drive credentials stay in Supabase Edge Function secrets.
 - Downloads are proxied through an Edge Function, so Flutter does not receive Google access tokens.
 - Album and media reads rely on RLS membership policies.
-- Active album members can read basic profile details for other active members in the same album.
+- Active album members can read basic profile details for other active, unbanned members in the same album.
 - Upload is checked in Edge Functions with Admin/Contributor role logic.
 - Download is checked in Edge Functions with active album membership logic.
 - Failed upload paths now mark `media_files.upload_status` as `failed`.
