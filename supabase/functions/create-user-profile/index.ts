@@ -20,6 +20,8 @@ Deno.serve(async (req) => {
     return error("INVALID_REQUEST", "Your account is missing an email address.", 400);
   }
 
+  const email = user.email.trim().toLowerCase();
+
   let body: Record<string, unknown> = {};
 
   try {
@@ -54,16 +56,37 @@ Deno.serve(async (req) => {
   }
 
   if (existingProfile) {
-    return success(toProfileResponse(existingProfile));
+    const nextProfile = {
+      email,
+      display_name: displayName ?? existingProfile.display_name,
+      avatar_url: avatarUrl ?? existingProfile.avatar_url,
+      last_active_at: new Date().toISOString(),
+      is_active: true,
+    };
+
+    const { data: updatedProfile, error: updateError } = await supabaseAdmin
+      .from("user_profiles")
+      .update(nextProfile)
+      .eq("id", user.id)
+      .select("id, email, display_name, avatar_url")
+      .single();
+
+    if (updateError || !updatedProfile) {
+      console.error("create-user-profile update failed", updateError?.message);
+      return error("SERVER_ERROR", "Could not update your profile. Please try again.", 500);
+    }
+
+    return success(toProfileResponse(updatedProfile));
   }
 
   const { data: profile, error: insertError } = await supabaseAdmin
     .from("user_profiles")
     .insert({
       id: user.id,
-      email: user.email,
+      email,
       display_name: displayName ?? null,
       avatar_url: avatarUrl ?? null,
+      last_active_at: new Date().toISOString(),
     })
     .select("id, email, display_name, avatar_url")
     .single();

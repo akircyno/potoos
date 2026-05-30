@@ -87,6 +87,7 @@ Use this file as the short working agreement for future Codex sessions so we do 
 ## Verified Sprint 1 Flows
 
 - Google login creates `user_profiles`.
+- Profile creation normalizes email casing and refreshes `last_active_at`.
 - Album creation creates `albums` and admin `album_members`.
 - Original upload works through `upload-original-file`.
 - Download Original works through `download-original-file`.
