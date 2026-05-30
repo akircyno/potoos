@@ -1,21 +1,31 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/providers/auth_provider.dart';
 import '../data/album_repository.dart';
 import '../models/album.dart';
 import '../models/album_member.dart';
 import '../models/media_file.dart';
 
-final albumListProvider = FutureProvider<List<Album>>((ref) {
+final albumListProvider = FutureProvider.autoDispose<List<Album>>((ref) {
+  final profile = ref.watch(currentUserProfileProvider);
+  if (profile == null) return const [];
+
   return ref.watch(albumRepositoryProvider).fetchMyAlbums();
 });
 
 final albumMediaFilesProvider =
-    FutureProvider.family<List<MediaFile>, String>((ref, albumId) {
+    FutureProvider.autoDispose.family<List<MediaFile>, String>((ref, albumId) {
+  final profile = ref.watch(currentUserProfileProvider);
+  if (profile == null) return const [];
+
   return ref.watch(albumRepositoryProvider).fetchAlbumMediaFiles(albumId);
 });
 
-final albumMembersProvider =
-    FutureProvider.family<List<AlbumMember>, String>((ref, albumId) {
+final albumMembersProvider = FutureProvider.autoDispose
+    .family<List<AlbumMember>, String>((ref, albumId) {
+  final profile = ref.watch(currentUserProfileProvider);
+  if (profile == null) return const [];
+
   return ref.watch(albumRepositoryProvider).fetchAlbumMembers(albumId);
 });
 

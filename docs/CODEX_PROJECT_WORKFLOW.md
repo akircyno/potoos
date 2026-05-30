@@ -96,6 +96,7 @@ Use this file as the short working agreement for future Codex sessions so we do 
 - Legacy `complete-upload` also verifies final size against the original upload metadata.
 - Download Original works through `download-original-file`.
 - Album details show uploaded media and current members.
+- Album/media/member providers are keyed to the current signed-in profile so role state refreshes after account switching.
 - Admin-only invite form validates album admin permission.
 - Invite form shows a friendly message when the email has not signed in yet.
 - Invite form clears after a successful invite and keeps the email after errors.
