@@ -98,6 +98,7 @@ Use this file as the short working agreement for future Codex sessions so we do 
 - Legacy `complete-upload` also verifies final size against the original upload metadata.
 - Download Original works through `download-original-file`.
 - Album details show uploaded media and current members.
+- Album media rows and File Preview show uploader profile names when visible.
 - Album/media/member providers are keyed to the current signed-in profile so role state refreshes after account switching.
 - Album Details and Save All stop showing stale content if the current account no longer has active album membership.
 - Album members can read basic profile details for other active, unbanned members in shared albums.

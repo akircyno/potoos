@@ -23,17 +23,34 @@ class MediaFile {
     final fileType = json['file_type']?.toString() ?? 'photo';
     final size = int.tryParse(json['file_size_bytes']?.toString() ?? '');
     final uploadedAt = DateTime.tryParse(json['uploaded_at']?.toString() ?? '');
+    final uploader = json['uploader'] ?? json['user_profiles'];
+    final uploaderMap = uploader is List && uploader.isNotEmpty
+        ? Map<String, dynamic>.from(uploader.first as Map)
+        : uploader is Map
+            ? Map<String, dynamic>.from(uploader)
+            : <String, dynamic>{};
 
     return MediaFile(
       id: json['id']?.toString() ?? '',
-      originalFilename: json['original_filename']?.toString() ?? 'Original file',
+      originalFilename:
+          json['original_filename']?.toString() ?? 'Original file',
       fileType: _formatFileType(fileType),
       mimeType: json['mime_type']?.toString() ?? '',
       fileSizeLabel: _formatFileSize(size),
-      uploaderName: 'Member',
+      uploaderName: _uploaderName(uploaderMap),
       uploadedLabel: _uploadedLabel(uploadedAt),
       isVideo: fileType == 'video',
     );
+  }
+
+  static String _uploaderName(Map<String, dynamic> uploader) {
+    final displayName = uploader['display_name']?.toString().trim();
+    if (displayName != null && displayName.isNotEmpty) return displayName;
+
+    final email = uploader['email']?.toString().trim();
+    if (email != null && email.isNotEmpty) return email;
+
+    return 'Member';
   }
 
   static String _formatFileType(String value) {

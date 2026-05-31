@@ -12,6 +12,7 @@ Sprint 1 now supports the core private original-quality flow:
 - Admins and Contributors can upload original files.
 - Viewers are blocked from upload in the UI and backend.
 - Completed files appear in the album gallery and file list.
+- File metadata uses joined uploader profile names when visible.
 - Album, media, and member reads refresh when the signed-in profile changes.
 - Album Details and Save All stop showing stale content if membership is removed.
 - Original files download through the `download-original-file` Edge Function.

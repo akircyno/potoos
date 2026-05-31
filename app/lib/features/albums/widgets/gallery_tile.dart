@@ -68,7 +68,7 @@ class GalleryTile extends StatelessWidget {
                     children: [
                       Icon(Icons.play_arrow, size: 8, color: AppColors.white),
                       SizedBox(width: 2),
-                      Text('0:24',
+                      Text('Video',
                           style:
                               TextStyle(color: AppColors.white, fontSize: 9)),
                     ],

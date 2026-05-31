@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:litratolink/features/albums/models/album.dart';
 import 'package:litratolink/features/albums/models/album_member.dart';
+import 'package:litratolink/features/albums/models/media_file.dart';
 import 'package:litratolink/features/downloads/models/downloaded_file.dart';
 
 void main() {
@@ -75,6 +76,39 @@ void main() {
 
       expect(member.title, 'Album member');
       expect(member.subtitle, 'Contributor');
+    });
+  });
+
+  group('MediaFile display helpers', () {
+    test('uses joined uploader profile display name', () {
+      final file = MediaFile.fromJson({
+        'id': 'file-id',
+        'original_filename': 'IMG_3778.JPG',
+        'file_type': 'photo',
+        'mime_type': 'image/jpeg',
+        'file_size_bytes': 1194062,
+        'uploader': {
+          'email': 'uploader@example.com',
+          'display_name': 'Ian Aquino',
+        },
+      });
+
+      expect(file.uploaderName, 'Ian Aquino');
+      expect(file.fileSizeLabel, '1.1 MB');
+    });
+
+    test('falls back to uploader email when display name is hidden', () {
+      final file = MediaFile.fromJson({
+        'id': 'file-id',
+        'original_filename': 'IMG_3778.JPG',
+        'file_type': 'photo',
+        'mime_type': 'image/jpeg',
+        'uploader': {
+          'email': 'uploader@example.com',
+        },
+      });
+
+      expect(file.uploaderName, 'uploader@example.com');
     });
   });
 }

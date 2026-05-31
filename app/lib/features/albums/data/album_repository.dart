@@ -100,7 +100,7 @@ class AlbumRepository {
       final rows = await supabaseService.client
           .from('media_files')
           .select(
-              'id, original_filename, file_type, mime_type, file_size_bytes, uploaded_at')
+              'id, original_filename, file_type, mime_type, file_size_bytes, uploaded_at, uploader:user_profiles!media_files_uploader_id_fkey(email, display_name)')
           .eq('album_id', albumId)
           .eq('upload_status', 'completed')
           .eq('is_deleted', false)
