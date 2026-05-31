@@ -44,7 +44,8 @@ Use this checklist when manually verifying the Sprint 1 original-quality flow.
 - Tap Save All.
 - Confirm the Save All screen lists the real files from the album.
 - Tap Save All Originals.
-- Confirm each original downloads through the browser/download picker.
+- Confirm one `*-originals.zip` downloads through the browser/download picker.
+- Open the ZIP and confirm it contains each selected original file.
 - Confirm progress reaches complete.
 
 ## Security Checks
