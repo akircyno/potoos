@@ -56,10 +56,13 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
             ],
           ] else ...[
             const SizedBox(height: 12),
-            const AppEmptyState(
+            AppEmptyState(
               title: 'Choose an album first',
               message:
                   'Open Upload from an album so the file is stored in the right private space.',
+              actionLabel: 'Back to Albums',
+              onAction: () =>
+                  Navigator.pushReplacementNamed(context, AppRoutes.home),
             ),
           ],
           const SizedBox(height: 22),

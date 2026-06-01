@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/routes.dart';
 import '../../../app/theme.dart';
 import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_card.dart';
@@ -20,11 +21,14 @@ class FilePreviewScreen extends ConsumerWidget {
     if (routeFile is! MediaFile) {
       return Scaffold(
         appBar: AppBar(title: const Text('File Preview')),
-        body: const AppScreen(
+        body: AppScreen(
           children: [
             AppEmptyState(
               title: 'File unavailable',
               message: 'Open a completed file from an album first.',
+              actionLabel: 'Back to Albums',
+              onAction: () =>
+                  Navigator.pushReplacementNamed(context, AppRoutes.home),
             ),
           ],
         ),
