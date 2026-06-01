@@ -16,6 +16,7 @@ Sprint 1 now supports the core private original-quality flow:
 - File metadata uses joined uploader profile names when visible.
 - Album, media, and member reads refresh when the signed-in profile changes.
 - Album Details and Save All stop showing stale content if membership is removed.
+- Album Details uses freshly loaded membership data for current role controls.
 - Album timestamps refresh after successful uploads and member changes.
 - Original files download through the `download-original-file` Edge Function.
 - File Preview displays a downloaded-size vs expected-original-size quality check.

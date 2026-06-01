@@ -101,6 +101,7 @@ Use this file as the short working agreement for future Codex sessions so we do 
 - Album media rows and File Preview show uploader profile names when visible.
 - Album/media/member providers are keyed to the current signed-in profile so role state refreshes after account switching.
 - Album Details and Save All stop showing stale content if the current account no longer has active album membership.
+- Album Details prefers freshly loaded membership data for the current user's role and controls.
 - Album members can read basic profile details for other active, unbanned members in shared albums.
 - Album `updated_at` is refreshed after successful uploads and member changes so Home, Invites, and Activity stay recent.
 - Admin-only invite form validates album admin permission.

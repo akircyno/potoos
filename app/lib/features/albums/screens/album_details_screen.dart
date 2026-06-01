@@ -76,7 +76,11 @@ class AlbumDetailsScreen extends ConsumerWidget {
     }
 
     final visibleMemberCount = loadedMembers?.length ?? album.memberCount;
-    final isAdmin = album.canManageMembers;
+    final currentMember = _currentMember(loadedMembers, currentProfile?.id);
+    final effectiveRole = currentMember?.role ?? album.role;
+    final effectiveRoleLabel = _roleLabel(effectiveRole);
+    final canUpload = _canUploadRole(effectiveRole);
+    final isAdmin = _canManageRole(effectiveRole);
 
     return Scaffold(
       appBar: AppBar(
@@ -141,7 +145,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
                         label: '$visibleMemberCount members'),
                     _HeaderMeta(
                         icon: Icons.verified_user_outlined,
-                        label: 'Your role: ${album.role}'),
+                        label: 'Your role: $effectiveRoleLabel'),
                   ],
                 ),
               ],
@@ -151,7 +155,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: Row(
               children: [
-                if (album.canUpload) ...[
+                if (canUpload) ...[
                   Expanded(
                     child: _ActionButton(
                       label: 'Upload',
@@ -243,11 +247,11 @@ class AlbumDetailsScreen extends ConsumerWidget {
               data: (files) => files.isEmpty
                   ? AlbumEmptyState(
                       title: 'No files yet',
-                      message: album.canUpload
+                      message: canUpload
                           ? 'Upload the first original-quality photo or video for this album.'
                           : 'Completed uploads will appear here.',
-                      actionLabel: album.canUpload ? 'Upload' : null,
-                      onAction: album.canUpload
+                      actionLabel: canUpload ? 'Upload' : null,
+                      onAction: canUpload
                           ? () => Navigator.pushNamed(context, AppRoutes.upload,
                               arguments: album)
                           : null,
@@ -432,6 +436,30 @@ class AlbumDetailsScreen extends ConsumerWidget {
     required String fileId,
   }) {
     ref.read(selectedMediaIdsProvider(albumId).notifier).toggle(fileId);
+  }
+
+  AlbumMember? _currentMember(List<AlbumMember>? members, String? profileId) {
+    if (members == null || profileId == null || profileId.isEmpty) return null;
+
+    for (final member in members) {
+      if (member.userId == profileId) return member;
+    }
+
+    return null;
+  }
+
+  String _roleLabel(String role) {
+    if (role.isEmpty) return 'Viewer';
+    return '${role[0].toUpperCase()}${role.substring(1).toLowerCase()}';
+  }
+
+  bool _canUploadRole(String role) {
+    final normalized = role.toLowerCase();
+    return normalized == 'admin' || normalized == 'contributor';
+  }
+
+  bool _canManageRole(String role) {
+    return role.toLowerCase() == 'admin';
   }
 }
 
