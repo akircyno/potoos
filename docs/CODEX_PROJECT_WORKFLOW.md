@@ -93,6 +93,7 @@ Use this file as the short working agreement for future Codex sessions so we do 
 ## Verified Sprint 1 Flows
 
 - Google login creates `user_profiles`.
+- Web Google login sends an explicit app-root redirect URL so localhost and GitHub Pages return to the correct app after OAuth.
 - Profile creation normalizes email casing and refreshes `last_active_at`.
 - Album creation creates `albums` and admin `album_members`.
 - `create-upload-session` prepares DB records and Drive folders for the server-side upload path.

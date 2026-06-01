@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:litratolink/features/albums/models/album.dart';
 import 'package:litratolink/features/albums/models/album_member.dart';
 import 'package:litratolink/features/albums/models/media_file.dart';
+import 'package:litratolink/features/auth/data/auth_repository.dart';
 import 'package:litratolink/features/downloads/models/downloaded_file.dart';
 
 void main() {
@@ -109,6 +110,24 @@ void main() {
       });
 
       expect(file.uploaderName, 'uploader@example.com');
+    });
+  });
+
+  group('OAuth redirect helper', () {
+    test('keeps GitHub Pages base path and removes hash route', () {
+      final redirectTo = webOAuthRedirectTo(
+        Uri.parse('https://akircyno.github.io/litratolink/#/login'),
+      );
+
+      expect(redirectTo, 'https://akircyno.github.io/litratolink/');
+    });
+
+    test('keeps localhost origin and removes transient error query', () {
+      final redirectTo = webOAuthRedirectTo(
+        Uri.parse('http://localhost:8080/?error=server_error#/login'),
+      );
+
+      expect(redirectTo, 'http://localhost:8080/');
     });
   });
 }

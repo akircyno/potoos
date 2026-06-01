@@ -36,7 +36,9 @@ class AuthRepository {
 
     await supabaseService.client.auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo: kIsWeb ? null : 'io.supabase.flutter://callback',
+      redirectTo: kIsWeb
+          ? webOAuthRedirectTo(Uri.base)
+          : 'io.supabase.flutter://callback',
     );
   }
 
@@ -49,7 +51,8 @@ class AuthRepository {
         'display_name': user?.userMetadata?['full_name'],
         'avatar_url': user?.userMetadata?['avatar_url'],
       },
-      parser: (data) => UserProfile.fromJson(Map<String, dynamic>.from(data as Map)),
+      parser: (data) =>
+          UserProfile.fromJson(Map<String, dynamic>.from(data as Map)),
     );
   }
 
@@ -57,4 +60,15 @@ class AuthRepository {
     if (!supabaseService.isConfigured) return;
     await supabaseService.client.auth.signOut();
   }
+}
+
+@visibleForTesting
+String webOAuthRedirectTo(Uri currentUri) {
+  return Uri(
+    scheme: currentUri.scheme,
+    userInfo: currentUri.userInfo,
+    host: currentUri.host,
+    port: currentUri.hasPort ? currentUri.port : null,
+    path: currentUri.path.isEmpty ? '/' : currentUri.path,
+  ).toString();
 }

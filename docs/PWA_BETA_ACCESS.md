@@ -55,6 +55,8 @@ https://akircyno.github.io/litratolink/#/login
 https://akircyno.github.io/litratolink/#/home
 ```
 
+The Flutter app sends the current app root as `redirectTo` during web Google login. This keeps local login returning to `http://localhost:8080/` and hosted login returning to `https://akircyno.github.io/litratolink/` instead of relying only on the Supabase Site URL default.
+
 Google OAuth client:
 
 ```text
