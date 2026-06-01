@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/routes.dart';
 import '../../../app/theme.dart';
 import '../../../config/constants.dart';
 import '../../../core/widgets/brand_mark.dart';
@@ -12,6 +13,11 @@ class LoginScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(currentUserProfileProvider, (previous, next) {
+      if (next == null) return;
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+    });
+
     ref.listen(authControllerProvider, (previous, next) {
       if (!next.hasError) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -20,7 +26,16 @@ class LoginScreen extends ConsumerWidget {
     });
 
     final authState = ref.watch(authControllerProvider);
+    final profile = ref.watch(currentUserProfileProvider);
     final isLoading = authState.isLoading;
+
+    if (profile != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+        }
+      });
+    }
 
     return Scaffold(
       backgroundColor: AppColors.deepMaroon,
@@ -37,7 +52,9 @@ class LoginScreen extends ConsumerWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.softGold.withValues(alpha: 0.40), width: 2),
+                  border: Border.all(
+                      color: AppColors.softGold.withValues(alpha: 0.40),
+                      width: 2),
                 ),
                 child: const BrandMark(size: 58),
               ),
@@ -50,14 +67,18 @@ class LoginScreen extends ConsumerWidget {
                       ),
                   children: const [
                     TextSpan(text: 'Litrato'),
-                    TextSpan(text: 'Link', style: TextStyle(color: AppColors.goldLight)),
+                    TextSpan(
+                        text: 'Link',
+                        style: TextStyle(color: AppColors.goldLight)),
                   ],
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 AppText.tagline,
-                style: TextStyle(color: AppColors.warmCream.withValues(alpha: 0.60), fontSize: 13),
+                style: TextStyle(
+                    color: AppColors.warmCream.withValues(alpha: 0.60),
+                    fontSize: 13),
               ),
               const SizedBox(height: 32),
               Text(
@@ -72,7 +93,10 @@ class LoginScreen extends ConsumerWidget {
               Text(
                 'Private albums. Invited people only. Every photo and video in full original quality.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.warmCream.withValues(alpha: 0.55), height: 1.65, fontSize: 13),
+                style: TextStyle(
+                    color: AppColors.warmCream.withValues(alpha: 0.55),
+                    height: 1.65,
+                    fontSize: 13),
               ),
               const SizedBox(height: 20),
               const Wrap(
@@ -81,8 +105,10 @@ class LoginScreen extends ConsumerWidget {
                 runSpacing: 6,
                 children: [
                   _WelcomePill(icon: Icons.lock_outline, label: 'Private'),
-                  _WelcomePill(icon: Icons.star_outline, label: 'Original quality'),
-                  _WelcomePill(icon: Icons.group_outlined, label: 'Invite-only'),
+                  _WelcomePill(
+                      icon: Icons.star_outline, label: 'Original quality'),
+                  _WelcomePill(
+                      icon: Icons.group_outlined, label: 'Invite-only'),
                 ],
               ),
               const Spacer(),
@@ -96,7 +122,10 @@ class LoginScreen extends ConsumerWidget {
               Text(
                 'No likes. No comments. No public feed.\nJust you and the people you choose.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.warmCream.withValues(alpha: 0.40), fontSize: 11, height: 1.5),
+                style: TextStyle(
+                    color: AppColors.warmCream.withValues(alpha: 0.40),
+                    fontSize: 11,
+                    height: 1.5),
               ),
             ],
           ),
@@ -118,7 +147,8 @@ class _WelcomePill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
       decoration: BoxDecoration(
         color: AppColors.warmCream.withValues(alpha: 0.08),
-        border: Border.all(color: AppColors.warmCream.withValues(alpha: 0.15), width: 0.5),
+        border: Border.all(
+            color: AppColors.warmCream.withValues(alpha: 0.15), width: 0.5),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -126,7 +156,10 @@ class _WelcomePill extends StatelessWidget {
         children: [
           Icon(icon, color: AppColors.goldLight, size: 11),
           const SizedBox(width: 4),
-          Text(label, style: TextStyle(color: AppColors.warmCream.withValues(alpha: 0.60), fontSize: 11)),
+          Text(label,
+              style: TextStyle(
+                  color: AppColors.warmCream.withValues(alpha: 0.60),
+                  fontSize: 11)),
         ],
       ),
     );

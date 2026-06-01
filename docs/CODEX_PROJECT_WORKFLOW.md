@@ -94,6 +94,7 @@ Use this file as the short working agreement for future Codex sessions so we do 
 
 - Google login creates `user_profiles`.
 - Web Google login sends an explicit app-root redirect URL so localhost and GitHub Pages return to the correct app after OAuth.
+- Login screen redirects to Home when a user profile becomes available, making OAuth return timing more reliable on PWA.
 - Profile creation normalizes email casing and refreshes `last_active_at`.
 - Album creation creates `albums` and admin `album_members`.
 - `create-upload-session` prepares DB records and Drive folders for the server-side upload path.
