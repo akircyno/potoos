@@ -6,11 +6,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/auth_repository.dart';
 import '../models/user_profile.dart';
 
-final currentUserProfileProvider = NotifierProvider<CurrentUserProfile, UserProfile?>(
+final currentUserProfileProvider =
+    NotifierProvider<CurrentUserProfile, UserProfile?>(
   CurrentUserProfile.new,
 );
 
-final authControllerProvider = NotifierProvider<AuthController, AsyncValue<void>>(
+final authControllerProvider =
+    NotifierProvider<AuthController, AsyncValue<void>>(
   AuthController.new,
 );
 
@@ -96,7 +98,16 @@ class AuthController extends Notifier<AsyncValue<void>> {
         data.event == AuthChangeEvent.signedIn ||
         data.event == AuthChangeEvent.tokenRefreshed ||
         data.event == AuthChangeEvent.userUpdated) {
-      unawaited(_loadProfileIfSessionExists());
+      unawaited(_loadProfileAfterAuthChange());
+    }
+  }
+
+  Future<void> _loadProfileAfterAuthChange() async {
+    try {
+      await _loadProfileIfSessionExists();
+      state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
     }
   }
 }
