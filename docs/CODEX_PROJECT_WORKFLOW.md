@@ -121,6 +121,7 @@ Use this file as the short working agreement for future Codex sessions so we do 
 - Save All creates one ZIP download for browser reliability and disables cancel navigation while active.
 - Direct Upload route now explains that uploads must start from an album.
 - File Preview shows a tester-friendly downloaded-size vs expected-original-size check.
+- Debug quality logs include SHA-256 checksums for selected originals and downloaded originals.
 - Download permission/file errors are mapped to friendly app messages instead of raw Dio errors.
 - Activity tab is driven by real album data instead of fake placeholder notifications.
 - Invites tab is driven by real album data and links Admins to member management.

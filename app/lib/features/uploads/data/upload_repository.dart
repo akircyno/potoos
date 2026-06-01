@@ -34,6 +34,7 @@ class UploadRepository {
       sizeBytes: file.sizeBytes,
       mimeType: file.mimeType,
       localPath: file.localPath,
+      checksumHex: QualityTestLog.sha256Hex(bytes),
     );
 
     final session = await edgeFunctionService.call<UploadSession>(

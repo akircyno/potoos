@@ -274,6 +274,7 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
           expectedSizeBytes: original.expectedSizeBytes,
           mimeType: original.mimeType,
           savedPath: savedPath ?? 'Browser downloads: $zipName',
+          checksumHex: QualityTestLog.sha256Hex(original.bytes),
         );
       }
 

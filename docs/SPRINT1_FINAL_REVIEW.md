@@ -19,6 +19,7 @@ Sprint 1 now supports the core private original-quality flow:
 - Album timestamps refresh after successful uploads and member changes.
 - Original files download through the `download-original-file` Edge Function.
 - File Preview displays a downloaded-size vs expected-original-size quality check.
+- Debug quality logs include SHA-256 checksums for upload and download comparison.
 - Upload progress keeps users on the upload screen until the active upload finishes or fails.
 - Save All uses real album files and downloads originals through the same backend path.
 - Album Details supports selecting files before Save All.

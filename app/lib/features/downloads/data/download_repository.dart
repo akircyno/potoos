@@ -48,6 +48,7 @@ class DownloadRepository {
       expectedSizeBytes: original.expectedSizeBytes,
       mimeType: original.mimeType,
       savedPath: savedPath ?? 'Browser downloads',
+      checksumHex: QualityTestLog.sha256Hex(original.bytes),
     );
 
     onProgress(1);
