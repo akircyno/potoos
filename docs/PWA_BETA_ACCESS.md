@@ -35,6 +35,30 @@ Before sharing the hosted beta link:
 - Test upload, download, and Save All ZIP.
 - Share only with trusted testers.
 
+## GitHub Pages Beta Deploy
+
+This repo includes `.github/workflows/pwa-beta.yml`.
+
+To use it:
+
+1. Push to `main`.
+2. Open the GitHub repository.
+3. Go to **Settings > Pages**.
+4. Set **Build and deployment > Source** to **GitHub Actions**.
+5. Open **Actions > PWA Beta Deploy**.
+6. Run the workflow manually, or let it run after app changes.
+
+Expected beta URL:
+
+```text
+https://akircyno.github.io/litratolink/
+```
+
+After the first successful deploy, add this URL to:
+
+- Supabase Auth redirect URLs
+- Google OAuth authorized JavaScript origins
+
 ## Notes
 
 - PWA beta is not the public launch.
