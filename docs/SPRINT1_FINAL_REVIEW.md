@@ -31,6 +31,7 @@ Sprint 1 now supports the core private original-quality flow:
 - Admins can update an existing member's role from the same invite form.
 - Admins can update another member's role from the member row menu.
 - Admins can remove another member from the member row menu after confirmation.
+- The database prevents downgrading or removing the final active Admin.
 - Unregistered invite emails show a friendly action message.
 
 ## Verified Locally
@@ -73,6 +74,7 @@ Sprint 1 now supports the core private original-quality flow:
 - Upload is checked in Edge Functions with Admin/Contributor role logic.
 - Pending upload completion is rejected if the uploader no longer has Admin/Contributor access.
 - Direct pending media row updates also require current Admin/Contributor access.
+- The final active album Admin cannot be downgraded or removed at the database layer.
 - Download is checked in Edge Functions with active album membership logic.
 - Failed upload paths now mark `media_files.upload_status` as `failed`.
 - Legacy upload completion verifies final size against original upload metadata.
