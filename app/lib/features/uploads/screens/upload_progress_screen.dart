@@ -220,7 +220,11 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
                 Flexible(
                   child: Text(
                     uploadState.isUploading
-                        ? 'Uploading original bytes. Keep this screen open.'
+                        ? uploadState.progress < 0.16
+                            ? 'Creating upload session...'
+                            : uploadState.progress >= 0.90
+                                ? 'Finalizing upload...'
+                                : 'Uploading original bytes. Keep this screen open.'
                         : 'Files are uploaded in original quality. No compression.',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
