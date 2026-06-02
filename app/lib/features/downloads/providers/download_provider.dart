@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/app_error.dart';
 import '../../albums/models/media_file.dart';
 import '../data/download_repository.dart';
 import '../models/downloaded_file.dart';
@@ -63,7 +64,7 @@ class DownloadController extends Notifier<DownloadState> {
     } catch (error) {
       state = state.copyWith(
         isDownloading: false,
-        errorMessage: error.toString(),
+        errorMessage: AppError.messageFor(error),
       );
     }
   }

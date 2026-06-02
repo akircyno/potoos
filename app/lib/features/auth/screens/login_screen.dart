@@ -1,42 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
 import '../../../config/constants.dart';
 import '../../../core/widgets/brand_mark.dart';
-import '../providers/auth_provider.dart';
 import '../widgets/google_login_button.dart';
 
-class LoginScreen extends ConsumerWidget {
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(currentUserProfileProvider, (previous, next) {
-      if (next == null) return;
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
-    });
-
-    ref.listen(authControllerProvider, (previous, next) {
-      if (!next.hasError) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(next.error.toString())),
-      );
-    });
-
-    final authState = ref.watch(authControllerProvider);
-    final profile = ref.watch(currentUserProfileProvider);
-    final isLoading = authState.isLoading;
-
-    if (profile != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          Navigator.pushReplacementNamed(context, AppRoutes.home);
-        }
-      });
-    }
-
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.deepMaroon,
       body: SafeArea(
@@ -113,10 +87,8 @@ class LoginScreen extends ConsumerWidget {
               ),
               const Spacer(),
               GoogleLoginButton(
-                isLoading: isLoading,
-                onPressed: () {
-                  ref.read(authControllerProvider.notifier).signInWithGoogle();
-                },
+                onPressed: () =>
+                    Navigator.pushReplacementNamed(context, AppRoutes.home),
               ),
               const SizedBox(height: 14),
               Text(

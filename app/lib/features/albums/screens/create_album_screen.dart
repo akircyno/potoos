@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
+import '../../../core/errors/app_error.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_screen.dart';
 import '../data/album_repository.dart';
@@ -96,7 +97,7 @@ class _CreateAlbumScreenState extends ConsumerState<CreateAlbumScreen> {
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
+          SnackBar(content: Text(AppError.messageFor(error))),
         );
       }
     } finally {

@@ -38,6 +38,14 @@ class EdgeFunctionService {
       );
     } on FunctionException catch (error) {
       throw _appErrorFromFunctionException(error);
+    } on AppError {
+      rethrow;
+    } catch (_) {
+      // Network drop, timeout, or any non-HTTP failure reaching the function.
+      throw const AppError(
+        'Could not reach the server. Check your connection and try again.',
+        code: 'NETWORK',
+      );
     }
 
     final payload = response.data;

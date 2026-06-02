@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/app_error.dart';
 import '../../albums/providers/album_provider.dart';
 import '../data/upload_repository.dart';
 import '../models/upload_file.dart';
@@ -70,7 +71,7 @@ class UploadController extends Notifier<UploadState> {
     } catch (error) {
       state = state.copyWith(
         isUploading: false,
-        errorMessage: error.toString(),
+        errorMessage: AppError.messageFor(error),
       );
     }
   }

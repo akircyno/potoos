@@ -144,7 +144,7 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
                   else if (filesAsync.hasError && resolvedFiles.isEmpty)
                     AppEmptyState(
                       title: 'Files unavailable',
-                      message: filesAsync.error.toString(),
+                      message: AppError.messageFor(filesAsync.error),
                       actionLabel: 'Try Again',
                       onAction: () =>
                           ref.invalidate(albumMediaFilesProvider(album.id)),
@@ -290,7 +290,7 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
       setState(() {
         isSaving = false;
         isComplete = false;
-        errorMessage = error.toString();
+        errorMessage = AppError.messageFor(error);
       });
     }
   }

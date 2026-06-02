@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
+import '../../../core/errors/app_error.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_screen.dart';
 import '../../../core/widgets/invite_form.dart';
@@ -239,7 +240,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
               ),
               error: (error, _) => AlbumEmptyState(
                 title: 'Files unavailable',
-                message: error.toString(),
+                message: AppError.messageFor(error),
                 actionLabel: 'Try Again',
                 onAction: () =>
                     ref.invalidate(albumMediaFilesProvider(album.id)),
@@ -328,7 +329,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
                   ),
                   error: (error, _) => AlbumEmptyState(
                     title: 'Members unavailable',
-                    message: error.toString(),
+                    message: AppError.messageFor(error),
                     actionLabel: 'Try Again',
                     onAction: () =>
                         ref.invalidate(albumMembersProvider(album.id)),

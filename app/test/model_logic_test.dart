@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:litratolink/core/errors/app_error.dart';
 import 'package:litratolink/features/albums/models/album.dart';
 import 'package:litratolink/features/albums/models/album_member.dart';
 import 'package:litratolink/features/albums/models/media_file.dart';
@@ -110,6 +111,26 @@ void main() {
       });
 
       expect(file.uploaderName, 'uploader@example.com');
+    });
+  });
+
+  group('AppError.messageFor', () {
+    test('uses the friendly message from an AppError', () {
+      expect(
+        AppError.messageFor(const AppError('Viewers cannot upload.')),
+        'Viewers cannot upload.',
+      );
+    });
+
+    test('collapses non-AppError exceptions to a generic fallback', () {
+      expect(
+        AppError.messageFor(Exception('ClientException: failed host lookup')),
+        'Something went wrong. Please try again.',
+      );
+      expect(
+        AppError.messageFor(null),
+        'Something went wrong. Please try again.',
+      );
     });
   });
 

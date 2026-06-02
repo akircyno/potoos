@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
+import '../../../core/errors/app_error.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/litrato_header.dart';
@@ -177,7 +178,7 @@ class _AlbumsTab extends ConsumerWidget {
                 ),
                 error: (error, _) => AlbumEmptyState(
                   title: 'Albums unavailable',
-                  message: error.toString(),
+                  message: AppError.messageFor(error),
                   actionLabel: 'Try Again',
                   onAction: () => ref.invalidate(albumListProvider),
                 ),
@@ -252,7 +253,7 @@ class _InvitesTab extends ConsumerWidget {
           ),
           error: (error, _) => AlbumEmptyState(
             title: 'Invites unavailable',
-            message: error.toString(),
+            message: AppError.messageFor(error),
             actionLabel: 'Try Again',
             onAction: () => ref.invalidate(albumListProvider),
           ),
@@ -421,7 +422,7 @@ class _NotificationsTab extends ConsumerWidget {
           ),
           error: (error, _) => AlbumEmptyState(
             title: 'Activity unavailable',
-            message: error.toString(),
+            message: AppError.messageFor(error),
             actionLabel: 'Try Again',
             onAction: () => ref.invalidate(albumListProvider),
           ),

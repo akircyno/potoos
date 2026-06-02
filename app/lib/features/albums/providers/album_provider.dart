@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/app_error.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/album_repository.dart';
 import '../models/album.dart';
@@ -128,7 +129,7 @@ class InviteMemberController extends Notifier<InviteMemberState> {
         successMessage: '${member.title} is now ${member.roleLabel}.',
       );
     } catch (error) {
-      state = InviteMemberState(errorMessage: error.toString());
+      state = InviteMemberState(errorMessage: AppError.messageFor(error));
     }
   }
 
@@ -150,7 +151,7 @@ class InviteMemberController extends Notifier<InviteMemberState> {
         successMessage: '${member.title} was removed from this album.',
       );
     } catch (error) {
-      state = InviteMemberState(errorMessage: error.toString());
+      state = InviteMemberState(errorMessage: AppError.messageFor(error));
     }
   }
 }
