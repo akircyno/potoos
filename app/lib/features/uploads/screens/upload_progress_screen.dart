@@ -5,6 +5,7 @@ import '../../../app/routes.dart';
 import '../../../app/theme.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_progress_bar.dart';
 import '../../../core/widgets/app_screen.dart';
 import '../models/upload_file.dart';
 import '../providers/upload_provider.dart';
@@ -34,7 +35,7 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
         Future.microtask(() {
           ref.read(uploadControllerProvider.notifier).upload(
                 albumId: routeArgs.album.id,
-                file: routeArgs.file,
+                files: routeArgs.files,
               );
         });
       }
@@ -45,32 +46,40 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
   Widget build(BuildContext context) {
     final uploadArgs = args;
     final uploadState = ref.watch(uploadControllerProvider);
-    final file = uploadArgs?.file;
+    final files = uploadArgs?.files ?? const [];
     final album = uploadArgs?.album;
 
-    if (file == null || album == null) {
+    if (files.isEmpty || album == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Upload')),
         body: const AppScreen(
           children: [
             AppEmptyState(
               title: 'Upload unavailable',
-              message: 'Start uploads from an album with a selected file.',
+              message: 'Start uploads from an album with selected files.',
             ),
           ],
         ),
       );
     }
 
+    final totalCount = files.length;
+    final completedCount = uploadState.completedCount;
+    final currentIndex = uploadState.currentFileIndex;
+    final isUploading = uploadState.isUploading;
+    final isComplete = uploadState.isComplete;
+
     return Scaffold(
       body: AppScreen(
         padding: EdgeInsets.zero,
         children: [
+          // ── Header ────────────────────────────────────────────────────
           Container(
             padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
             decoration: const BoxDecoration(
               color: AppColors.deepMaroon,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+              borderRadius:
+                  BorderRadius.vertical(bottom: Radius.circular(28)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,9 +87,7 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
                 Row(
                   children: [
                     InkWell(
-                      onTap: uploadState.isUploading
-                          ? null
-                          : () => Navigator.pop(context),
+                      onTap: isUploading ? null : () => Navigator.pop(context),
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         width: 28,
@@ -120,13 +127,15 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
               ],
             ),
           ),
+
+          // ── File count + quality badge ─────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
             child: Row(
               children: [
                 Expanded(
                   child: Text(
-                    '1 file selected',
+                    '$totalCount file${totalCount == 1 ? '' : 's'} selected',
                     style: const TextStyle(
                         color: AppColors.mutedInk, fontSize: 12),
                   ),
@@ -156,38 +165,56 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
               ],
             ),
           ),
+
+          // ── Overall progress ───────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: AppProgressBar(value: uploadState.progress),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+            child: Text(
+              isComplete
+                  ? 'All $totalCount files uploaded'
+                  : isUploading
+                      ? '$completedCount of $totalCount uploaded'
+                      : uploadState.errorMessage != null
+                          ? 'Upload stopped — see error below'
+                          : 'Preparing...',
+              style: const TextStyle(
+                  color: AppColors.mutedInk,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500),
+            ),
+          ),
+
+          // ── Per-file progress cards ────────────────────────────────────
           const SizedBox(height: 12),
-          SizedBox(
-            height: 60,
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              scrollDirection: Axis.horizontal,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
               children: [
-                _SelectedThumb(isVideo: file.fileType == 'video'),
+                for (var i = 0; i < files.length; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: UploadProgressCard(
+                      name: files[i].name,
+                      size: files[i].sizeLabel,
+                      progress: _progressFor(i, uploadState),
+                      status: _statusFor(i, uploadState),
+                      done: i < completedCount,
+                      waiting: !isUploading && i > currentIndex ||
+                          (currentIndex < 0 && !isComplete),
+                    ),
+                  ),
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: UploadProgressCard(
-              name: file.name,
-              size: file.sizeLabel,
-              progress: uploadState.progress,
-              status: uploadState.completedUpload != null
-                  ? 'Done'
-                  : uploadState.errorMessage != null
-                      ? 'Failed'
-                      : '${(uploadState.progress * 100).round()}%',
-              done: uploadState.completedUpload != null,
-              waiting: !uploadState.isUploading &&
-                  uploadState.completedUpload == null &&
-                  uploadState.errorMessage == null,
-            ),
-          ),
+
+          // ── Error ──────────────────────────────────────────────────────
           if (uploadState.errorMessage != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
               child: Text(
                 uploadState.errorMessage!,
                 textAlign: TextAlign.center,
@@ -197,11 +224,13 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
                     fontWeight: FontWeight.w700),
               ),
             ),
-          if (uploadState.completedUpload != null)
+
+          // ── Success ────────────────────────────────────────────────────
+          if (isComplete)
             const Padding(
-              padding: EdgeInsets.fromLTRB(20, 12, 20, 0),
+              padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: Text(
-                'Upload complete. The original file is now in the album.',
+                'Upload complete. All originals are now in the album.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     color: AppColors.maroon,
@@ -209,6 +238,8 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
                     fontWeight: FontWeight.w700),
               ),
             ),
+
+          // ── Info hint ──────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
             child: Row(
@@ -219,7 +250,7 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
-                    uploadState.isUploading
+                    isUploading
                         ? uploadState.progress < 0.16
                             ? 'Creating upload session...'
                             : uploadState.progress >= 0.90
@@ -236,11 +267,13 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
               ],
             ),
           ),
+
+          // ── Action button ──────────────────────────────────────────────
           const SizedBox(height: 22),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: AppButton(
-              label: uploadState.isUploading
+              label: isUploading
                   ? 'Uploading...'
                   : uploadState.errorMessage == null
                       ? 'Back to Album'
@@ -248,7 +281,7 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
               icon: uploadState.errorMessage == null
                   ? Icons.check
                   : Icons.refresh,
-              onPressed: uploadState.isUploading
+              onPressed: isUploading
                   ? null
                   : uploadState.errorMessage == null
                       ? () => Navigator.pushNamedAndRemoveUntil(
@@ -260,7 +293,7 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
                       : () {
                           ref.read(uploadControllerProvider.notifier).upload(
                                 albumId: album.id,
-                                file: file,
+                                files: files,
                               );
                         },
             ),
@@ -269,54 +302,27 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
       ),
     );
   }
-}
 
-class _SelectedThumb extends StatelessWidget {
-  const _SelectedThumb({required this.isVideo});
+  double _progressFor(int index, UploadState state) {
+    if (index < state.completedCount) return 1.0;
+    if (index == state.currentFileIndex && state.isUploading) {
+      // interpolate current file's share of overall progress
+      final fileShare = 1.0 / state.totalCount;
+      final base = index / state.totalCount;
+      final current = (state.progress - base).clamp(0.0, fileShare);
+      return (current / fileShare).clamp(0.0, 1.0);
+    }
+    return 0.0;
+  }
 
-  final bool isVideo;
-
-  @override
-  Widget build(BuildContext context) {
-    const palettes = [
-      [Color(0xFFD4A0AC), Color(0xFF8C2840)],
-      [Color(0xFFD4C4A0), Color(0xFF8C7A30)],
-      [Color(0xFFC4A0D4), Color(0xFF6B2C80)],
-      [Color(0xFFB0D4D0), Color(0xFF2C7C78)],
-    ];
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: palettes[isVideo ? 3 : 0]),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(
-            isVideo ? Icons.movie_outlined : Icons.image_outlined,
-            color: AppColors.white,
-            size: 20,
-          ),
-        ),
-        Positioned(
-          top: -4,
-          right: -4,
-          child: Container(
-            width: 16,
-            height: 16,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.maroon,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.warmCream, width: 1.5),
-            ),
-            child: const Icon(Icons.close, color: AppColors.white, size: 8),
-          ),
-        ),
-      ],
-    );
+  String _statusFor(int index, UploadState state) {
+    if (index < state.completedCount) return 'Done';
+    if (index == state.currentFileIndex && state.isUploading) {
+      return '${(_progressFor(index, state) * 100).round()}%';
+    }
+    if (index == state.currentFileIndex && state.errorMessage != null) {
+      return 'Failed';
+    }
+    return 'Queued';
   }
 }

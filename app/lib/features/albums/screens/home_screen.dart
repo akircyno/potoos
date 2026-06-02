@@ -507,6 +507,31 @@ class _ProfileTab extends ConsumerWidget {
                 icon: Icons.logout,
                 secondary: true,
                 onPressed: () async {
+                  final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Log out?'),
+                          content: const Text(
+                              'Your albums and originals stay safe. You can sign back in any time.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(false),
+                              child: const Text('Cancel'),
+                            ),
+                            FilledButton(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.maroon,
+                                foregroundColor: AppColors.white,
+                              ),
+                              onPressed: () => Navigator.of(ctx).pop(true),
+                              child: const Text('Log out'),
+                            ),
+                          ],
+                        ),
+                      ) ??
+                      false;
+
+                  if (!confirmed || !context.mounted) return;
                   await ref.read(authControllerProvider.notifier).signOut();
                   if (context.mounted) {
                     Navigator.pushReplacementNamed(context, AppRoutes.login);
@@ -564,6 +589,41 @@ class _ProfileTab extends ConsumerWidget {
             ],
           ),
         ),
+        const SizedBox(height: 14),
+        AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.verified_outlined,
+                      color: AppColors.maroon, size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'Storage guarantee',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _GuaranteeRow(
+                icon: Icons.high_quality_outlined,
+                text: 'Originals stored without compression or resizing.',
+              ),
+              const SizedBox(height: 6),
+              _GuaranteeRow(
+                icon: Icons.lock_outline,
+                text: 'Albums are invite-only — no public access.',
+              ),
+              const SizedBox(height: 6),
+              _GuaranteeRow(
+                icon: Icons.download_outlined,
+                text: 'You can download the exact original file any time.',
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -581,5 +641,28 @@ class _ProfileTab extends ConsumerWidget {
 
     return '${parts.first.characters.first}${parts.last.characters.first}'
         .toUpperCase();
+  }
+}
+
+class _GuaranteeRow extends StatelessWidget {
+  const _GuaranteeRow({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 14, color: AppColors.maroon),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(text,
+              style: const TextStyle(
+                  color: AppColors.mutedInk, fontSize: 12, height: 1.4)),
+        ),
+      ],
+    );
   }
 }

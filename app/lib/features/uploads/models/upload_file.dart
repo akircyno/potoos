@@ -32,9 +32,9 @@ class UploadFile {
 class UploadProgressArgs {
   const UploadProgressArgs({
     required this.album,
-    required this.file,
+    required this.files,
   });
 
   final Album album;
-  final UploadFile file;
+  final List<UploadFile> files;
 }

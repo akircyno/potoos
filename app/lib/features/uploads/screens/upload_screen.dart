@@ -20,7 +20,7 @@ class UploadScreen extends ConsumerStatefulWidget {
 }
 
 class _UploadScreenState extends ConsumerState<UploadScreen> {
-  UploadFile? selectedFile;
+  List<UploadFile> selectedFiles = [];
   bool isPicking = false;
 
   @override
@@ -28,16 +28,17 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
     final routeAlbum = ModalRoute.of(context)?.settings.arguments;
     final album = routeAlbum is Album ? routeAlbum : null;
     final canUpload = album?.canUpload ?? false;
+    final count = selectedFiles.length;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Upload')),
       body: AppScreen(
         children: [
-          Text('Upload Original Photo',
+          Text('Upload Originals',
               style: Theme.of(context).textTheme.headlineLarge),
           const SizedBox(height: 8),
           const Text(
-            'Choose one photo and upload the original file. No compression, resizing, or conversion.',
+            'Choose one or more photos and upload the original files. No compression, resizing, or conversion.',
             style: TextStyle(color: AppColors.mutedInk, height: 1.45),
           ),
           if (album != null) ...[
@@ -68,42 +69,64 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
           ],
           const SizedBox(height: 22),
           AppButton(
-            label: isPicking ? 'Opening picker...' : 'Choose Photo',
+            label: isPicking ? 'Opening picker...' : 'Choose Photos',
             icon: Icons.photo_library_outlined,
             secondary: true,
-            onPressed: isPicking || !canUpload
-                ? null
-                : () => _pickFile(includeVideos: false),
+            onPressed: isPicking || !canUpload ? null : _pickFiles,
           ),
           const SizedBox(height: 10),
           AppButton(
-            label: 'Choose from Files',
-            icon: Icons.folder_open_outlined,
+            label: isPicking ? 'Opening picker...' : 'Choose Videos',
+            icon: Icons.video_library_outlined,
             secondary: true,
             onPressed: isPicking || !canUpload
                 ? null
-                : () => _pickFile(includeVideos: false),
+                : () => _pickFiles(includeVideos: true),
           ),
           const SizedBox(height: 20),
-          if (selectedFile == null)
+          if (selectedFiles.isEmpty)
             const AppEmptyState(
-              title: 'No file selected',
-              message:
-                  'Choose one original photo for this Sprint 1 upload test.',
+              title: 'No files selected',
+              message: 'Choose original photos or videos to upload.',
             )
-          else
-            SelectedFileCard(file: selectedFile!),
+          else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '$count file${count == 1 ? '' : 's'} selected',
+                    style: const TextStyle(
+                        color: AppColors.mutedInk,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => setState(() => selectedFiles = []),
+                  child: const Text('Clear',
+                      style: TextStyle(
+                          color: AppColors.maroon, fontSize: 12)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            for (final file in selectedFiles) ...[
+              SelectedFileCard(file: file),
+              const SizedBox(height: 8),
+            ],
+          ],
           const SizedBox(height: 14),
           const Text(
             'Files will be uploaded in original quality.',
-            style:
-                TextStyle(color: AppColors.maroon, fontWeight: FontWeight.w700),
+            style: TextStyle(color: AppColors.maroon, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 22),
           AppButton(
-            label: 'Upload Original File',
+            label: count > 1
+                ? 'Upload $count Originals'
+                : 'Upload Original File',
             icon: Icons.cloud_upload_outlined,
-            onPressed: selectedFile == null || !canUpload
+            onPressed: selectedFiles.isEmpty || !canUpload
                 ? null
                 : () {
                     if (album == null) {
@@ -113,12 +136,11 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                       );
                       return;
                     }
-
                     Navigator.pushNamed(
                       context,
                       AppRoutes.uploadProgress,
-                      arguments:
-                          UploadProgressArgs(album: album, file: selectedFile!),
+                      arguments: UploadProgressArgs(
+                          album: album, files: selectedFiles),
                     );
                   },
           ),
@@ -127,15 +149,14 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
     );
   }
 
-  Future<void> _pickFile({bool includeVideos = true}) async {
+  Future<void> _pickFiles({bool includeVideos = false}) async {
     setState(() => isPicking = true);
-
     try {
-      final file = await ref.read(fileServiceProvider).pickOriginalMediaFile(
-            includeVideos: includeVideos,
-          );
-      if (file != null && mounted) {
-        setState(() => selectedFile = file);
+      final files = await ref
+          .read(fileServiceProvider)
+          .pickOriginalMediaFiles(includeVideos: includeVideos);
+      if (files.isNotEmpty && mounted) {
+        setState(() => selectedFiles = files);
       }
     } catch (error) {
       if (mounted) {
@@ -144,9 +165,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => isPicking = false);
-      }
+      if (mounted) setState(() => isPicking = false);
     }
   }
 }
