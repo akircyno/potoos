@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
 import '../../../core/errors/app_error.dart';
-import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/pressable_scale.dart';
 import '../../../core/widgets/litrato_header.dart';
 import '../../../core/widgets/memory_stat_card.dart';
 import '../../../core/widgets/notification_item.dart';
@@ -494,152 +494,283 @@ class _ProfileTab extends ConsumerWidget {
     final initials = _initialsFor(displayName);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md, AppSpacing.lg, AppSpacing.md, AppSpacing.xxl),
       children: [
-        Text('Profile', style: Theme.of(context).textTheme.headlineLarge),
-        const SizedBox(height: 14),
-        AppCard(
+        // ── Avatar hero ───────────────────────────────────────────────────
+        Center(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: AppColors.maroon,
-                foregroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
-                child: Text(initials,
-                    style: const TextStyle(color: AppColors.white)),
-              ),
-              const SizedBox(height: 14),
-              Text(displayName, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 4),
-              Text(email, style: const TextStyle(color: AppColors.mutedInk)),
-              const SizedBox(height: 18),
-              AppButton(
-                label: 'Log out',
-                icon: Icons.logout,
-                secondary: true,
-                onPressed: () async {
-                  final confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Log out?'),
-                          content: const Text(
-                              'Your albums and originals stay safe. You can sign back in any time.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(ctx).pop(false),
-                              child: const Text('Cancel'),
-                            ),
-                            FilledButton(
-                              style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.maroon,
-                                foregroundColor: AppColors.white,
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.velvetMaroon,
+                  border: Border.all(
+                    color: AppColors.brightGold.withValues(alpha: 0.40),
+                    width: 2.5,
+                  ),
+                  boxShadow: AppShadows.float,
+                ),
+                child: ClipOval(
+                  child: hasAvatar
+                      ? Image.network(
+                          avatarUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Center(
+                            child: Text(
+                              initials,
+                              style: const TextStyle(
+                                fontFamily: AppTheme.headingFont,
+                                color: AppColors.pearlCream,
+                                fontSize: 28,
+                                fontWeight: FontWeight.w700,
                               ),
-                              onPressed: () => Navigator.of(ctx).pop(true),
-                              child: const Text('Log out'),
                             ),
-                          ],
+                          ),
+                        )
+                      : Center(
+                          child: Text(
+                            initials,
+                            style: const TextStyle(
+                              fontFamily: AppTheme.headingFont,
+                              color: AppColors.pearlCream,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
-                      ) ??
-                      false;
-
-                  if (!confirmed || !context.mounted) return;
-                  await ref.read(authControllerProvider.notifier).signOut();
-                  if (context.mounted) {
-                    Navigator.pushReplacementNamed(context, AppRoutes.login);
-                  }
-                },
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                displayName,
+                style: const TextStyle(
+                  fontFamily: AppTheme.headingFont,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.deepMaroon,
+                  letterSpacing: -0.3,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                email,
+                style: const TextStyle(
+                  color: AppColors.featherTaupe,
+                  fontSize: 13,
+                ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
         ),
-        const SizedBox(height: 14),
+
+        const SizedBox(height: AppSpacing.xl),
+
+        // ── Stat row ─────────────────────────────────────────────────────
         Row(
           children: [
             MemoryStatCard(
-              label: 'Files',
+              label: 'originals',
               value: '$fileCount',
-              icon: Icons.photo_library_outlined,
-            ),
-            const SizedBox(width: 10),
-            MemoryStatCard(
-              label: 'Albums',
-              value: '${albums.length}',
-              icon: Icons.auto_awesome_motion_outlined,
+              icon: Icons.photo_outlined,
               gold: true,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.sm),
             MemoryStatCard(
-              label: 'People',
+              label: 'albums',
+              value: '${albums.length}',
+              icon: Icons.auto_awesome_motion_outlined,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            MemoryStatCard(
+              label: 'people',
               value: '$memberCount',
               icon: Icons.group_outlined,
             ),
           ],
         ),
-        const SizedBox(height: 14),
-        AppCard(
-          child: Row(
-            children: [
-              const Icon(Icons.admin_panel_settings_outlined,
-                  color: AppColors.softGold, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Albums you manage',
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 3),
-                    Text(
-                      '$adminCount Admin space${adminCount == 1 ? '' : 's'}',
-                      style: const TextStyle(
-                          color: AppColors.mutedInk, fontSize: 12),
-                    ),
-                  ],
+
+        const SizedBox(height: AppSpacing.md),
+
+        // ── Admin spaces ────────────────────────────────────────────────
+        if (adminCount > 0) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md, vertical: 14),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+              border: Border.all(
+                  color: AppColors.velvetMaroon.withValues(alpha: 0.10),
+                  width: 0.8),
+              boxShadow: AppShadows.card,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.brightGold.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                  ),
+                  child: const Icon(Icons.admin_panel_settings_outlined,
+                      color: AppColors.brightGold, size: 18),
                 ),
-              ),
-            ],
+                const SizedBox(width: AppSpacing.sm + 2),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'You manage',
+                        style: TextStyle(
+                          fontFamily: AppTheme.headingFont,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.charcoalInk,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$adminCount Admin space${adminCount == 1 ? '' : 's'}',
+                        style: const TextStyle(
+                          color: AppColors.featherTaupe,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 14),
-        AppCard(
+          const SizedBox(height: AppSpacing.sm),
+        ],
+
+        // ── Storage guarantee ────────────────────────────────────────────
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+            border: Border.all(
+                color: AppColors.velvetMaroon.withValues(alpha: 0.10),
+                width: 0.8),
+            boxShadow: AppShadows.card,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Row(
                 children: [
                   Icon(Icons.verified_outlined,
-                      color: AppColors.maroon, size: 18),
+                      color: AppColors.velvetMaroon, size: 16),
                   SizedBox(width: 8),
                   Text(
-                    'Storage guarantee',
+                    'What Potoos promises you.',
                     style: TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 13),
+                      fontFamily: AppTheme.headingFont,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: AppColors.deepMaroon,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _GuaranteeRow(
                 icon: Icons.high_quality_outlined,
-                text: 'Originals stored without compression or resizing.',
+                text: 'Every file stored without compression.',
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               _GuaranteeRow(
                 icon: Icons.lock_outline,
-                text: 'Albums are invite-only — no public access.',
+                text: 'Albums are invite-only. Nothing is public.',
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               _GuaranteeRow(
                 icon: Icons.download_outlined,
-                text: 'You can download the exact original file any time.',
+                text: 'Download the exact original any time.',
               ),
             ],
+          ),
+        ),
+
+        const SizedBox(height: AppSpacing.xl),
+
+        // ── Log out ──────────────────────────────────────────────────────
+        PressableScale(
+          onTap: () async {
+            final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Log out?'),
+                    content: const Text(
+                        'Your albums and originals stay safe. Sign back in any time.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.velvetMaroon,
+                          foregroundColor: AppColors.white,
+                        ),
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        child: const Text('Log out'),
+                      ),
+                    ],
+                  ),
+                ) ??
+                false;
+
+            if (!confirmed || !context.mounted) return;
+            await ref.read(authControllerProvider.notifier).signOut();
+            if (context.mounted) {
+              Navigator.pushReplacementNamed(context, AppRoutes.login);
+            }
+          },
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          child: Container(
+            height: 52,
+            width: double.infinity,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+              border: Border.all(
+                color: AppColors.velvetMaroon.withValues(alpha: 0.28),
+                width: 1.5,
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.logout_outlined,
+                    color: AppColors.velvetMaroon, size: 17),
+                SizedBox(width: 8),
+                Text(
+                  'Log out',
+                  style: TextStyle(
+                    color: AppColors.velvetMaroon,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
     );
   }
-
 }
 
 String _initialsFor(String? name) {
