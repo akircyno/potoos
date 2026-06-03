@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
-import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_empty_state.dart';
-import '../../../core/widgets/app_progress_bar.dart';
 import '../../../core/widgets/app_screen.dart';
+import '../../../core/widgets/pressable_scale.dart';
 import '../../albums/models/media_file.dart';
 import '../../albums/widgets/gallery_tile.dart';
 import '../models/downloaded_file.dart';
 import '../providers/download_provider.dart';
-import '../widgets/download_button.dart';
 
 class FilePreviewScreen extends ConsumerWidget {
   const FilePreviewScreen({super.key});
@@ -26,7 +25,7 @@ class FilePreviewScreen extends ConsumerWidget {
           children: [
             AppEmptyState(
               title: 'File unavailable',
-              message: 'Open a completed file from an album first.',
+              message: 'Open a file from an album first.',
               actionLabel: 'Back to Albums',
               onAction: () =>
                   Navigator.pushReplacementNamed(context, AppRoutes.home),
@@ -38,277 +37,373 @@ class FilePreviewScreen extends ConsumerWidget {
 
     final file = routeFile;
     final downloadState = ref.watch(downloadControllerProvider);
+    final topPad = MediaQuery.of(context).padding.top;
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+    final screenH = MediaQuery.of(context).size.height;
 
-    const palettes = [
-      [Color(0xFFD4A0AC), Color(0xFF8C2840)],
-      [Color(0xFFA0BCD4), Color(0xFF2C5880)],
-      [Color(0xFFD4C4A0), Color(0xFF8C7A30)],
-      [Color(0xFFA0D4B0), Color(0xFF2C8040)],
-      [Color(0xFFC4A0D4), Color(0xFF6B2C80)],
-    ];
-    final gradient = palettes[file.id.hashCode.abs() % palettes.length];
-
-    return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 0,
-        backgroundColor: AppColors.deepMaroon,
-        automaticallyImplyLeading: false,
-      ),
-      body: AppScreen(
-        padding: EdgeInsets.zero,
-        children: [
-          // ── Maroon header ──────────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-            decoration: const BoxDecoration(
-              color: AppColors.deepMaroon,
-              borderRadius:
-                  BorderRadius.vertical(bottom: Radius.circular(28)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: AppColors.midnightBurgundy,
+        body: Stack(
+          children: [
+            // ── Content ─────────────────────────────────────────────────
+            Column(
               children: [
-                InkWell(
-                  onTap: () => Navigator.pop(context),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.white.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.chevron_left,
-                            color: AppColors.white, size: 18),
+                // Preview hero
+                _PreviewHero(
+                  file: file,
+                  heroHeight: (screenH * 0.50).clamp(260, 420),
+                  topPad: topPad,
+                ),
+
+                // Info panel — warmCream, rounded top corners
+                Expanded(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: AppColors.warmCream,
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(28)),
+                    ),
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpacing.md,
+                        AppSpacing.lg,
+                        AppSpacing.md,
+                        // clear the sticky download bar
+                        80 + bottomPad + AppSpacing.md,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Album',
-                        style: TextStyle(
-                            color: AppColors.white.withValues(alpha: 0.70),
-                            fontSize: 13),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Filename
+                          Text(
+                            file.originalFilename,
+                            style: const TextStyle(
+                              fontFamily: AppTheme.headingFont,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.deepMaroon,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${file.fileType.toUpperCase()} · ${file.fileSizeLabel} · ${file.uploadedLabel}',
+                            style: const TextStyle(
+                              color: AppColors.featherTaupe,
+                              fontSize: 13,
+                            ),
+                          ),
+
+                          const SizedBox(height: AppSpacing.lg),
+
+                          // Meta rows
+                          _MetaSection(file: file),
+
+                          // Quality check (after download)
+                          if (downloadState.downloadedFile != null) ...[
+                            const SizedBox(height: AppSpacing.md),
+                            _QualityResult(
+                                file: downloadState.downloadedFile!),
+                          ],
+
+                          // Error message
+                          if (downloadState.errorMessage != null) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.maroonFaint,
+                                borderRadius: BorderRadius.circular(
+                                    AppSpacing.radiusMd),
+                                border: Border.all(
+                                    color: AppColors.velvetMaroon
+                                        .withValues(alpha: 0.20)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.info_outline,
+                                      color: AppColors.velvetMaroon,
+                                      size: 16),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      downloadState.errorMessage!,
+                                      style: const TextStyle(
+                                        color: AppColors.velvetMaroon,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  file.originalFilename,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineLarge
-                      ?.copyWith(color: AppColors.warmCream),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${file.fileType} · ${file.fileSizeLabel} · ${file.uploadedLabel}',
-                  style: TextStyle(
-                      color: AppColors.warmCream.withValues(alpha: 0.60),
-                      fontSize: 11),
                 ),
               ],
             ),
-          ),
 
-          // ── Preview area ───────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
-                height: 200,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: gradient,
-                        ),
-                      ),
-                    ),
-                    Center(
-                      child: Icon(
-                        fileTypeIcon(file),
-                        color: AppColors.white.withValues(alpha: 0.45),
-                        size: 64,
-                      ),
-                    ),
-                    Positioned(
-                      top: 10,
-                      left: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: file.isVideo
-                              ? Colors.black.withValues(alpha: 0.55)
-                              : AppColors.maroon.withValues(alpha: 0.75),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (file.isVideo) ...[
-                              const Icon(Icons.play_arrow,
-                                  size: 10, color: AppColors.white),
-                              const SizedBox(width: 3),
-                            ],
-                            Text(
-                              fileFormatLabel(file),
-                              style: const TextStyle(
-                                  color: AppColors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.softGold.withValues(alpha: 0.90),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          'Original Quality',
-                          style: TextStyle(
-                            color: AppColors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: 12,
-                      right: 12,
-                      bottom: 10,
-                      child: Text(
-                        'Uploaded by ${file.uploaderName}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          shadows: [
-                            Shadow(color: Colors.black45, blurRadius: 6)
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+            // ── Floating back button ─────────────────────────────────────
+            Positioned(
+              top: topPad + 12,
+              left: 16,
+              child: PressableScale(
+                onTap: () => Navigator.pop(context),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: AppColors.white.withValues(alpha: 0.15),
+                        width: 0.8),
+                  ),
+                  child: const Icon(Icons.chevron_left,
+                      color: AppColors.white, size: 20),
+                ),
+              ),
+            ),
+
+            // ── Sticky download bar ───────────────────────────────────────
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _DownloadBar(
+                state: downloadState,
+                bottomPad: bottomPad,
+                onDownload: () => ref
+                    .read(downloadControllerProvider.notifier)
+                    .download(file),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Preview hero ──────────────────────────────────────────────────────────────
+
+class _PreviewHero extends StatelessWidget {
+  const _PreviewHero({
+    required this.file,
+    required this.heroHeight,
+    required this.topPad,
+  });
+
+  final MediaFile file;
+  final double heroHeight;
+  final double topPad;
+
+  static const _palettes = [
+    [Color(0xFFD4A0AC), Color(0xFF8C2840)],
+    [Color(0xFFA0BCD4), Color(0xFF2C5880)],
+    [Color(0xFFD4C4A0), Color(0xFF8C7A30)],
+    [Color(0xFFA0D4B0), Color(0xFF2C8040)],
+    [Color(0xFFC4A0D4), Color(0xFF6B2C80)],
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final gradient = _palettes[file.id.hashCode.abs() % _palettes.length];
+
+    return SizedBox(
+      height: heroHeight,
+      width: double.infinity,
+      child: Stack(
+        children: [
+          // Gradient background
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: gradient,
                 ),
               ),
             ),
           ),
 
-          // ── Metadata card ──────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: AppCard(
-              padding: const EdgeInsets.all(14),
-              child: Column(
+          // Subtle grid paper texture
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.06,
+              child: GridPaper(
+                color: AppColors.white,
+                divisions: 1,
+                interval: 20,
+                subdivisions: 1,
+              ),
+            ),
+          ),
+
+          // Centered file icon
+          Center(
+            child: Icon(
+              fileTypeIcon(file),
+              color: AppColors.white.withValues(alpha: 0.55),
+              size: 72,
+            ),
+          ),
+
+          // Format badge — top-left (below back button)
+          Positioned(
+            top: topPad + 56,
+            left: 16,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                color: file.isVideo
+                    ? Colors.black.withValues(alpha: 0.55)
+                    : AppColors.velvetMaroon.withValues(alpha: 0.80),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _MetaRow(
-                      icon: Icons.insert_drive_file_outlined,
-                      label: 'File',
-                      value: file.mimeType),
-                  const SizedBox(height: 8),
-                  _MetaRow(
-                      icon: Icons.storage_outlined,
-                      label: 'Size',
-                      value: file.fileSizeLabel),
-                  const SizedBox(height: 8),
-                  _MetaRow(
-                      icon: Icons.person_outline,
-                      label: 'Uploader',
-                      value: file.uploaderName),
-                  const SizedBox(height: 8),
-                  _MetaRow(
-                      icon: Icons.schedule_outlined,
-                      label: 'Uploaded',
-                      value: file.uploadedLabel),
+                  if (file.isVideo) ...[
+                    const Icon(Icons.play_arrow,
+                        size: 10, color: AppColors.white),
+                    const SizedBox(width: 3),
+                  ],
+                  Text(
+                    fileFormatLabel(file),
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
 
-          // ── Download section ───────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: AppCard(
-              child: AppProgressBar(
-                value: downloadState.progress,
-                label: downloadState.isDownloading
-                    ? 'Downloading original...'
-                    : downloadState.downloadedFile != null
-                        ? 'Download complete'
-                        : 'Download progress',
+          // Original quality badge — top-right
+          Positioned(
+            top: topPad + 56,
+            right: 16,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.brightGold.withValues(alpha: 0.88),
+                borderRadius: BorderRadius.circular(999),
               ),
-            ),
-          ),
-          if (downloadState.errorMessage != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-              child: Text(
-                downloadState.errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: AppColors.maroon, fontWeight: FontWeight.w700),
-              ),
-            ),
-          if (downloadState.downloadedFile != null) ...[
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _QualityCheck(file: downloadState.downloadedFile!),
-            ),
-          ],
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: DownloadButton(
-              isDownloading: downloadState.isDownloading,
-              onPressed: () =>
-                  ref.read(downloadControllerProvider.notifier).download(file),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.verified_outlined,
-                    color: AppColors.maroon, size: 13),
-                SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    'Original file — no compression, no resizing.',
-                    textAlign: TextAlign.center,
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.verified_outlined,
+                      size: 10, color: AppColors.deepMaroon),
+                  SizedBox(width: 4),
+                  Text(
+                    'Original',
                     style: TextStyle(
-                        color: AppColors.maroon,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500),
+                      color: AppColors.deepMaroon,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 24),
+
+          // Bottom scrim + uploader name
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.50),
+                  ],
+                ),
+              ),
+              child: Text(
+                'by ${file.uploaderName}',
+                style: const TextStyle(
+                  color: AppColors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  shadows: [
+                    Shadow(color: Colors.black45, blurRadius: 6)
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Meta section ──────────────────────────────────────────────────────────────
+
+class _MetaSection extends StatelessWidget {
+  const _MetaSection({required this.file});
+
+  final MediaFile file;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        border: Border.all(
+            color: AppColors.velvetMaroon.withValues(alpha: 0.08),
+            width: 0.8),
+        boxShadow: AppShadows.card,
+      ),
+      child: Column(
+        children: [
+          _MetaRow(
+            icon: Icons.insert_drive_file_outlined,
+            label: 'Format',
+            value: file.mimeType,
+            isFirst: true,
+          ),
+          _Divider(),
+          _MetaRow(
+            icon: Icons.storage_outlined,
+            label: 'Size',
+            value: file.fileSizeLabel,
+          ),
+          _Divider(),
+          _MetaRow(
+            icon: Icons.person_outline,
+            label: 'Uploader',
+            value: file.uploaderName,
+          ),
+          _Divider(),
+          _MetaRow(
+            icon: Icons.schedule_outlined,
+            label: 'Uploaded',
+            value: file.uploadedLabel,
+            isLast: true,
+          ),
         ],
       ),
     );
@@ -316,97 +411,294 @@ class FilePreviewScreen extends ConsumerWidget {
 }
 
 class _MetaRow extends StatelessWidget {
-  const _MetaRow(
-      {required this.icon, required this.label, required this.value});
+  const _MetaRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.isFirst = false,
+    this.isLast = false,
+  });
 
   final IconData icon;
   final String label;
   final String value;
+  final bool isFirst;
+  final bool isLast;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: AppColors.mutedInk),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 64,
-          child: Text(label,
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        isFirst ? 14 : 10,
+        AppSpacing.md,
+        isLast ? 14 : 10,
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 15, color: AppColors.featherTaupe),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 68,
+            child: Text(
+              label,
               style: const TextStyle(
-                  color: AppColors.mutedInk,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500)),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12),
+                color: AppColors.featherTaupe,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
-        ),
-      ],
+          Expanded(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.charcoalInk,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _QualityCheck extends StatelessWidget {
-  const _QualityCheck({required this.file});
+class _Divider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 0.6,
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      color: AppColors.creamLine,
+    );
+  }
+}
+
+// ── Quality result ────────────────────────────────────────────────────────────
+
+class _QualityResult extends StatelessWidget {
+  const _QualityResult({required this.file});
 
   final DownloadedFile file;
 
+  static String _fmt(int bytes) {
+    if (bytes <= 0) return '?';
+    final mb = bytes / (1024 * 1024);
+    return mb < 1
+        ? '${(bytes / 1024).toStringAsFixed(1)} KB'
+        : '${mb.toStringAsFixed(1)} MB';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final matches = file.sizeMatchesExpected;
-    final color = matches ? const Color(0xFF3B6D11) : AppColors.maroon;
-    final title = matches ? 'Original size verified' : 'Size mismatch detected';
-    final sizeLine =
-        '${_formatBytes(file.sizeBytes)} downloaded / ${_formatBytes(file.expectedSizeBytes)} expected';
+    final ok = file.sizeMatchesExpected;
+    final iconColor = ok ? const Color(0xFF4A8C2A) : AppColors.velvetMaroon;
+    final bgColor = ok
+        ? AppColors.brightGold.withValues(alpha: 0.08)
+        : AppColors.maroonFaint;
+    final borderColor = ok
+        ? AppColors.brightGold.withValues(alpha: 0.22)
+        : AppColors.velvetMaroon.withValues(alpha: 0.18);
 
-    return AppCard(
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        border: Border.all(color: borderColor, width: 0.8),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(
-                matches ? Icons.verified_outlined : Icons.warning_amber,
-                color: color,
-                size: 18,
+                ok ? Icons.verified_outlined : Icons.warning_amber_outlined,
+                color: iconColor,
+                size: 16,
               ),
               const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
+              Text(
+                ok ? 'Original size verified.' : 'Size mismatch detected.',
+                style: TextStyle(
+                  color: iconColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          Text(sizeLine,
-              style:
-                  const TextStyle(color: AppColors.mutedInk, fontSize: 12)),
-          const SizedBox(height: 4),
           Text(
-            'Saved to ${file.savedPath}',
+            '${_fmt(file.sizeBytes)} downloaded · ${_fmt(file.expectedSizeBytes)} expected',
+            style: const TextStyle(
+              color: AppColors.featherTaupe,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            file.savedPath,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: AppColors.mutedInk, fontSize: 12),
+            style: const TextStyle(
+              color: AppColors.featherTaupe,
+              fontSize: 11,
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  static String _formatBytes(int bytes) {
-    if (bytes <= 0) return 'Unknown size';
-    final mb = bytes / (1024 * 1024);
-    if (mb < 1) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    return '${mb.toStringAsFixed(1)} MB';
+// ── Download bar ──────────────────────────────────────────────────────────────
+
+class _DownloadBar extends StatelessWidget {
+  const _DownloadBar({
+    required this.state,
+    required this.bottomPad,
+    required this.onDownload,
+  });
+
+  final DownloadState state;
+  final double bottomPad;
+  final VoidCallback onDownload;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDownloading = state.isDownloading;
+    final isDone = state.downloadedFile != null;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        border: const Border(
+            top: BorderSide(color: AppColors.creamLine, width: 0.8)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.midnightBurgundy.withValues(alpha: 0.10),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.fromLTRB(
+          AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.sm + bottomPad),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Progress bar (visible while downloading)
+          if (isDownloading) ...[
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: state.progress),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              builder: (context, v, _) {
+                return Container(
+                  height: 4,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.creamLine,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: FractionallySizedBox(
+                    widthFactor: v.clamp(0.0, 1.0),
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.brightGold,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+
+          // Button
+          PressableScale(
+            onTap: (isDownloading || isDone) ? null : onDownload,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+            child: Container(
+              height: 54,
+              width: double.infinity,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isDone
+                    ? AppColors.warmCream
+                    : isDownloading
+                        ? AppColors.creamLine
+                        : AppColors.brightGold,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                border: isDone
+                    ? Border.all(
+                        color: AppColors.creamLine, width: 1.5)
+                    : null,
+                boxShadow: (!isDownloading && !isDone)
+                    ? AppShadows.goldButton
+                    : null,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isDone
+                        ? Icons.check_circle_outline
+                        : isDownloading
+                            ? Icons.hourglass_top_rounded
+                            : Icons.download_outlined,
+                    color: isDone
+                        ? AppColors.featherTaupe
+                        : isDownloading
+                            ? AppColors.featherTaupe
+                            : AppColors.deepMaroon,
+                    size: 18,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    isDone
+                        ? 'Downloaded'
+                        : isDownloading
+                            ? 'Downloading original...'
+                            : 'Download Original',
+                    style: TextStyle(
+                      color: isDone
+                          ? AppColors.featherTaupe
+                          : isDownloading
+                              ? AppColors.featherTaupe
+                              : AppColors.deepMaroon,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Quality promise
+          if (!isDone && !isDownloading) ...[
+            const SizedBox(height: 6),
+            const Text(
+              'Full original quality — nothing compressed.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.featherTaupe,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
