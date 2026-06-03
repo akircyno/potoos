@@ -15,6 +15,7 @@ dependencies:
     sdk: flutter
   flutter_dotenv: ^6.0.1
   flutter_riverpod: ^3.3.1
+  flutter_svg: ^2.0.10+1
   supabase_flutter: ^2.12.4
 
 dev_dependencies:
@@ -28,6 +29,7 @@ flutter:
     - env.properties
     - assets/branding/
     - assets/logo/
+    - assets/logo/google_g.svg
     - assets/mascot/
   fonts:
     - family: GeneralSans

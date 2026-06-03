@@ -29,6 +29,94 @@ class AppColors {
   static const white = Color(0xFFFFFFFF);
 }
 
+class AppSpacing {
+  const AppSpacing._();
+
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 16;
+  static const double lg = 24;
+  static const double xl = 40;
+  static const double xxl = 56;
+
+  static const double radiusSm = 8;
+  static const double radiusMd = 12;
+  static const double radiusLg = 18;
+  static const double radiusXl = 24;
+  static const double radiusPill = 999;
+}
+
+class AppShadows {
+  const AppShadows._();
+
+  static List<BoxShadow> get card => [
+        BoxShadow(
+          color: AppColors.velvetMaroon.withValues(alpha: 0.07),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
+      ];
+
+  static List<BoxShadow> get float => [
+        BoxShadow(
+          color: AppColors.midnightBurgundy.withValues(alpha: 0.18),
+          blurRadius: 32,
+          offset: const Offset(0, 8),
+        ),
+        BoxShadow(
+          color: AppColors.velvetMaroon.withValues(alpha: 0.08),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ];
+
+  static List<BoxShadow> get header => [
+        BoxShadow(
+          color: AppColors.midnightBurgundy.withValues(alpha: 0.28),
+          blurRadius: 24,
+          offset: const Offset(0, 12),
+        ),
+      ];
+
+  static List<BoxShadow> get primaryButton => [
+        BoxShadow(
+          color: AppColors.velvetMaroon.withValues(alpha: 0.28),
+          blurRadius: 20,
+          offset: const Offset(0, 4),
+        ),
+      ];
+
+  static List<BoxShadow> get goldButton => [
+        BoxShadow(
+          color: AppColors.brightGold.withValues(alpha: 0.30),
+          blurRadius: 20,
+          offset: const Offset(0, 4),
+        ),
+      ];
+}
+
+class AppGradients {
+  const AppGradients._();
+
+  static const LinearGradient header = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [AppColors.midnightBurgundy, AppColors.deepMaroon],
+  );
+
+  static const LinearGradient splash = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [AppColors.midnightBurgundy, AppColors.deepMaroon],
+  );
+
+  static const LinearGradient darkCard = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [AppColors.deepMaroon, AppColors.velvetMaroon],
+  );
+}
+
 class AppTheme {
   const AppTheme._();
 
@@ -61,6 +149,7 @@ class AppTheme {
           color: AppColors.deepMaroon,
           fontSize: 32,
           fontWeight: FontWeight.w600,
+          letterSpacing: -0.5,
         ),
         headlineLarge: const TextStyle(
           fontFamily: headingFont,
@@ -78,22 +167,24 @@ class AppTheme {
           fontFamily: headingFont,
           color: AppColors.deepMaroon,
           fontSize: 17,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
         ),
         bodyMedium: bodyTheme.bodyMedium?.copyWith(
           color: AppColors.ink,
           fontSize: 15,
+          height: 1.55,
         ),
         labelLarge: bodyTheme.labelLarge?.copyWith(
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.1,
         ),
       ),
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.warmCream,
         foregroundColor: AppColors.deepMaroon,
         centerTitle: false,
         elevation: 0,
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           fontFamily: headingFont,
           color: AppColors.deepMaroon,
           fontSize: 24,
@@ -102,39 +193,56 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.maroon,
-          foregroundColor: AppColors.white,
+          backgroundColor: AppColors.velvetMaroon,
+          foregroundColor: AppColors.pearlCream,
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg)),
           textStyle: const TextStyle(
             fontFamily: bodyFont,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
           ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.maroon,
-          side: const BorderSide(color: AppColors.creamLine),
-          minimumSize: const Size.fromHeight(48),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          foregroundColor: AppColors.charcoalInk,
+          side: const BorderSide(color: AppColors.creamLine, width: 1.5),
+          minimumSize: const Size.fromHeight(52),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg)),
+          textStyle: const TextStyle(
+            fontFamily: bodyFont,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.white,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
           borderSide: const BorderSide(color: AppColors.creamLine),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
           borderSide: const BorderSide(color: AppColors.creamLine),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.softGold, width: 1.4),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          borderSide:
+              const BorderSide(color: AppColors.brightGold, width: 1.5),
         ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      ),
+      dividerColor: AppColors.creamLine,
+      dividerTheme: const DividerThemeData(
+        color: AppColors.creamLine,
+        thickness: 0.6,
+        space: 0,
       ),
     );
   }

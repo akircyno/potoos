@@ -1,0 +1,1898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Potoos — Design System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --midnight-burgundy: #21070D;
+      --deep-maroon: #4A1220;
+      --velvet-maroon: #6B1C2E;
+      --garnet: #8A2438;
+      --soft-gold: #C4973A;
+      --bright-gold: #F1C85B;
+      --warm-cream: #FAF6F0;
+      --pearl-cream: #FFF8E8;
+      --feather-taupe: #B9A58A;
+      --charcoal-ink: #24191B;
+      --cream-line: #E9DED0;
+      --maroon-faint: #F7EDEF;
+      --white: #FFFFFF;
+      --font-display: 'DM Sans', system-ui, sans-serif;
+      --font-body: 'Inter', system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--warm-cream);
+      color: var(--charcoal-ink);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(250, 246, 240, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--cream-line);
+      padding: 0 40px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    nav .wordmark {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.3px;
+      margin-right: auto;
+    }
+    nav .wordmark span { color: var(--bright-gold); }
+
+    nav a {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--feather-taupe);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    nav a:hover { color: var(--velvet-maroon); }
+
+    /* ─── HERO ─── */
+    .hero {
+      background: linear-gradient(160deg, var(--midnight-burgundy) 0%, var(--deep-maroon) 100%);
+      padding: 80px 40px 72px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 50% 100%, rgba(241,200,91,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-mascot {
+      font-size: 72px;
+      margin-bottom: 24px;
+      filter: drop-shadow(0 0 32px rgba(241,200,91,0.3));
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: var(--pearl-cream);
+      margin-bottom: 12px;
+    }
+    .hero h1 span { color: var(--bright-gold); }
+
+    .hero p {
+      font-size: 17px;
+      color: rgba(185,165,138,0.85);
+      max-width: 460px;
+      margin: 0 auto 32px;
+      font-weight: 400;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(241,200,91,0.12);
+      border: 1px solid rgba(241,200,91,0.28);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: var(--bright-gold);
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    /* ─── LAYOUT ─── */
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    section {
+      padding: 64px 0;
+      border-bottom: 1px solid var(--cream-line);
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--feather-taupe);
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--deep-maroon);
+      letter-spacing: -0.4px;
+      margin-bottom: 8px;
+    }
+
+    .section-desc {
+      font-size: 14px;
+      color: var(--feather-taupe);
+      margin-bottom: 40px;
+      max-width: 520px;
+    }
+
+    /* ─── COLORS ─── */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .color-swatch {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 2px 8px rgba(74,18,32,0.06);
+    }
+
+    .swatch-block {
+      height: 80px;
+    }
+
+    .swatch-info {
+      background: white;
+      padding: 10px 12px;
+    }
+
+    .swatch-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--charcoal-ink);
+      margin-bottom: 2px;
+    }
+
+    .swatch-hex {
+      font-size: 10px;
+      color: var(--feather-taupe);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    .swatch-use {
+      font-size: 9.5px;
+      color: var(--feather-taupe);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    /* ─── TYPOGRAPHY ─── */
+    .type-row {
+      display: flex;
+      align-items: baseline;
+      gap: 24px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--cream-line);
+    }
+
+    .type-row:first-child { padding-top: 0; }
+    .type-row:last-child { border-bottom: none; }
+
+    .type-meta {
+      width: 160px;
+      flex-shrink: 0;
+    }
+
+    .type-role {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--feather-taupe);
+      letter-spacing: 0.5px;
+    }
+
+    .type-spec {
+      font-size: 10px;
+      color: #C0A89A;
+      margin-top: 2px;
+      font-family: monospace;
+    }
+
+    /* ─── SPACING ─── */
+    .spacing-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .spacing-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .spacing-token {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--feather-taupe);
+      width: 80px;
+      font-family: monospace;
+    }
+
+    .spacing-bar-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .spacing-bar {
+      height: 20px;
+      background: var(--velvet-maroon);
+      border-radius: 4px;
+      opacity: 0.8;
+    }
+
+    .spacing-val {
+      font-size: 12px;
+      color: var(--charcoal-ink);
+      font-weight: 500;
+    }
+
+    .spacing-use {
+      font-size: 11px;
+      color: var(--feather-taupe);
+    }
+
+    /* ─── BUTTONS ─── */
+    .component-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 32px;
+    }
+
+    .component-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .component-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--feather-taupe);
+      margin-bottom: 4px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 52px;
+      padding: 0 28px;
+      border-radius: 18px;
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      transition: transform 0.12s ease-out, opacity 0.12s;
+      min-width: 160px;
+      letter-spacing: -0.1px;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--velvet-maroon);
+      color: var(--pearl-cream);
+      box-shadow: 0 4px 20px rgba(107,28,46,0.28), 0 1px 4px rgba(107,28,46,0.12);
+    }
+    .btn-primary:hover { background: var(--garnet); }
+
+    .btn-gold {
+      background: var(--bright-gold);
+      color: var(--deep-maroon);
+      box-shadow: 0 4px 20px rgba(241,200,91,0.30), 0 1px 4px rgba(241,200,91,0.16);
+    }
+    .btn-gold:hover { background: #f5d46d; }
+
+    .btn-ghost {
+      background: var(--white);
+      color: var(--charcoal-ink);
+      border: 1.5px solid var(--cream-line);
+      box-shadow: 0 1px 4px rgba(74,18,32,0.05);
+    }
+    .btn-ghost:hover { border-color: var(--feather-taupe); }
+
+    .btn-disabled {
+      background: var(--cream-line);
+      color: var(--feather-taupe);
+      cursor: not-allowed;
+    }
+
+    .btn-loading {
+      background: var(--velvet-maroon);
+      color: var(--pearl-cream);
+      opacity: 0.75;
+      cursor: wait;
+      gap: 10px;
+    }
+
+    .btn-sm {
+      height: 40px;
+      padding: 0 18px;
+      font-size: 13px;
+      border-radius: 12px;
+      min-width: 0;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,248,232,0.3);
+      border-top-color: var(--pearl-cream);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Icon button */
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.12s ease-out;
+      font-size: 18px;
+    }
+    .btn-icon:active { transform: scale(0.95); }
+    .btn-icon-primary { background: var(--velvet-maroon); color: var(--pearl-cream); }
+    .btn-icon-ghost { background: var(--white); border: 1.5px solid var(--cream-line); color: var(--charcoal-ink); }
+
+    /* ─── CARDS ─── */
+    .card {
+      background: var(--white);
+      border-radius: 20px;
+      border: 0.8px solid rgba(107,28,46,0.10);
+      box-shadow: 0 8px 24px rgba(107,28,46,0.07);
+      padding: 20px;
+    }
+
+    .card-warm {
+      background: var(--warm-cream);
+      border-radius: 20px;
+      border: 0.8px solid var(--cream-line);
+      box-shadow: 0 4px 16px rgba(107,28,46,0.05);
+      padding: 20px;
+    }
+
+    .card-dark {
+      background: linear-gradient(135deg, var(--deep-maroon) 0%, var(--velvet-maroon) 100%);
+      border-radius: 20px;
+      border: 0.8px solid rgba(255,248,232,0.08);
+      box-shadow: 0 12px 40px rgba(33,7,13,0.30);
+      padding: 20px;
+      color: var(--pearl-cream);
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .card-body {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--feather-taupe);
+    }
+
+    .card-dark .card-body { color: rgba(185,165,138,0.75); }
+    .card-dark .card-title { color: var(--pearl-cream); }
+
+    /* ─── INPUTS ─── */
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--charcoal-ink);
+    }
+
+    .input {
+      height: 48px;
+      padding: 0 14px;
+      background: var(--white);
+      border: 1.5px solid var(--cream-line);
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: var(--font-body);
+      color: var(--charcoal-ink);
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    .input:focus { border-color: var(--bright-gold); box-shadow: 0 0 0 3px rgba(241,200,91,0.15); }
+    .input.error { border-color: #E05C5C; }
+    .input.success { border-color: #4CAF7D; }
+    .input-hint { font-size: 11.5px; color: var(--feather-taupe); }
+    .input-error { font-size: 11.5px; color: #C94444; }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    /* ─── CHIPS ─── */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      height: 26px;
+      padding: 0 11px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+
+    .chip-admin {
+      background: var(--maroon-faint);
+      color: var(--velvet-maroon);
+      border-color: rgba(107,28,46,0.18);
+    }
+    .chip-contributor {
+      background: rgba(241,200,91,0.12);
+      color: #A07A20;
+      border-color: rgba(241,200,91,0.32);
+    }
+    .chip-viewer {
+      background: rgba(185,165,138,0.10);
+      color: var(--feather-taupe);
+      border-color: rgba(185,165,138,0.25);
+    }
+
+    /* ─── STAT CARDS ─── */
+    .stat-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .stat-card {
+      flex: 1;
+      background: var(--warm-cream);
+      border-radius: 18px;
+      padding: 12px;
+      border: 0.6px solid rgba(107,28,46,0.10);
+      height: 86px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .stat-card.gold {
+      border-color: rgba(241,200,91,0.28);
+    }
+
+    .stat-icon { font-size: 16px; }
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--charcoal-ink);
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 10.5px;
+      color: var(--feather-taupe);
+    }
+
+    /* ─── ALBUM CARD ─── */
+    .album-card {
+      background: white;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 0.8px solid rgba(107,28,46,0.10);
+      box-shadow: 0 8px 24px rgba(107,28,46,0.07);
+      cursor: pointer;
+      transition: transform 0.15s ease-out, box-shadow 0.15s;
+      max-width: 300px;
+    }
+    .album-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 36px rgba(107,28,46,0.13);
+    }
+
+    .album-cover {
+      height: 116px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .album-cover-grid {
+      position: absolute;
+      inset: 0;
+      opacity: 0.08;
+      background-image:
+        linear-gradient(rgba(255,255,255,1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+
+    .album-role-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.20);
+      border: 0.5px solid rgba(255,255,255,0.30);
+      border-radius: 20px;
+      padding: 2px 9px;
+      font-size: 10px;
+      font-weight: 500;
+      color: white;
+      letter-spacing: 0.5px;
+    }
+
+    .album-name {
+      position: absolute;
+      bottom: 14px;
+      left: 16px;
+      right: 16px;
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+      color: white;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.26);
+    }
+
+    .album-meta {
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--feather-taupe);
+    }
+
+    .album-meta-dot {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--cream-line);
+      margin: 0 6px;
+    }
+
+    /* ─── NOTIFICATION ─── */
+    .notif {
+      background: white;
+      border-radius: 10px;
+      border: 1px solid var(--cream-line);
+      padding: 14px;
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .notif.unread {
+      border-color: var(--bright-gold);
+    }
+
+    .notif-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .notif-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--charcoal-ink);
+      margin-bottom: 3px;
+    }
+
+    .notif-msg {
+      font-size: 13px;
+      color: var(--feather-taupe);
+      line-height: 1.4;
+    }
+
+    .notif-time {
+      font-size: 11px;
+      color: var(--feather-taupe);
+      margin-top: 5px;
+    }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid var(--cream-line);
+      padding: 40px 32px;
+      text-align: center;
+      max-width: 360px;
+    }
+
+    .empty-mascot { font-size: 64px; margin-bottom: 16px; }
+    .empty-title {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--deep-maroon);
+      margin-bottom: 8px;
+    }
+    .empty-msg {
+      font-size: 13px;
+      color: var(--feather-taupe);
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    /* ─── HEADER ─── */
+    .app-header {
+      background: linear-gradient(to bottom, var(--midnight-burgundy), var(--deep-maroon));
+      padding: 20px 20px 24px;
+      border-radius: 0 0 28px 28px;
+    }
+
+    .app-header-greeting {
+      font-size: 12px;
+      color: rgba(185,165,138,0.70);
+      margin-bottom: 4px;
+    }
+
+    .app-header-name {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--pearl-cream);
+      letter-spacing: -0.3px;
+    }
+
+    .app-header-sub {
+      font-size: 12px;
+      color: rgba(185,165,138,0.55);
+      margin-top: 2px;
+    }
+
+    .app-header-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(241,200,91,0.18);
+      border: 1.5px solid rgba(241,200,91,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--bright-gold);
+      flex-shrink: 0;
+    }
+
+    .app-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    /* ─── PROMISE CARD ─── */
+    .promise-card {
+      background: linear-gradient(135deg, var(--deep-maroon) 0%, var(--velvet-maroon) 100%);
+      border-radius: 22px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 12px 36px rgba(33,7,13,0.22);
+    }
+
+    .promise-icon-wrap {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: rgba(241,200,91,0.14);
+      border: 0.8px solid rgba(241,200,91,0.32);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .promise-title {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--warm-cream);
+      margin-bottom: 4px;
+    }
+
+    .promise-body {
+      font-size: 12px;
+      color: rgba(250,246,240,0.62);
+      line-height: 1.4;
+    }
+
+    /* ─── ACTION STRIP ─── */
+    .action-strip {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-pill {
+      flex: 1;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.12s;
+      border: none;
+    }
+    .action-pill:active { transform: scale(0.96); }
+
+    .action-pill-primary {
+      background: var(--velvet-maroon);
+      color: var(--pearl-cream);
+    }
+
+    .action-pill-gold {
+      background: rgba(241,200,91,0.15);
+      color: var(--soft-gold);
+      border: 0.8px solid rgba(241,200,91,0.28);
+    }
+
+    .action-pill-muted {
+      background: rgba(107,28,46,0.08);
+      color: var(--velvet-maroon);
+    }
+
+    /* ─── MEMBER ROW ─── */
+    .member-row {
+      background: white;
+      border-radius: 14px;
+      border: 0.8px solid rgba(107,28,46,0.08);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 8px rgba(107,28,46,0.04);
+    }
+
+    .member-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--maroon-faint);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--velvet-maroon);
+      flex-shrink: 0;
+    }
+
+    .member-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--charcoal-ink);
+    }
+
+    .member-email {
+      font-size: 11px;
+      color: var(--feather-taupe);
+    }
+
+    /* ─── PROGRESS BAR ─── */
+    .progress-wrap {
+      background: var(--cream-line);
+      border-radius: 999px;
+      height: 6px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--velvet-maroon), var(--bright-gold));
+      border-radius: 999px;
+      transition: width 0.6s ease-out;
+    }
+
+    /* ─── BOTTOM NAV ─── */
+    .bottom-nav {
+      background: var(--warm-cream);
+      border-top: 1px solid var(--cream-line);
+      padding: 8px 0 4px;
+      display: flex;
+      justify-content: space-around;
+      border-radius: 0 0 20px 20px;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 4px 16px;
+      cursor: pointer;
+    }
+
+    .nav-icon { font-size: 22px; }
+    .nav-label { font-size: 10px; font-weight: 500; }
+
+    .nav-item.active .nav-icon,
+    .nav-item.active .nav-label { color: var(--velvet-maroon); }
+    .nav-item:not(.active) .nav-icon,
+    .nav-item:not(.active) .nav-label { color: var(--feather-taupe); }
+
+    .nav-item.active { position: relative; }
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 32px;
+      height: 3px;
+      background: var(--velvet-maroon);
+      border-radius: 0 0 3px 3px;
+      opacity: 0.08;
+    }
+
+    /* ─── PHONE FRAME ─── */
+    .phone-frame {
+      background: var(--warm-cream);
+      border-radius: 50px;
+      border: 9px solid #100508;
+      box-shadow:
+        0 40px 80px rgba(33,7,13,0.35),
+        0 0 0 1px rgba(255,255,255,0.05),
+        inset 0 0 0 1px rgba(255,255,255,0.04);
+      overflow: hidden;
+      width: 320px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-status-bar {
+      padding: 12px 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .phone-time {
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      font-family: var(--font-body);
+      letter-spacing: -0.2px;
+    }
+
+    .phone-time-dark {
+      color: var(--charcoal-ink);
+    }
+
+    .phone-dynamic-island {
+      width: 108px;
+      height: 30px;
+      background: #050103;
+      border-radius: 999px;
+    }
+
+    .phone-dynamic-island-light {
+      background: #0A0408;
+    }
+
+    .phone-status-icons {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .phone-status-icons svg { display: block; }
+
+    .phone-home-indicator {
+      padding: 6px 0 12px;
+      display: flex;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .phone-home-bar {
+      width: 112px;
+      height: 4px;
+      background: rgba(0,0,0,0.16);
+      border-radius: 2px;
+    }
+
+    .phone-home-bar-light {
+      background: rgba(255,255,255,0.28);
+    }
+
+    .bottom-nav {
+      position: relative;
+      padding-bottom: 20px !important;
+    }
+    .bottom-nav::after {
+      content: '';
+      position: absolute;
+      bottom: 7px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 112px;
+      height: 4px;
+      background: rgba(0,0,0,0.14);
+      border-radius: 2px;
+    }
+
+    .screen-frames {
+      display: flex;
+      gap: 40px;
+      overflow-x: auto;
+      padding: 20px 0 8px;
+    }
+
+    /* ─── TRANSITIONS DEMO ─── */
+    .transition-demo {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .transition-card {
+      background: white;
+      border-radius: 14px;
+      border: 1px solid var(--cream-line);
+      padding: 20px;
+      min-width: 180px;
+    }
+
+    .transition-name {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--deep-maroon);
+      margin-bottom: 4px;
+    }
+
+    .transition-spec {
+      font-size: 11px;
+      color: var(--feather-taupe);
+      font-family: monospace;
+      margin-bottom: 8px;
+    }
+
+    .transition-use {
+      font-size: 12px;
+      color: var(--charcoal-ink);
+    }
+
+    .transition-bar {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--cream-line);
+      margin-top: 12px;
+      overflow: hidden;
+    }
+
+    .transition-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--velvet-maroon);
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--midnight-burgundy);
+      padding: 40px;
+      text-align: center;
+      color: rgba(185,165,138,0.50);
+      font-size: 13px;
+    }
+
+    footer strong {
+      color: var(--bright-gold);
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="wordmark">Poto<span>os</span> Design</div>
+  <a href="#colors">Colors</a>
+  <a href="#typography">Type</a>
+  <a href="#spacing">Spacing</a>
+  <a href="#buttons">Buttons</a>
+  <a href="#cards">Cards</a>
+  <a href="#inputs">Inputs</a>
+  <a href="#components">Components</a>
+  <a href="#screens">Screens</a>
+  <a href="#transitions">Transitions</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-mascot">🦉</div>
+  <h1>Poto<span>os</span></h1>
+  <p>Design System · v2.0 · Where your real memories live.</p>
+  <div class="hero-badge">
+    <span>●</span> Potoos Brand Identity · 2026
+  </div>
+</div>
+
+<!-- COLORS -->
+<section id="colors">
+  <div class="container">
+    <div class="section-label">01 — Colors</div>
+    <div class="section-title">Brand Palette</div>
+    <p class="section-desc">Rooted in rich maroon warmth with gold accents. The palette moves between the intimacy of midnight burgundy and the glow of polished gold.</p>
+
+    <div class="color-grid">
+      <div class="color-swatch">
+        <div class="swatch-block" style="background:#21070D;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Midnight Burgundy</div>
+          <div class="swatch-hex">#21070D</div>
+          <div class="swatch-use">Splash, Login bg, deepest layer</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-block" style="background:#4A1220;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Deep Maroon</div>
+          <div class="swatch-hex">#4A1220</div>
+          <div class="swatch-use">Screen headers, dark surfaces</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-block" style="background:#6B1C2E;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Velvet Maroon</div>
+          <div class="swatch-hex">#6B1C2E</div>
+          <div class="swatch-use">Primary buttons, active states</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-block" style="background:#8A2438;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Garnet</div>
+          <div class="swatch-hex">#8A2438</div>
+          <div class="swatch-use">Hover/pressed states</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-block" style="background:#F1C85B;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Bright Gold</div>
+          <div class="swatch-hex">#F1C85B</div>
+          <div class="swatch-use">Save/Download CTA, key accents, icons</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-block" style="background:#C4973A;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Soft Gold</div>
+          <div class="swatch-hex">#C4973A</div>
+          <div class="swatch-use">Secondary gold, contributor role</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-block" style="background:#FAF6F0;border:1px solid #E9DED0;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Warm Cream</div>
+          <div class="swatch-hex">#FAF6F0</div>
+          <div class="swatch-use">App background, cards, nav bar</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-block" style="background:#FFF8E8;border:1px solid #E9DED0;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Pearl Cream</div>
+          <div class="swatch-hex">#FFF8E8</div>
+          <div class="swatch-use">Logo text, button text on dark bg</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-block" style="background:#B9A58A;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Feather Taupe</div>
+          <div class="swatch-hex">#B9A58A</div>
+          <div class="swatch-use">Muted text, secondary copy, icons</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-block" style="background:#24191B;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Charcoal Ink</div>
+          <div class="swatch-hex">#24191B</div>
+          <div class="swatch-use">Body text, primary text on light bg</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-block" style="background:#E9DED0;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Cream Line</div>
+          <div class="swatch-hex">#E9DED0</div>
+          <div class="swatch-use">Borders, dividers, disabled bg</div>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-block" style="background:#F7EDEF;border:1px solid #E9DED0;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Maroon Faint</div>
+          <div class="swatch-hex">#F7EDEF</div>
+          <div class="swatch-use">Avatar bg, role chip bg (admin)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TYPOGRAPHY -->
+<section id="typography">
+  <div class="container">
+    <div class="section-label">02 — Typography</div>
+    <div class="section-title">Type Scale</div>
+    <p class="section-desc">DM Sans (GeneralSans in app) for display and headings. Inter for all body copy. Sizes follow a fluid scale — confident, readable, and warm.</p>
+
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-role">Display</div>
+        <div class="type-spec">32px · w600 · DM Sans</div>
+      </div>
+      <div style="font-family:var(--font-display);font-size:32px;font-weight:600;color:var(--deep-maroon);letter-spacing:-0.5px;">Your memories, always original.</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-role">Headline Large</div>
+        <div class="type-spec">22px · w500 · DM Sans</div>
+      </div>
+      <div style="font-family:var(--font-display);font-size:22px;font-weight:500;color:var(--deep-maroon);">Your private spaces</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-role">Headline Medium</div>
+        <div class="type-spec">20px · w500 · DM Sans</div>
+      </div>
+      <div style="font-family:var(--font-display);font-size:20px;font-weight:500;color:var(--deep-maroon);">Summer 2024</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-role">Title Large</div>
+        <div class="type-spec">17px · w600 · DM Sans</div>
+      </div>
+      <div style="font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--deep-maroon);">People in this space.</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-role">Body Medium</div>
+        <div class="type-spec">15px · w400 · Inter</div>
+      </div>
+      <div style="font-size:15px;font-weight:400;color:var(--charcoal-ink);line-height:1.55;">Nothing gets compressed. What goes in comes back out — original size, original quality, every time.</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-role">Body Small</div>
+        <div class="type-spec">13px · w400 · Inter</div>
+      </div>
+      <div style="font-size:13px;font-weight:400;color:var(--feather-taupe);line-height:1.5;">Only the people you choose can see these.</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-role">Label</div>
+        <div class="type-spec">11px · w600 · Inter · 1.2px spacing</div>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:var(--feather-taupe);letter-spacing:1.2px;text-transform:uppercase;">Your Albums</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-role">Caption</div>
+        <div class="type-spec">10.5px · w400 · Inter</div>
+      </div>
+      <div style="font-size:10.5px;font-weight:400;color:var(--feather-taupe);">Updated 3 days ago · 24 originals</div>
+    </div>
+  </div>
+</section>
+
+<!-- SPACING -->
+<section id="spacing">
+  <div class="container">
+    <div class="section-label">03 — Spacing</div>
+    <div class="section-title">Spacing Scale</div>
+    <p class="section-desc">4pt base unit. All layout, padding, and gap values are multiples of 4. Consistent vertical rhythm across every screen.</p>
+
+    <div class="spacing-grid">
+      <div class="spacing-row"><span class="spacing-token">xs · 4</span><div class="spacing-bar-wrap"><div class="spacing-bar" style="width:4px;"></div><span class="spacing-val">4px</span></div><span class="spacing-use">Icon gaps, chip padding tops</span></div>
+      <div class="spacing-row"><span class="spacing-token">sm · 8</span><div class="spacing-bar-wrap"><div class="spacing-bar" style="width:8px;"></div><span class="spacing-val">8px</span></div><span class="spacing-use">Button gaps, inline icon spacing</span></div>
+      <div class="spacing-row"><span class="spacing-token">md · 16</span><div class="spacing-bar-wrap"><div class="spacing-bar" style="width:16px;"></div><span class="spacing-val">16px</span></div><span class="spacing-use">Card padding, section horizontal insets</span></div>
+      <div class="spacing-row"><span class="spacing-token">lg · 24</span><div class="spacing-bar-wrap"><div class="spacing-bar" style="width:24px;"></div><span class="spacing-val">24px</span></div><span class="spacing-use">Section spacing, header padding</span></div>
+      <div class="spacing-row"><span class="spacing-token">xl · 40</span><div class="spacing-bar-wrap"><div class="spacing-bar" style="width:40px;"></div><span class="spacing-val">40px</span></div><span class="spacing-use">Section separators, large gaps</span></div>
+      <div class="spacing-row"><span class="spacing-token">xxl · 56</span><div class="spacing-bar-wrap"><div class="spacing-bar" style="width:56px;"></div><span class="spacing-val">56px</span></div><span class="spacing-use">Hero spaces, screen tops</span></div>
+    </div>
+
+    <div style="height:24px;"></div>
+    <div class="section-title" style="font-size:18px;">Corner Radius</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;">
+      <div style="text-align:center;">
+        <div style="width:56px;height:56px;background:var(--velvet-maroon);border-radius:8px;margin:0 auto 8px;"></div>
+        <div style="font-size:11px;color:var(--feather-taupe);">sm · 8</div>
+        <div style="font-size:10px;color:#C0A89A;">inputs</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:56px;height:56px;background:var(--velvet-maroon);border-radius:12px;margin:0 auto 8px;"></div>
+        <div style="font-size:11px;color:var(--feather-taupe);">md · 12</div>
+        <div style="font-size:10px;color:#C0A89A;">action pills</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:56px;height:56px;background:var(--velvet-maroon);border-radius:18px;margin:0 auto 8px;"></div>
+        <div style="font-size:11px;color:var(--feather-taupe);">lg · 18</div>
+        <div style="font-size:10px;color:#C0A89A;">cards, buttons</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:56px;height:56px;background:var(--velvet-maroon);border-radius:24px;margin:0 auto 8px;"></div>
+        <div style="font-size:11px;color:var(--feather-taupe);">xl · 24</div>
+        <div style="font-size:10px;color:#C0A89A;">header blocks</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:56px;height:56px;background:var(--velvet-maroon);border-radius:999px;margin:0 auto 8px;"></div>
+        <div style="font-size:11px;color:var(--feather-taupe);">pill · 999</div>
+        <div style="font-size:10px;color:#C0A89A;">chips, avatars</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BUTTONS -->
+<section id="buttons">
+  <div class="container">
+    <div class="section-label">04 — Buttons</div>
+    <div class="section-title">Button System</div>
+    <p class="section-desc">Three variants. One primary CTA per screen. Gold for high-value download actions. Ghost for secondary and cancel paths. All use spring press animation (scale 0.97).</p>
+
+    <div style="margin-bottom:32px;">
+      <div class="component-label">Full Width</div>
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:360px;">
+        <button class="btn btn-primary" style="width:100%;">Upload Originals</button>
+        <button class="btn btn-gold" style="width:100%;">Save All Originals</button>
+        <button class="btn btn-ghost" style="width:100%;">Choose Photos</button>
+        <button class="btn btn-disabled" style="width:100%;">Upload Original</button>
+        <button class="btn btn-loading" style="width:100%;">
+          <div class="spinner"></div> Opening Google...
+        </button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:32px;">
+      <div class="component-label">Compact (h:40 · Action Buttons)</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm">Upload</button>
+        <button class="btn btn-gold btn-sm">Save 3</button>
+        <button class="btn btn-ghost btn-sm">Members</button>
+        <button class="btn btn-ghost btn-sm">Select</button>
+        <button class="btn btn-ghost btn-sm" style="color:#C94444;border-color:#F0C0C0;">Leave Album</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="component-label">Icon-Only (44×44)</div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-icon btn-icon-primary">←</button>
+        <button class="btn-icon btn-icon-ghost">↑</button>
+        <button class="btn-icon btn-icon-ghost" style="background:rgba(241,200,91,0.12);border-color:rgba(241,200,91,0.28);color:var(--soft-gold);">⬇</button>
+        <button class="btn-icon btn-icon-ghost">⋯</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CARDS -->
+<section id="cards">
+  <div class="container">
+    <div class="section-label">05 — Cards</div>
+    <div class="section-title">Card Variants</div>
+    <p class="section-desc">Cards are the primary container unit. Three surface types: white (on cream bg), warm (on white), dark (on dark headers). Consistent 18–20px radius.</p>
+
+    <div class="card-grid">
+      <div>
+        <div class="component-label">Default — White surface</div>
+        <br>
+        <div class="card">
+          <div class="card-title">Summer Vibes 2024</div>
+          <div class="card-body">Your private space for this trip. Only invited people can see what's shared here.</div>
+        </div>
+      </div>
+      <div>
+        <div class="component-label">Warm — Cream surface</div>
+        <br>
+        <div class="card-warm">
+          <div class="card-title">New invite from Mara</div>
+          <div class="card-body">She's inviting you to join "Bali Trip 2024" as a Contributor.</div>
+        </div>
+      </div>
+      <div>
+        <div class="component-label">Dark — Gradient surface</div>
+        <br>
+        <div class="card-dark">
+          <div style="font-size:22px;margin-bottom:8px;">✦</div>
+          <div class="card-title">Every file, exactly as you took it.</div>
+          <div class="card-body">Nothing gets compressed. What goes in comes back out.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INPUTS -->
+<section id="inputs">
+  <div class="container">
+    <div class="section-label">06 — Inputs</div>
+    <div class="section-title">Form Fields</div>
+    <p class="section-desc">Focused border uses Bright Gold. Error state is warm red. Helper text always visible. 48px height for comfortable touch targets.</p>
+
+    <div class="input-grid">
+      <div class="input-group">
+        <label class="input-label">Album Name</label>
+        <input class="input" type="text" placeholder="e.g. Bali Trip 2024">
+        <div class="input-hint">Give it a name only you'll recognize.</div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Email Address</label>
+        <input class="input" type="email" placeholder="friend@example.com">
+        <div class="input-hint">They'll get an invite to join this space.</div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Email Address (focused)</label>
+        <input class="input" type="email" value="mara@example.com" style="border-color:var(--bright-gold);box-shadow:0 0 0 3px rgba(241,200,91,0.15);">
+        <div class="input-hint">Invite someone to your space.</div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Email Address (error)</label>
+        <input class="input error" type="email" value="notanemail">
+        <div class="input-error">That doesn't look like a valid email address.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPONENTS -->
+<section id="components">
+  <div class="container">
+    <div class="section-label">07 — Components</div>
+    <div class="section-title">UI Components</div>
+    <p class="section-desc">The full component library — chips, stats, notifications, members, album cards, and more.</p>
+
+    <!-- Role Chips -->
+    <div style="margin-bottom:48px;">
+      <div class="component-label" style="margin-bottom:16px;">Role Chips</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <span class="chip chip-admin">Admin</span>
+        <span class="chip chip-contributor">Contributor</span>
+        <span class="chip chip-viewer">Viewer</span>
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div style="margin-bottom:48px;">
+      <div class="component-label" style="margin-bottom:16px;">Stat Cards</div>
+      <div class="stat-row" style="max-width:400px;">
+        <div class="stat-card gold">
+          <div class="stat-icon" style="color:var(--bright-gold);">◎</div>
+          <div>
+            <div class="stat-value">124</div>
+            <div class="stat-label">originals</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="color:var(--velvet-maroon);">⊞</div>
+          <div>
+            <div class="stat-value">6</div>
+            <div class="stat-label">albums</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="color:var(--velvet-maroon);">👤</div>
+          <div>
+            <div class="stat-value">18</div>
+            <div class="stat-label">people</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quality Promise Card -->
+    <div style="margin-bottom:48px;">
+      <div class="component-label" style="margin-bottom:16px;">Quality Promise Card</div>
+      <div style="max-width:400px;">
+        <div class="promise-card">
+          <div class="promise-icon-wrap">✦</div>
+          <div>
+            <div class="promise-title">Every file, exactly as you took it.</div>
+            <div class="promise-body">Nothing gets compressed. What goes in comes back out.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div style="margin-bottom:48px;">
+      <div class="component-label" style="margin-bottom:16px;">Notifications</div>
+      <div style="max-width:420px;">
+        <div class="notif unread">
+          <div class="notif-icon">🔔</div>
+          <div>
+            <div class="notif-title">Mara joined Summer Vibes</div>
+            <div class="notif-msg">She's now a Contributor. She can upload and view originals.</div>
+            <div class="notif-time">2 min ago</div>
+          </div>
+        </div>
+        <div class="notif">
+          <div class="notif-icon">🔕</div>
+          <div>
+            <div class="notif-title">3 new originals in Bali Trip</div>
+            <div class="notif-msg">Josh uploaded 3 files. All originals are preserved.</div>
+            <div class="notif-time">Yesterday</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Album Card -->
+    <div style="margin-bottom:48px;">
+      <div class="component-label" style="margin-bottom:16px;">Album Card</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        <div class="album-card">
+          <div class="album-cover" style="background:linear-gradient(135deg,#4A1220,#8A2438);">
+            <div class="album-cover-grid"></div>
+            <div class="album-role-badge">ADMIN</div>
+            <div class="album-name">Summer Vibes 2024</div>
+          </div>
+          <div class="album-meta">
+            <span style="color:var(--bright-gold);">◎</span>&nbsp;42 originals
+            <span class="album-meta-dot"></span>
+            4 members
+            <div style="flex:1;"></div>
+            <span>3d ago</span>
+          </div>
+        </div>
+        <div class="album-card">
+          <div class="album-cover" style="background:linear-gradient(135deg,#1C3A4A,#2E6B5A);">
+            <div class="album-cover-grid"></div>
+            <div class="album-role-badge">CONTRIBUTOR</div>
+            <div class="album-name">Bali Trip</div>
+          </div>
+          <div class="album-meta">
+            <span style="color:var(--bright-gold);">◎</span>&nbsp;89 originals
+            <span class="album-meta-dot"></span>
+            7 members
+            <div style="flex:1;"></div>
+            <span>1h ago</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Member Rows -->
+    <div style="margin-bottom:48px;">
+      <div class="component-label" style="margin-bottom:16px;">Member Rows</div>
+      <div style="max-width:420px;">
+        <div class="member-row">
+          <div class="member-avatar">M</div>
+          <div style="flex:1;">
+            <div class="member-name">Mara Santos</div>
+            <div class="member-email">mara@example.com</div>
+          </div>
+          <span class="chip chip-admin">Admin</span>
+        </div>
+        <div class="member-row">
+          <div class="member-avatar">J</div>
+          <div style="flex:1;">
+            <div class="member-name">Josh Kim</div>
+            <div class="member-email">josh@example.com</div>
+          </div>
+          <span class="chip chip-contributor">Contributor</span>
+        </div>
+        <div class="member-row">
+          <div class="member-avatar">A</div>
+          <div style="flex:1;">
+            <div class="member-name">Ana Cruz</div>
+            <div class="member-email">ana@example.com</div>
+          </div>
+          <span class="chip chip-viewer">Viewer</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div style="margin-bottom:48px;">
+      <div class="component-label" style="margin-bottom:16px;">Progress Bar</div>
+      <div style="max-width:420px;">
+        <div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--feather-taupe);margin-bottom:6px;">
+            <span>IMG_4521.HEIC</span><span>68%</span>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-fill" style="width:68%;"></div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--feather-taupe);margin-bottom:6px;">
+            <span>VID_0034.MOV</span><span>100%</span>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-fill" style="width:100%;background:var(--bright-gold);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div style="margin-bottom:48px;">
+      <div class="component-label" style="margin-bottom:16px;">Empty States</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        <div class="empty-state">
+          <div class="empty-mascot">🦉</div>
+          <div class="empty-title">Nothing here yet.</div>
+          <div class="empty-msg">Be the first to add something here. Poto will watch over it.</div>
+          <button class="btn btn-primary btn-sm" style="width:100%;">Upload First Original</button>
+        </div>
+        <div class="empty-state">
+          <div class="empty-mascot" style="font-size:52px;opacity:0.5;">🦉</div>
+          <div class="empty-title">No invites right now.</div>
+          <div class="empty-msg">When someone invites you to their space, it'll show up here.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Strip -->
+    <div style="margin-bottom:48px;">
+      <div class="component-label" style="margin-bottom:16px;">Action Strip (Album Details)</div>
+      <div style="max-width:360px;">
+        <div class="action-strip">
+          <button class="action-pill action-pill-primary">↑ Upload</button>
+          <button class="action-pill action-pill-gold">⬇ Save All</button>
+          <button class="action-pill action-pill-muted">👥 Members</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header Component -->
+    <div>
+      <div class="component-label" style="margin-bottom:16px;">Screen Header</div>
+      <div style="max-width:360px;border-radius:28px;overflow:hidden;box-shadow:0 12px 40px rgba(33,7,13,0.22);">
+        <div class="app-header">
+          <div class="app-header-row">
+            <div>
+              <div class="app-header-greeting">Good morning.</div>
+              <div class="app-header-name">Your Albums</div>
+              <div class="app-header-sub">Only the people you choose can see these.</div>
+            </div>
+            <div class="app-header-avatar">AK</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCREENS -->
+<section id="screens">
+  <div class="container">
+    <div class="section-label">08 — Screen Comps</div>
+    <div class="section-title">Phone Frames</div>
+    <p class="section-desc">Key screen compositions showing how the design system comes together. Each screen has one clear purpose and one primary action.</p>
+  </div>
+
+  <div style="padding:0 40px;overflow-x:auto;">
+    <div class="screen-frames">
+
+      <!-- LOGIN SCREEN -->
+      <div>
+        <div style="text-align:center;font-size:11px;color:var(--feather-taupe);margin-bottom:12px;font-weight:500;">Login</div>
+        <div class="phone-frame" style="background:linear-gradient(180deg,#21070D 0%,#4A1220 100%);">
+          <!-- Status bar -->
+          <div class="phone-status-bar">
+            <span class="phone-time">9:41</span>
+            <div class="phone-dynamic-island"></div>
+            <div class="phone-status-icons">
+              <svg width="14" height="10" viewBox="0 0 15 11" fill="none"><rect x="0" y="6" width="2.5" height="5" rx="0.7" fill="white"/><rect x="3.5" y="4" width="2.5" height="7" rx="0.7" fill="white"/><rect x="7" y="2" width="2.5" height="9" rx="0.7" fill="white"/><rect x="10.5" y="0" width="2.5" height="11" rx="0.7" fill="white"/></svg>
+              <svg width="14" height="10" viewBox="0 0 16 12" fill="none"><path d="M8 2.5C10.5 2.5 12.7 3.5 14.2 5.2L15.5 3.8C13.5 1.8 10.9 0.5 8 0.5C5.1 0.5 2.5 1.8 0.5 3.8L1.8 5.2C3.3 3.5 5.5 2.5 8 2.5Z" fill="white"/><path d="M8 5.5C9.7 5.5 11.2 6.2 12.3 7.3L13.6 5.9C12.1 4.5 10.1 3.5 8 3.5C5.9 3.5 3.9 4.5 2.4 5.9L3.7 7.3C4.8 6.2 6.3 5.5 8 5.5Z" fill="white"/><circle cx="8" cy="10" r="1.5" fill="white"/></svg>
+              <svg width="24" height="11" viewBox="0 0 24 11" fill="none"><rect x="0.5" y="0.5" width="20" height="10" rx="2.5" stroke="white" stroke-opacity="0.35" stroke-width="1"/><rect x="2" y="2" width="15" height="7" rx="1.5" fill="white"/><path d="M22 3.5V7.5C22.8 7.2 23.5 6.2 23.5 5.5C23.5 4.8 22.8 3.8 22 3.5Z" fill="white" fill-opacity="0.5"/></svg>
+            </div>
+          </div>
+          <!-- Content -->
+          <div style="flex:1;padding:16px 24px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div style="font-size:60px;margin-bottom:20px;filter:drop-shadow(0 0 24px rgba(241,200,91,0.32));animation:float 3s ease-in-out infinite;">🦉</div>
+            <div style="font-family:var(--font-display);font-size:34px;font-weight:800;letter-spacing:-0.6px;text-align:center;margin-bottom:8px;">
+              <span style="color:#FFF8E8;">Poto</span><span style="color:#F1C85B;">os</span>
+            </div>
+            <div style="font-size:13px;color:rgba(185,165,138,0.72);text-align:center;margin-bottom:52px;line-height:1.5;">Where your real memories live.</div>
+            <!-- Standard Google Button -->
+            <div style="width:100%;background:white;border:1.5px solid #dadce0;border-radius:14px;height:52px;display:flex;align-items:center;padding:0 16px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.10);">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" style="flex-shrink:0;">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              <span style="flex:1;text-align:center;font-size:14px;font-weight:500;color:#3c4043;letter-spacing:0.1px;font-family:var(--font-body);">Continue with Google</span>
+            </div>
+            <div style="margin-top:14px;font-size:10.5px;color:rgba(185,165,138,0.40);text-align:center;line-height:1.5;">By continuing, you agree to our<br>Terms of Use &amp; Privacy Policy.</div>
+          </div>
+          <!-- Home indicator -->
+          <div class="phone-home-indicator"><div class="phone-home-bar phone-home-bar-light"></div></div>
+        </div>
+      </div>
+
+      <!-- HOME SCREEN -->
+      <div>
+        <div style="text-align:center;font-size:11px;color:var(--feather-taupe);margin-bottom:12px;font-weight:500;">Home · Albums Tab</div>
+        <div class="phone-frame">
+          <div class="phone-status-bar" style="background:#21070D;">
+            <span class="phone-time">9:41</span>
+            <div class="phone-dynamic-island"></div>
+            <div class="phone-status-icons">
+              <svg width="14" height="10" viewBox="0 0 15 11" fill="none"><rect x="0" y="6" width="2.5" height="5" rx="0.7" fill="white"/><rect x="3.5" y="4" width="2.5" height="7" rx="0.7" fill="white"/><rect x="7" y="2" width="2.5" height="9" rx="0.7" fill="white"/><rect x="10.5" y="0" width="2.5" height="11" rx="0.7" fill="white"/></svg>
+              <svg width="14" height="10" viewBox="0 0 16 12" fill="none"><path d="M8 2.5C10.5 2.5 12.7 3.5 14.2 5.2L15.5 3.8C13.5 1.8 10.9 0.5 8 0.5C5.1 0.5 2.5 1.8 0.5 3.8L1.8 5.2C3.3 3.5 5.5 2.5 8 2.5Z" fill="white"/><path d="M8 5.5C9.7 5.5 11.2 6.2 12.3 7.3L13.6 5.9C12.1 4.5 10.1 3.5 8 3.5C5.9 3.5 3.9 4.5 2.4 5.9L3.7 7.3C4.8 6.2 6.3 5.5 8 5.5Z" fill="white"/><circle cx="8" cy="10" r="1.5" fill="white"/></svg>
+              <svg width="24" height="11" viewBox="0 0 24 11" fill="none"><rect x="0.5" y="0.5" width="20" height="10" rx="2.5" stroke="white" stroke-opacity="0.35" stroke-width="1"/><rect x="2" y="2" width="15" height="7" rx="1.5" fill="white"/><path d="M22 3.5V7.5C22.8 7.2 23.5 6.2 23.5 5.5C23.5 4.8 22.8 3.8 22 3.5Z" fill="white" fill-opacity="0.5"/></svg>
+            </div>
+          </div>
+          <div style="background:linear-gradient(180deg,#21070D,#4A1220);padding:16px 16px 20px;border-radius:0 0 24px 24px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <div style="font-size:10px;color:rgba(185,165,138,0.65);margin-bottom:3px;">Good morning.</div>
+                <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:#FFF8E8;">Your Albums</div>
+                <div style="font-size:10px;color:rgba(185,165,138,0.50);margin-top:2px;">Only the people you choose can see these.</div>
+              </div>
+              <div style="width:34px;height:34px;border-radius:50%;background:rgba(241,200,91,0.18);border:1.5px solid rgba(241,200,91,0.40);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:12px;color:#F1C85B;">AK</div>
+            </div>
+          </div>
+          <div style="padding:12px 12px 8px;display:flex;flex-direction:column;gap:10px;">
+            <div style="background:white;border-radius:14px;overflow:hidden;border:0.8px solid rgba(107,28,46,0.08);box-shadow:0 4px 14px rgba(107,28,46,0.06);">
+              <div style="height:80px;background:linear-gradient(135deg,#4A1220,#8A2438);position:relative;">
+                <div style="position:absolute;top:6px;right:8px;background:rgba(255,255,255,0.2);border-radius:20px;padding:2px 7px;font-size:8px;color:white;">ADMIN</div>
+                <div style="position:absolute;bottom:8px;left:10px;font-family:var(--font-display);font-size:13px;font-weight:700;color:white;">Summer Vibes</div>
+              </div>
+              <div style="padding:8px 10px;font-size:10px;color:var(--feather-taupe);display:flex;gap:8px;">
+                <span>◎ 42 originals</span>
+                <span>·</span>
+                <span>4 members</span>
+              </div>
+            </div>
+            <div style="background:white;border-radius:14px;overflow:hidden;border:0.8px solid rgba(107,28,46,0.08);box-shadow:0 4px 14px rgba(107,28,46,0.06);">
+              <div style="height:80px;background:linear-gradient(135deg,#1C3A4A,#2E6B5A);position:relative;">
+                <div style="position:absolute;top:6px;right:8px;background:rgba(255,255,255,0.2);border-radius:20px;padding:2px 7px;font-size:8px;color:white;">CONTRIBUTOR</div>
+                <div style="position:absolute;bottom:8px;left:10px;font-family:var(--font-display);font-size:13px;font-weight:700;color:white;">Bali Trip</div>
+              </div>
+              <div style="padding:8px 10px;font-size:10px;color:var(--feather-taupe);display:flex;gap:8px;">
+                <span>◎ 89 originals</span>
+                <span>·</span>
+                <span>7 members</span>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav" style="margin-top:4px;">
+            <div class="nav-item active"><div class="nav-icon">⊞</div><div class="nav-label">Albums</div></div>
+            <div class="nav-item"><div class="nav-icon">✉</div><div class="nav-label">Invites</div></div>
+            <div class="nav-item"><div class="nav-icon">◌</div><div class="nav-label">Activity</div></div>
+            <div class="nav-item"><div class="nav-icon">👤</div><div class="nav-label">Profile</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALBUM DETAILS -->
+      <div>
+        <div style="text-align:center;font-size:11px;color:var(--feather-taupe);margin-bottom:12px;font-weight:500;">Album Details</div>
+        <div class="phone-frame">
+          <div class="phone-status-bar" style="background:#21070D;">
+            <span class="phone-time">9:41</span>
+            <div class="phone-dynamic-island"></div>
+            <div class="phone-status-icons">
+              <svg width="14" height="10" viewBox="0 0 15 11" fill="none"><rect x="0" y="6" width="2.5" height="5" rx="0.7" fill="white"/><rect x="3.5" y="4" width="2.5" height="7" rx="0.7" fill="white"/><rect x="7" y="2" width="2.5" height="9" rx="0.7" fill="white"/><rect x="10.5" y="0" width="2.5" height="11" rx="0.7" fill="white"/></svg>
+              <svg width="14" height="10" viewBox="0 0 16 12" fill="none"><path d="M8 2.5C10.5 2.5 12.7 3.5 14.2 5.2L15.5 3.8C13.5 1.8 10.9 0.5 8 0.5C5.1 0.5 2.5 1.8 0.5 3.8L1.8 5.2C3.3 3.5 5.5 2.5 8 2.5Z" fill="white"/><path d="M8 5.5C9.7 5.5 11.2 6.2 12.3 7.3L13.6 5.9C12.1 4.5 10.1 3.5 8 3.5C5.9 3.5 3.9 4.5 2.4 5.9L3.7 7.3C4.8 6.2 6.3 5.5 8 5.5Z" fill="white"/><circle cx="8" cy="10" r="1.5" fill="white"/></svg>
+              <svg width="24" height="11" viewBox="0 0 24 11" fill="none"><rect x="0.5" y="0.5" width="20" height="10" rx="2.5" stroke="white" stroke-opacity="0.35" stroke-width="1"/><rect x="2" y="2" width="15" height="7" rx="1.5" fill="white"/><path d="M22 3.5V7.5C22.8 7.2 23.5 6.2 23.5 5.5C23.5 4.8 22.8 3.8 22 3.5Z" fill="white" fill-opacity="0.5"/></svg>
+            </div>
+          </div>
+          <div style="background:linear-gradient(180deg,#21070D,#4A1220);padding:12px 14px 20px;border-radius:0 0 28px 28px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+              <div style="width:24px;height:24px;background:rgba(255,255,255,0.10);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;color:white;">‹</div>
+              <span style="font-size:11px;color:rgba(255,255,255,0.55);">Albums</span>
+            </div>
+            <div style="font-family:var(--font-display);font-size:20px;font-weight:700;color:#FFF8E8;margin-bottom:6px;">Summer Vibes</div>
+            <div style="display:flex;gap:10px;font-size:10px;color:rgba(185,165,138,0.65);">
+              <span>◎ 42 originals</span>
+              <span>· 4 members</span>
+              <span>· Admin</span>
+            </div>
+          </div>
+          <div style="padding:10px 10px 4px;">
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+              <button style="flex:1;height:36px;background:var(--velvet-maroon);border:none;border-radius:10px;font-size:10px;font-weight:600;color:#FFF8E8;cursor:pointer;">↑ Upload</button>
+              <button style="flex:1;height:36px;background:rgba(241,200,91,0.15);border:0.8px solid rgba(241,200,91,0.28);border-radius:10px;font-size:10px;font-weight:600;color:var(--soft-gold);cursor:pointer;">⬇ Save All</button>
+              <button style="flex:1;height:36px;background:rgba(107,28,46,0.08);border:none;border-radius:10px;font-size:10px;font-weight:500;color:var(--velvet-maroon);cursor:pointer;">👥 Members</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding:0 2px;">
+              <span style="font-size:10px;color:var(--feather-taupe);">42 originals</span>
+              <span style="font-size:10px;color:var(--bright-gold);font-weight:500;">Select</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;border-radius:10px;overflow:hidden;">
+              <div style="aspect-ratio:1;background:linear-gradient(135deg,#8A2438,#C4973A);"></div>
+              <div style="aspect-ratio:1;background:linear-gradient(135deg,#1C3A4A,#2E6B5A);"></div>
+              <div style="aspect-ratio:1;background:linear-gradient(135deg,#2E2E5A,#4A2E8A);"></div>
+              <div style="aspect-ratio:1;background:linear-gradient(135deg,#4A4A1C,#8A6A1C);"></div>
+              <div style="aspect-ratio:1;background:linear-gradient(135deg,#6B1C2E,#4A1220);"></div>
+              <div style="aspect-ratio:1;background:linear-gradient(135deg,#1C4A2E,#1C8A5A);"></div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item active"><div class="nav-icon">⊞</div><div class="nav-label">Albums</div></div>
+            <div class="nav-item"><div class="nav-icon">✉</div><div class="nav-label">Invites</div></div>
+            <div class="nav-item"><div class="nav-icon">◌</div><div class="nav-label">Activity</div></div>
+            <div class="nav-item"><div class="nav-icon">👤</div><div class="nav-label">Profile</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- UPLOAD SCREEN -->
+      <div>
+        <div style="text-align:center;font-size:11px;color:var(--feather-taupe);margin-bottom:12px;font-weight:500;">Upload</div>
+        <div class="phone-frame">
+          <div class="phone-status-bar" style="background:#21070D;">
+            <span class="phone-time">9:41</span>
+            <div class="phone-dynamic-island"></div>
+            <div class="phone-status-icons">
+              <svg width="14" height="10" viewBox="0 0 15 11" fill="none"><rect x="0" y="6" width="2.5" height="5" rx="0.7" fill="white"/><rect x="3.5" y="4" width="2.5" height="7" rx="0.7" fill="white"/><rect x="7" y="2" width="2.5" height="9" rx="0.7" fill="white"/><rect x="10.5" y="0" width="2.5" height="11" rx="0.7" fill="white"/></svg>
+              <svg width="14" height="10" viewBox="0 0 16 12" fill="none"><path d="M8 2.5C10.5 2.5 12.7 3.5 14.2 5.2L15.5 3.8C13.5 1.8 10.9 0.5 8 0.5C5.1 0.5 2.5 1.8 0.5 3.8L1.8 5.2C3.3 3.5 5.5 2.5 8 2.5Z" fill="white"/><path d="M8 5.5C9.7 5.5 11.2 6.2 12.3 7.3L13.6 5.9C12.1 4.5 10.1 3.5 8 3.5C5.9 3.5 3.9 4.5 2.4 5.9L3.7 7.3C4.8 6.2 6.3 5.5 8 5.5Z" fill="white"/><circle cx="8" cy="10" r="1.5" fill="white"/></svg>
+              <svg width="24" height="11" viewBox="0 0 24 11" fill="none"><rect x="0.5" y="0.5" width="20" height="10" rx="2.5" stroke="white" stroke-opacity="0.35" stroke-width="1"/><rect x="2" y="2" width="15" height="7" rx="1.5" fill="white"/><path d="M22 3.5V7.5C22.8 7.2 23.5 6.2 23.5 5.5C23.5 4.8 22.8 3.8 22 3.5Z" fill="white" fill-opacity="0.5"/></svg>
+            </div>
+          </div>
+          <div style="background:linear-gradient(180deg,#21070D,#4A1220);padding:12px 14px 20px;border-radius:0 0 28px 28px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+              <div style="width:24px;height:24px;background:rgba(255,255,255,0.10);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;color:white;">✕</div>
+            </div>
+            <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:#FFF8E8;margin-bottom:2px;">Add Originals</div>
+            <div style="font-size:10px;color:rgba(185,165,138,0.55);">Summer Vibes 2024</div>
+          </div>
+          <div style="padding:14px 12px;display:flex;flex-direction:column;gap:10px;flex:1;">
+            <div style="background:var(--warm-cream);border:1.5px dashed var(--cream-line);border-radius:16px;padding:24px 16px;text-align:center;">
+              <div style="font-size:32px;margin-bottom:8px;">🦉</div>
+              <div style="font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--deep-maroon);margin-bottom:4px;">Drop files here</div>
+              <div style="font-size:11px;color:var(--feather-taupe);">or tap to pick from your gallery</div>
+            </div>
+            <button style="width:100%;height:44px;background:white;border:1.5px solid var(--cream-line);border-radius:12px;font-size:13px;font-weight:600;color:var(--charcoal-ink);cursor:pointer;">Choose Photos &amp; Videos</button>
+            <div style="font-size:11px;color:var(--feather-taupe);text-align:center;padding:4px 0;">Files are uploaded in full original quality. Nothing is compressed.</div>
+          </div>
+          <div style="padding:12px;border-top:1px solid var(--cream-line);">
+            <button style="width:100%;height:48px;background:var(--velvet-maroon);border:none;border-radius:14px;font-size:14px;font-weight:700;color:#FFF8E8;cursor:pointer;opacity:0.4;">Upload Originals</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- TRANSITIONS -->
+<section id="transitions">
+  <div class="container">
+    <div class="section-label">09 — Motion</div>
+    <div class="section-title">Transitions & Animation</div>
+    <p class="section-desc">Every transition has a direction that carries spatial meaning. Forward = right. Modal = up. Brand moments = fade. Exit is always faster than enter.</p>
+
+    <div class="transition-demo">
+      <div class="transition-card">
+        <div class="transition-name">Fade</div>
+        <div class="transition-spec">280ms ease-out · reverse 200ms</div>
+        <div class="transition-use">Splash → Login/Home<br>Tab switches</div>
+        <div class="transition-bar"><div class="transition-fill" style="width:60%;background:var(--bright-gold);"></div></div>
+      </div>
+      <div class="transition-card">
+        <div class="transition-name">Slide Right</div>
+        <div class="transition-spec">300ms easeOutCubic · secondary -30%</div>
+        <div class="transition-use">Home → Album Details<br>Album → Members · File Preview</div>
+        <div class="transition-bar"><div class="transition-fill" style="width:80%;"></div></div>
+      </div>
+      <div class="transition-card">
+        <div class="transition-name">Slide Up</div>
+        <div class="transition-spec">320ms easeOutCubic + fade</div>
+        <div class="transition-use">Upload (modal feel)<br>Save All · Create Album</div>
+        <div class="transition-bar"><div class="transition-fill" style="width:75%;background:var(--garnet);"></div></div>
+      </div>
+      <div class="transition-card">
+        <div class="transition-name">Press Scale</div>
+        <div class="transition-spec">0.97 scale · 120ms ease-out</div>
+        <div class="transition-use">All tappable cards, buttons, tiles</div>
+        <div class="transition-bar"><div class="transition-fill" style="width:40%;background:var(--feather-taupe);"></div></div>
+      </div>
+      <div class="transition-card">
+        <div class="transition-name">Hero Float</div>
+        <div class="transition-spec">3s ease-in-out · infinite</div>
+        <div class="transition-use">Poto mascot on splash and login<br>Y: 0 → -8px → 0</div>
+        <div class="transition-bar"><div class="transition-fill" style="width:55%;background:rgba(241,200,91,0.6);"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <strong>Potoos</strong> Design System · v2.0<br>
+  <span style="margin-top:6px;display:block;">Built for Flutter · Potoos brand palette · Poto mascot</span>
+</footer>
+
+</body>
+</html>

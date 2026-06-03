@@ -16,32 +16,44 @@ class RoleChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isContributor = label.toLowerCase() == 'contributor';
-    final isViewer = label.toLowerCase() == 'viewer';
-    final background = selected
-        ? (isContributor ? AppColors.goldFaint : AppColors.maroonFaint)
-        : AppColors.warmCream;
-    final foreground = isViewer
+    final lower = label.toLowerCase();
+    final isContributor = lower == 'contributor';
+    final isViewer = lower == 'viewer';
+
+    final Color fg = isViewer
         ? AppColors.mutedInk
         : isContributor
             ? AppColors.softGold
-            : AppColors.maroon;
+            : AppColors.velvetMaroon;
+
+    final Color bg = selected
+        ? (isContributor
+            ? AppColors.brightGold.withValues(alpha: 0.10)
+            : isViewer
+                ? AppColors.featherTaupe.withValues(alpha: 0.10)
+                : AppColors.maroonFaint)
+        : AppColors.warmCream;
 
     return ActionChip(
       onPressed: onTap,
       label: Text(label.toUpperCase()),
       labelStyle: TextStyle(
-        color: foreground,
+        color: fg,
         fontSize: 10,
         letterSpacing: 0.5,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
       ),
-      backgroundColor: background,
+      backgroundColor: bg,
       side: BorderSide(
-          color: selected
-              ? foreground.withValues(alpha: 0.28)
-              : AppColors.creamLine),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+        color: selected
+            ? fg.withValues(alpha: 0.28)
+            : AppColors.creamLine,
+        width: 0.8,
+      ),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPill)),
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      visualDensity: VisualDensity.compact,
     );
   }
 }
