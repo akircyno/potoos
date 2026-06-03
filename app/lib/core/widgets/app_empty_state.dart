@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
 import 'app_button.dart';
+import 'poto_mascot.dart';
 
 class AppEmptyState extends StatelessWidget {
   const AppEmptyState({
     required this.title,
     required this.message,
+    this.expression = PotoExpression.waiting,
     this.actionLabel,
     this.onAction,
     super.key,
@@ -14,6 +16,7 @@ class AppEmptyState extends StatelessWidget {
 
   final String title;
   final String message;
+  final PotoExpression expression;
   final String? actionLabel;
   final VoidCallback? onAction;
 
@@ -21,17 +24,17 @@ class AppEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       decoration: BoxDecoration(
         color: AppColors.white,
         border: Border.all(color: AppColors.creamLine),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.photo_album_outlined, color: AppColors.softGold, size: 42),
-          const SizedBox(height: 12),
+          PotoMascot(expression: expression, size: 100),
+          const SizedBox(height: 16),
           Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(

@@ -4,7 +4,7 @@ import 'package:litratolink/app/app.dart';
 import 'package:litratolink/config/env.dart';
 
 void main() {
-  testWidgets('shows the LitratoLink welcome flow', (tester) async {
+  testWidgets('shows the Potoos splash screen', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -18,13 +18,12 @@ void main() {
             ),
           ),
         ],
-        child: const LitratoLinkApp(),
+        child: const PotoosApp(),
       ),
     );
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(milliseconds: 2000));
     await tester.pump();
 
-    expect(find.text('Memories shared the way they were meant to be seen.'), findsOneWidget);
-    expect(find.text('Share Memories in Original Quality'), findsWidgets);
+    expect(find.text('Original memories, safely shared.'), findsWidgets);
   });
 }

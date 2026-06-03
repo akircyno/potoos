@@ -3,18 +3,28 @@ import 'package:flutter/material.dart';
 class AppColors {
   const AppColors._();
 
+  // Potoos brand palette
+  static const midnightBurgundy = Color(0xFF21070D);
   static const deepMaroon = Color(0xFF4A1220);
-  static const maroon = Color(0xFF6B1C2E);
-  static const maroonLight = Color(0xFF8C2840);
+  static const velvetMaroon = Color(0xFF6B1C2E);
+  static const garnetHighlight = Color(0xFF8A2438);
+  static const softGold = Color(0xFFC4973A);
+  static const brightGold = Color(0xFFF1C85B);
+  static const warmCream = Color(0xFFFAF6F0);
+  static const pearlCream = Color(0xFFFFF8E8);
+  static const featherTaupe = Color(0xFFB9A58A);
+  static const charcoalInk = Color(0xFF24191B);
+
+  // Legacy aliases kept for backward compat with existing widgets
+  static const maroon = velvetMaroon;
+  static const maroonLight = garnetHighlight;
   static const maroonFaint = Color(0xFFF7EDEF);
   static const maroonTint = Color(0xFFF0D9DE);
-  static const softGold = Color(0xFFC4973A);
   static const goldLight = Color(0xFFE8C87A);
   static const goldFaint = Color(0xFFFBF5E6);
-  static const warmCream = Color(0xFFFAF6F0);
   static const creamLine = Color(0xFFE9DED0);
-  static const ink = Color(0xFF2A1810);
-  static const mutedInk = Color(0xFF7A6258);
+  static const ink = charcoalInk;
+  static const mutedInk = featherTaupe;
   static const navMuted = Color(0xFFC0A89A);
   static const white = Color(0xFFFFFFFF);
 }

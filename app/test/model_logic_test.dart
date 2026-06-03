@@ -156,10 +156,10 @@ void main() {
       expect(result.endsWith('-'), isFalse);
     });
 
-    test('falls back to litratolink-album for blank or all-symbol names', () {
-      expect(safeZipName(''), 'litratolink-album');
-      expect(safeZipName('   '), 'litratolink-album');
-      expect(safeZipName('!!!'), 'litratolink-album');
+    test('falls back to potoos-album for blank or all-symbol names', () {
+      expect(safeZipName(''), 'potoos-album');
+      expect(safeZipName('   '), 'potoos-album');
+      expect(safeZipName('!!!'), 'potoos-album');
     });
   });
 

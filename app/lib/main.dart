@@ -21,7 +21,7 @@ Future<void> main() async {
       overrides: [
         appEnvProvider.overrideWithValue(env),
       ],
-      child: const LitratoLinkApp(),
+      child: const PotoosApp(),
     ),
   );
 }

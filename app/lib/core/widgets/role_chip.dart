@@ -33,6 +33,7 @@ class RoleChip extends StatelessWidget {
       labelStyle: TextStyle(
         color: foreground,
         fontSize: 10,
+        letterSpacing: 0.5,
         fontWeight: FontWeight.w500,
       ),
       backgroundColor: background,

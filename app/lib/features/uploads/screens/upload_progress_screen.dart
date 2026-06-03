@@ -7,6 +7,7 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_progress_bar.dart';
 import '../../../core/widgets/app_screen.dart';
+import '../../../core/widgets/poto_mascot.dart';
 import '../models/upload_file.dart';
 import '../providers/upload_provider.dart';
 import '../widgets/upload_progress_card.dart';
@@ -57,6 +58,7 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
             AppEmptyState(
               title: 'Upload unavailable',
               message: 'Start uploads from an album with selected files.',
+              expression: PotoExpression.error,
             ),
           ],
         ),
@@ -166,9 +168,29 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
             ),
           ),
 
+          // ── Poto mascot (working / happy / error) ─────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: Center(
+              child: PotoMascot(
+                expression: isComplete
+                    ? PotoExpression.happy
+                    : uploadState.errorMessage != null
+                        ? PotoExpression.error
+                        : PotoExpression.working,
+                size: 80,
+                caption: isComplete
+                    ? 'Original quality confirmed.'
+                    : uploadState.errorMessage != null
+                        ? 'Poto could not complete the upload.'
+                        : 'Poto is protecting your originals.',
+              ),
+            ),
+          ),
+
           // ── Overall progress ───────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: AppProgressBar(value: uploadState.progress),
           ),
           Padding(
@@ -211,7 +233,7 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
             ),
           ),
 
-          // ── Error ──────────────────────────────────────────────────────
+          // ── Error detail ───────────────────────────────────────────────
           if (uploadState.errorMessage != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
@@ -219,23 +241,9 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
                 uploadState.errorMessage!,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    color: AppColors.maroon,
+                    color: AppColors.velvetMaroon,
                     fontSize: 12,
-                    fontWeight: FontWeight.w700),
-              ),
-            ),
-
-          // ── Success ────────────────────────────────────────────────────
-          if (isComplete)
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
-              child: Text(
-                'Upload complete. All originals are now in the album.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: AppColors.maroon,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700),
+                    fontWeight: FontWeight.w500),
               ),
             ),
 

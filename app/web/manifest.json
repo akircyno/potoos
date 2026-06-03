@@ -1,11 +1,11 @@
 {
-    "name": "LitratoLink",
-    "short_name": "LitratoLink",
+    "name": "Potoos",
+    "short_name": "Potoos",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FAF6F0",
     "theme_color": "#4A1220",
-    "description": "Private albums for sharing and downloading memories in original quality.",
+    "description": "Original memories, safely shared.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

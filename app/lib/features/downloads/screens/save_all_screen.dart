@@ -13,6 +13,7 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_progress_bar.dart';
 import '../../../core/widgets/app_screen.dart';
+import '../../../core/widgets/poto_mascot.dart';
 import '../../../core/widgets/save_all_ring.dart';
 import '../../albums/models/album.dart';
 import '../../albums/models/media_file.dart';
@@ -60,6 +61,7 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
             AppEmptyState(
               title: 'Album unavailable',
               message: 'Open Save All from an album first.',
+              expression: PotoExpression.error,
             ),
           ],
         ),
@@ -80,6 +82,7 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
               title: 'Album access unavailable',
               message:
                   'You may have been removed from this album, or your access changed. Open Albums to refresh your private spaces.',
+              expression: PotoExpression.error,
               actionLabel: 'Back to Albums',
               onAction: () =>
                   Navigator.pushReplacementNamed(context, AppRoutes.home),
@@ -145,6 +148,7 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
                     AppEmptyState(
                       title: 'Files unavailable',
                       message: AppError.messageFor(filesAsync.error),
+                      expression: PotoExpression.error,
                       actionLabel: 'Try Again',
                       onAction: () =>
                           ref.invalidate(albumMediaFilesProvider(album.id)),
@@ -202,10 +206,24 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
               ),
             ),
           ),
+          if (isSaving || isComplete)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              child: Center(
+                child: PotoMascot(
+                  expression:
+                      isComplete ? PotoExpression.happy : PotoExpression.working,
+                  size: 80,
+                  caption: isComplete
+                      ? 'Poto packed your originals.'
+                      : 'Poto is packing your originals.',
+                ),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
             child: Text(
-              '$subhead will download through LitratoLink original storage.',
+              '$subhead will download through Potoos original storage.',
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppColors.mutedInk, fontSize: 11),
             ),
@@ -318,7 +336,7 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
 @visibleForTesting
 String safeZipName(String albumName) {
   final rawName = albumName.trim();
-  if (rawName.isEmpty) return 'litratolink-album';
+  if (rawName.isEmpty) return 'potoos-album';
 
   var safe = rawName
       .replaceAll(RegExp(r'[^\w\s-]'), '_') // replace any non-alphanumeric/space/dash
@@ -327,11 +345,11 @@ String safeZipName(String albumName) {
       .replaceAll(RegExp(r'[-_]+'), '-')
       .replaceAll(RegExp(r'^-+|-+$'), '');
 
-  if (safe.isEmpty) return 'litratolink-album';
+  if (safe.isEmpty) return 'potoos-album';
   if (safe.length > 50) {
     safe = safe.substring(0, 50).replaceAll(RegExp(r'-+$'), '');
   }
-  return safe.isEmpty ? 'litratolink-album' : safe;
+  return safe.isEmpty ? 'potoos-album' : safe;
 }
 
 /// Returns a deduplicated, OS-safe filename for an entry inside the ZIP.

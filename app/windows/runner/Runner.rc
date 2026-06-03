@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "litratolink" "\0"
+            VALUE "CompanyName", "Potoos" "\0"
+            VALUE "FileDescription", "Potoos" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "litratolink" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "litratolink.exe" "\0"
-            VALUE "ProductName", "litratolink" "\0"
+            VALUE "InternalName", "potoos" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Potoos. All rights reserved." "\0"
+            VALUE "OriginalFilename", "potoos.exe" "\0"
+            VALUE "ProductName", "Potoos" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

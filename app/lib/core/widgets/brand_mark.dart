@@ -21,7 +21,7 @@ class BrandMark extends StatelessWidget {
         borderRadius: BorderRadius.circular(size * 0.26),
       ),
       child: Image.asset(
-        'assets/logo/litratolink_logo.png',
+        'assets/branding/potoos/logo/potoos-logo-reference.png',
         fit: BoxFit.contain,
         errorBuilder: (_, __, ___) {
           return const Icon(

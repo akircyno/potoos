@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'routes.dart';
 import 'theme.dart';
 
-class LitratoLinkApp extends StatelessWidget {
-  const LitratoLinkApp({super.key});
+class PotoosApp extends StatelessWidget {
+  const PotoosApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LitratoLink',
+      title: 'Potoos',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       initialRoute: AppRoutes.splash,

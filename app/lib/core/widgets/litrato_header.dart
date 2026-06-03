@@ -4,7 +4,7 @@ import '../../app/theme.dart';
 
 class LitratoHeader extends StatelessWidget {
   const LitratoHeader({
-    this.title = 'LitratoLink',
+    this.title = 'Potoos',
     this.subtitle = 'Good morning, Maria',
     this.showAvatar = true,
     super.key,
@@ -48,13 +48,18 @@ class LitratoHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const LinearGradient(
-                  colors: [AppColors.softGold, AppColors.maroonLight],
+                  colors: [AppColors.softGold, AppColors.garnetHighlight],
                 ),
-                border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.50), width: 1.5),
+                border: Border.all(
+                    color: AppColors.goldLight.withValues(alpha: 0.50),
+                    width: 1.5),
               ),
               child: const Text(
                 'MA',
-                style: TextStyle(color: AppColors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                    color: AppColors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500),
               ),
             ),
         ],
@@ -70,7 +75,7 @@ class _HeaderTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (title != 'LitratoLink') {
+    if (title != 'Potoos') {
       return Text(
         title,
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -87,8 +92,8 @@ class _HeaderTitle extends StatelessWidget {
               fontSize: 18,
             ),
         children: const [
-          TextSpan(text: 'Litrato'),
-          TextSpan(text: 'Link', style: TextStyle(color: AppColors.goldLight)),
+          TextSpan(text: 'Poto'),
+          TextSpan(text: 'os', style: TextStyle(color: AppColors.brightGold)),
         ],
       ),
     );

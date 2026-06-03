@@ -14,6 +14,7 @@ import '../models/album.dart';
 import '../models/album_member.dart';
 import '../models/media_file.dart';
 import '../providers/album_provider.dart';
+import '../../../core/widgets/poto_mascot.dart';
 import '../widgets/album_empty_state.dart';
 import '../widgets/gallery_tile.dart';
 
@@ -31,6 +32,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
             AlbumEmptyState(
               title: 'Album unavailable',
               message: 'Open an album from your album list.',
+              expression: PotoExpression.error,
               actionLabel: 'Back to Albums',
               onAction: () =>
                   Navigator.pushReplacementNamed(context, AppRoutes.home),
@@ -67,6 +69,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
               title: 'Album access unavailable',
               message:
                   'You may have been removed from this album, or your access changed. Open Albums to refresh your private spaces.',
+              expression: PotoExpression.error,
               actionLabel: 'Back to Albums',
               onAction: () =>
                   Navigator.pushReplacementNamed(context, AppRoutes.home),
@@ -253,6 +256,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
               error: (error, _) => AlbumEmptyState(
                 title: 'Files unavailable',
                 message: AppError.messageFor(error),
+                expression: PotoExpression.error,
                 actionLabel: 'Try Again',
                 onAction: () =>
                     ref.invalidate(albumMediaFilesProvider(album.id)),
@@ -342,6 +346,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
                   error: (error, _) => AlbumEmptyState(
                     title: 'Members unavailable',
                     message: AppError.messageFor(error),
+                    expression: PotoExpression.error,
                     actionLabel: 'Try Again',
                     onAction: () =>
                         ref.invalidate(albumMembersProvider(album.id)),

@@ -26,7 +26,8 @@ class MemoryStatCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppColors.white,
-          border: Border.all(color: AppColors.maroon.withValues(alpha: 0.10), width: 0.6),
+          border: Border.all(
+              color: AppColors.maroon.withValues(alpha: 0.10), width: 0.6),
           borderRadius: BorderRadius.circular(18),
         ),
         child: Column(
@@ -37,8 +38,12 @@ class MemoryStatCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
-                Text(label, style: const TextStyle(color: AppColors.mutedInk, fontSize: 10.5)),
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 17, fontWeight: FontWeight.w800)),
+                Text(label,
+                    style: const TextStyle(
+                        color: AppColors.mutedInk, fontSize: 10.5)),
               ],
             ),
           ],

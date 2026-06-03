@@ -18,7 +18,7 @@ class QualityTestLog {
   }) {
     if (!kDebugMode) return;
 
-    debugPrint('[LitratoLink Quality] Original upload');
+    debugPrint('[Potoos Quality] Original upload');
     debugPrint('  filename: $filename');
     debugPrint('  size_bytes: $sizeBytes');
     debugPrint('  mime_type: $mimeType');
@@ -38,7 +38,7 @@ class QualityTestLog {
   }) {
     if (!kDebugMode) return;
 
-    debugPrint('[LitratoLink Quality] Downloaded original');
+    debugPrint('[Potoos Quality] Downloaded original');
     debugPrint('  filename: $filename');
     debugPrint('  downloaded_size_bytes: $downloadedSizeBytes');
     debugPrint('  expected_size_bytes: $expectedSizeBytes');

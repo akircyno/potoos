@@ -14,6 +14,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../models/album.dart';
 import '../providers/album_provider.dart';
 import '../widgets/album_card.dart';
+import '../../../core/widgets/poto_mascot.dart';
 import '../widgets/album_empty_state.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -179,6 +180,7 @@ class _AlbumsTab extends ConsumerWidget {
                 error: (error, _) => AlbumEmptyState(
                   title: 'Albums unavailable',
                   message: AppError.messageFor(error),
+                  expression: PotoExpression.error,
                   actionLabel: 'Try Again',
                   onAction: () => ref.invalidate(albumListProvider),
                 ),
@@ -254,6 +256,7 @@ class _InvitesTab extends ConsumerWidget {
           error: (error, _) => AlbumEmptyState(
             title: 'Invites unavailable',
             message: AppError.messageFor(error),
+            expression: PotoExpression.error,
             actionLabel: 'Try Again',
             onAction: () => ref.invalidate(albumListProvider),
           ),
@@ -428,6 +431,7 @@ class _NotificationsTab extends ConsumerWidget {
           error: (error, _) => AlbumEmptyState(
             title: 'Activity unavailable',
             message: AppError.messageFor(error),
+            expression: PotoExpression.error,
             actionLabel: 'Try Again',
             onAction: () => ref.invalidate(albumListProvider),
           ),
@@ -478,7 +482,7 @@ class _ProfileTab extends ConsumerWidget {
     final adminCount = albums.where((album) => album.canManageMembers).length;
     final displayName = profile?.displayName?.isNotEmpty == true
         ? profile!.displayName!
-        : 'LitratoLink User';
+        : 'Potoos User';
     final email = profile?.email.isNotEmpty == true
         ? profile!.email
         : 'Signed in with Google';
