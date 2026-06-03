@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
 import '../../../core/errors/app_error.dart';
-import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_screen.dart';
-import '../../../core/widgets/invite_form.dart';
-import '../../../core/widgets/role_chip.dart';
+import '../../../core/widgets/pressable_scale.dart';
+import '../../../core/widgets/poto_mascot.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../downloads/screens/save_all_screen.dart';
 import '../models/album.dart';
 import '../models/album_member.dart';
 import '../models/media_file.dart';
 import '../providers/album_provider.dart';
-import '../../../core/widgets/poto_mascot.dart';
 import '../widgets/album_empty_state.dart';
 import '../widgets/gallery_tile.dart';
 
@@ -45,21 +44,23 @@ class AlbumDetailsScreen extends ConsumerWidget {
     final album = routeAlbum;
     final filesAsync = ref.watch(albumMediaFilesProvider(album.id));
     final membersAsync = ref.watch(albumMembersProvider(album.id));
-    final inviteState = ref.watch(inviteMemberControllerProvider);
     final currentProfile = ref.watch(currentUserProfileProvider);
     final selectionMode = ref.watch(albumSelectionModeProvider(album.id));
     final selectedIds = ref.watch(selectedMediaIdsProvider(album.id));
+
     final loadedFiles = filesAsync.asData?.value;
+    final loadedMembers = membersAsync.asData?.value;
+
     final selectedFiles = loadedFiles
-            ?.where((file) => selectedIds.contains(file.id))
+            ?.where((f) => selectedIds.contains(f.id))
             .toList(growable: false) ??
         const <MediaFile>[];
     final hasSelection = selectedFiles.isNotEmpty;
-    final canSaveSelection = !selectionMode || hasSelection;
-    final filesForSaveAll =
+    final filesForSave =
         hasSelection ? selectedFiles : loadedFiles ?? const [];
+
     final visibleFileCount = loadedFiles?.length ?? album.fileCount;
-    final loadedMembers = membersAsync.asData?.value;
+
     if (loadedMembers != null && loadedMembers.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: const Text('Album Details')),
@@ -68,7 +69,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
             AlbumEmptyState(
               title: 'Album access unavailable',
               message:
-                  'You may have been removed from this album, or your access changed. Open Albums to refresh your private spaces.',
+                  'You may have been removed from this album. Go back to refresh your spaces.',
               expression: PotoExpression.error,
               actionLabel: 'Back to Albums',
               onAction: () =>
@@ -84,368 +85,270 @@ class AlbumDetailsScreen extends ConsumerWidget {
     final effectiveRole = currentMember?.role ?? album.role;
     final effectiveRoleLabel = _roleLabel(effectiveRole);
     final canUpload = _canUploadRole(effectiveRole);
-    final isAdmin = _canManageRole(effectiveRole);
+    final canSave = !selectionMode || hasSelection;
 
-    return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 0,
-        backgroundColor: AppColors.deepMaroon,
-        automaticallyImplyLeading: false,
-      ),
-      body: AppScreen(
-        padding: EdgeInsets.zero,
-        children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-            decoration: const BoxDecoration(
-              color: AppColors.deepMaroon,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    InkWell(
-                      onTap: () => Navigator.pop(context),
-                      borderRadius: BorderRadius.circular(8),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: AppColors.warmCream,
+        body: Stack(
+          children: [
+            CustomScrollView(
+              slivers: [
+                // ── Cover header ─────────────────────────────────────────────
+                SliverAppBar(
+                  expandedHeight: 220,
+                  pinned: true,
+                  stretch: true,
+                  backgroundColor: album.coverColors.isNotEmpty
+                      ? album.coverColors.first
+                      : AppColors.deepMaroon,
+                  foregroundColor: AppColors.white,
+                  automaticallyImplyLeading: false,
+                  leading: const _BackButton(),
+                  title: Text(
+                    album.name,
+                    style: const TextStyle(
+                      fontFamily: AppTheme.headingFont,
+                      color: AppColors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  actions: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 14, top: 8),
                       child: Container(
-                        width: 28,
-                        height: 28,
-                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.white.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(8),
+                          color: AppColors.white.withValues(alpha: 0.18),
+                          border: Border.all(
+                              color: AppColors.white.withValues(alpha: 0.28),
+                              width: 0.5),
+                          borderRadius:
+                              BorderRadius.circular(AppSpacing.radiusPill),
                         ),
-                        child: const Icon(Icons.chevron_left,
-                            color: AppColors.white, size: 18),
+                        child: Text(
+                          effectiveRoleLabel.toUpperCase(),
+                          style: const TextStyle(
+                            color: AppColors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text('Albums',
-                        style: TextStyle(
-                            color: AppColors.white.withValues(alpha: 0.70),
-                            fontSize: 13)),
                   ],
+                  flexibleSpace: FlexibleSpaceBar(
+                    stretchModes: const [StretchMode.zoomBackground],
+                    background: _CoverBackground(
+                      album: album,
+                      visibleFileCount: visibleFileCount,
+                      visibleMemberCount: visibleMemberCount,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  album.name,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineLarge
-                      ?.copyWith(color: AppColors.warmCream),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 6,
-                  children: [
-                    _HeaderMeta(
-                        icon: Icons.photo_outlined,
-                        label: '$visibleFileCount files'),
-                    _HeaderMeta(
-                        icon: Icons.group_outlined,
-                        label: '$visibleMemberCount members'),
-                    _HeaderMeta(
-                        icon: Icons.verified_user_outlined,
-                        label: 'Your role: $effectiveRoleLabel'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-            child: Row(
-              children: [
-                if (canUpload) ...[
-                  Expanded(
-                    child: _ActionButton(
-                      label: 'Upload',
-                      icon: Icons.upload,
-                      color: AppColors.maroon,
-                      foreground: AppColors.white,
-                      onTap: () => Navigator.pushNamed(
+
+                // ── Action strip ──────────────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.md, AppSpacing.md, AppSpacing.md, 0),
+                    child: _ActionStrip(
+                      canUpload: canUpload,
+                      selectionMode: selectionMode,
+                      selectedCount: selectedFiles.length,
+                      canSave: canSave,
+                      onUpload: () => Navigator.pushNamed(
                           context, AppRoutes.upload,
+                          arguments: album),
+                      onSave: canSave
+                          ? () => Navigator.pushNamed(
+                                context,
+                                AppRoutes.saveAll,
+                                arguments: SaveAllArgs(
+                                    album: album, files: filesForSave),
+                              )
+                          : null,
+                      onMembers: () => Navigator.pushNamed(
+                          context, AppRoutes.members,
                           arguments: album),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                ],
-                Expanded(
-                  child: _ActionButton(
-                    label: selectionMode
-                        ? hasSelection
-                            ? 'Save ${selectedFiles.length}'
-                            : 'Save Selected'
-                        : 'Save All',
-                    icon: Icons.save_alt,
-                    color: AppColors.goldFaint,
-                    foreground: AppColors.softGold,
-                    onTap: canSaveSelection
-                        ? () => Navigator.pushNamed(
-                              context,
-                              AppRoutes.saveAll,
-                              arguments: SaveAllArgs(
-                                album: album,
-                                files: filesForSaveAll,
-                              ),
-                            )
-                        : null,
-                  ),
                 ),
-                const SizedBox(width: 8),
-                _ActionButton(
-                  label: 'Members',
-                  icon: Icons.group_outlined,
-                  color: AppColors.maroonFaint,
-                  foreground: AppColors.maroon,
-                  onTap: () => Navigator.pushNamed(
-                    context,
-                    AppRoutes.members,
-                    arguments: album,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    selectionMode
-                        ? '${selectedIds.length} selected'
-                        : '$visibleFileCount memories',
-                    style: TextStyle(
-                        color: AppColors.mutedInk,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500),
-                  ),
-                ),
-                TextButton(
-                  onPressed: loadedFiles == null || loadedFiles.isEmpty
-                      ? null
-                      : () {
-                          final selectionNotifier = ref.read(
-                              albumSelectionModeProvider(album.id).notifier);
-                          final selectedNotifier = ref.read(
-                              selectedMediaIdsProvider(album.id).notifier);
-                          final nextMode = !selectionMode;
-                          selectionNotifier.setEnabled(nextMode);
-                          if (!nextMode) selectedNotifier.clear();
-                        },
-                  child: Text(selectionMode ? 'Done' : 'Select',
-                      style: const TextStyle(
-                          color: AppColors.softGold, fontSize: 11)),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: filesAsync.when(
-              loading: () => const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: CircularProgressIndicator(color: AppColors.softGold),
-                ),
-              ),
-              error: (error, _) => AlbumEmptyState(
-                title: 'Files unavailable',
-                message: AppError.messageFor(error),
-                expression: PotoExpression.error,
-                actionLabel: 'Try Again',
-                onAction: () =>
-                    ref.invalidate(albumMediaFilesProvider(album.id)),
-              ),
-              data: (files) => files.isEmpty
-                  ? AlbumEmptyState(
-                      title: 'No files yet',
-                      message: canUpload
-                          ? 'Upload the first original-quality photo or video for this album.'
-                          : 'Completed uploads will appear here.',
-                      actionLabel: canUpload ? 'Upload' : null,
-                      onAction: canUpload
-                          ? () => Navigator.pushNamed(context, AppRoutes.upload,
-                              arguments: album)
-                          : null,
-                    )
-                  : Column(
+
+                // ── Count + select toggle ─────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.md, AppSpacing.md, AppSpacing.md, 0),
+                    child: Row(
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: files.length,
+                        Expanded(
+                          child: Text(
+                            selectionMode
+                                ? '${selectedIds.length} selected'
+                                : '$visibleFileCount originals',
+                            style: const TextStyle(
+                              color: AppColors.mutedInk,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: loadedFiles == null || loadedFiles.isEmpty
+                              ? null
+                              : () {
+                                  final selNotifier = ref.read(
+                                      albumSelectionModeProvider(album.id)
+                                          .notifier);
+                                  final idsNotifier = ref.read(
+                                      selectedMediaIdsProvider(album.id)
+                                          .notifier);
+                                  final next = !selectionMode;
+                                  selNotifier.setEnabled(next);
+                                  if (!next) idsNotifier.clear();
+                                },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            child: Text(
+                              selectionMode ? 'Done' : 'Select',
+                              style: TextStyle(
+                                color: (loadedFiles == null ||
+                                        loadedFiles.isEmpty)
+                                    ? AppColors.featherTaupe
+                                    : AppColors.brightGold,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // ── File grid ─────────────────────────────────────────────────
+                filesAsync.when(
+                  loading: () => const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(48),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.brightGold,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  error: (error, _) => SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+                      child: AlbumEmptyState(
+                        title: 'Could not load files',
+                        message: AppError.messageFor(error),
+                        expression: PotoExpression.error,
+                        actionLabel: 'Try Again',
+                        onAction: () =>
+                            ref.invalidate(albumMediaFilesProvider(album.id)),
+                      ),
+                    ),
+                  ),
+                  data: (files) => files.isEmpty
+                      ? SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                                AppSpacing.md,
+                                AppSpacing.sm,
+                                AppSpacing.md,
+                                0),
+                            child: AlbumEmptyState(
+                              title: 'Nothing here yet.',
+                              message: canUpload
+                                  ? 'Be the first to add something. Poto is ready when you are.'
+                                  : 'Files will show up when someone uploads.',
+                              actionLabel: canUpload ? 'Upload' : null,
+                              onAction: canUpload
+                                  ? () => Navigator.pushNamed(
+                                      context, AppRoutes.upload,
+                                      arguments: album)
+                                  : null,
+                            ),
+                          ),
+                        )
+                      : SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+                          sliver: SliverGrid.builder(
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 3,
-                              crossAxisSpacing: 3,
-                              mainAxisSpacing: 3,
+                              crossAxisSpacing: 2,
+                              mainAxisSpacing: 2,
                               childAspectRatio: 1,
                             ),
+                            itemCount: files.length,
                             itemBuilder: (context, index) {
+                              final file = files[index];
                               return GalleryTile(
-                                file: files[index],
+                                file: file,
                                 selectionMode: selectionMode,
-                                selected: selectedIds.contains(files[index].id),
+                                selected: selectedIds.contains(file.id),
                                 onTap: selectionMode
                                     ? () => _toggleSelectedFile(
                                           ref,
                                           albumId: album.id,
-                                          fileId: files[index].id,
+                                          fileId: file.id,
                                         )
                                     : () => Navigator.pushNamed(
                                         context, AppRoutes.filePreview,
-                                        arguments: files[index]),
+                                        arguments: file),
                               );
                             },
                           ),
                         ),
-                        const SizedBox(height: 14),
-                        for (final file in files) ...[
-                          _FileMetadataRow(
-                            file: file,
-                            selectionMode: selectionMode,
-                            selected: selectedIds.contains(file.id),
-                            onTap: selectionMode
-                                ? () => _toggleSelectedFile(
-                                      ref,
-                                      albumId: album.id,
-                                      fileId: file.id,
-                                    )
-                                : () => Navigator.pushNamed(
-                                    context, AppRoutes.filePreview,
-                                    arguments: file),
-                          ),
-                          const SizedBox(height: 8),
-                        ],
-                      ],
-                    ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Members', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 10),
-                membersAsync.when(
-                  loading: () => const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child:
-                          CircularProgressIndicator(color: AppColors.softGold),
-                    ),
-                  ),
-                  error: (error, _) => AlbumEmptyState(
-                    title: 'Members unavailable',
-                    message: AppError.messageFor(error),
-                    expression: PotoExpression.error,
-                    actionLabel: 'Try Again',
-                    onAction: () =>
-                        ref.invalidate(albumMembersProvider(album.id)),
-                  ),
-                  data: (members) => Column(
-                    children: [
-                      for (final member in members) ...[
-                        _MemberRow(
-                          member: member,
-                          canManageMember:
-                              isAdmin && currentProfile?.id != member.userId,
-                          canEditRole: member.email?.isNotEmpty == true,
-                          isSaving: inviteState.isSending,
-                          onRoleSelected: (role) {
-                            final email = member.email;
-                            if (email == null || email.isEmpty) return;
-                            ref
-                                .read(inviteMemberControllerProvider.notifier)
-                                .invite(
-                                  albumId: album.id,
-                                  email: email,
-                                  role: role,
-                                );
-                          },
-                          onRemoveSelected: () => _confirmRemoveMember(
-                            context,
-                            ref,
-                            album: album,
-                            member: member,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    ],
-                  ),
                 ),
-                if (isAdmin) ...[
-                  const SizedBox(height: 10),
-                  AppCard(
-                    child: InviteForm(
-                      isSending: inviteState.isSending,
-                      successMessage: inviteState.successMessage,
-                      errorMessage: inviteState.errorMessage,
-                      onInvite: (email, role) {
-                        return ref
-                            .read(inviteMemberControllerProvider.notifier)
-                            .invite(
-                              albumId: album.id,
-                              email: email,
-                              role: role,
-                            );
-                      },
-                    ),
-                  ),
-                ],
+
+                // Bottom padding — extra clearance for the sticky selection bar
+                SliverToBoxAdapter(
+                  child:
+                      SizedBox(height: selectionMode && hasSelection ? 84 : 32),
+                ),
               ],
             ),
-          ),
-          const SizedBox(height: 24),
-        ],
+
+            // ── Sticky selection bar ──────────────────────────────────────────
+            if (selectionMode)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: _SelectionBar(
+                  selectedCount: selectedFiles.length,
+                  onSave: hasSelection
+                      ? () => Navigator.pushNamed(
+                            context,
+                            AppRoutes.saveAll,
+                            arguments: SaveAllArgs(
+                                album: album, files: selectedFiles),
+                          )
+                      : null,
+                  onClear: () => ref
+                      .read(selectedMediaIdsProvider(album.id).notifier)
+                      .clear(),
+                ),
+              ),
+          ],
+        ),
       ),
     );
-  }
-
-  Future<void> _confirmRemoveMember(
-    BuildContext context,
-    WidgetRef ref, {
-    required Album album,
-    required AlbumMember member,
-  }) async {
-    final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) => AlertDialog(
-            title: const Text('Remove member?'),
-            content: Text('Remove ${member.title} from ${album.name}?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.maroon,
-                  foregroundColor: AppColors.white,
-                ),
-                onPressed: () => Navigator.of(dialogContext).pop(true),
-                child: const Text('Remove'),
-              ),
-            ],
-          ),
-        ) ??
-        false;
-
-    if (!confirmed || !context.mounted) return;
-
-    await ref.read(inviteMemberControllerProvider.notifier).remove(
-          albumId: album.id,
-          member: member,
-        );
   }
 
   void _toggleSelectedFile(
@@ -458,11 +361,9 @@ class AlbumDetailsScreen extends ConsumerWidget {
 
   AlbumMember? _currentMember(List<AlbumMember>? members, String? profileId) {
     if (members == null || profileId == null || profileId.isEmpty) return null;
-
-    for (final member in members) {
-      if (member.userId == profileId) return member;
+    for (final m in members) {
+      if (m.userId == profileId) return m;
     }
-
     return null;
   }
 
@@ -472,182 +373,357 @@ class AlbumDetailsScreen extends ConsumerWidget {
   }
 
   bool _canUploadRole(String role) {
-    final normalized = role.toLowerCase();
-    return normalized == 'admin' || normalized == 'contributor';
-  }
-
-  bool _canManageRole(String role) {
-    return role.toLowerCase() == 'admin';
+    final r = role.toLowerCase();
+    return r == 'admin' || r == 'contributor';
   }
 }
 
-class _FileMetadataRow extends StatelessWidget {
-  const _FileMetadataRow({
-    required this.file,
-    required this.onTap,
-    this.selectionMode = false,
-    this.selected = false,
-  });
+// ── Private widgets ───────────────────────────────────────────────────────────
 
-  final MediaFile file;
-  final VoidCallback onTap;
-  final bool selectionMode;
-  final bool selected;
+class _BackButton extends StatelessWidget {
+  const _BackButton();
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.white,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+    return Center(
+      child: PressableScale(
+        onTap: () => Navigator.pop(context),
+        borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.creamLine, width: 0.5),
-            borderRadius: BorderRadius.circular(8),
+            color: AppColors.white.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Row(
-            children: [
-              if (selectionMode)
-                Icon(
-                  selected ? Icons.check_circle : Icons.radio_button_unchecked,
-                  color: selected ? AppColors.maroon : AppColors.mutedInk,
-                  size: 18,
-                )
-              else
-                Icon(
-                  fileTypeIcon(file),
-                  color: AppColors.maroon,
-                  size: 18,
-                ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      file.originalFilename,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 12),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '${file.fileSizeLabel} - ${file.mimeType} - ${file.uploadedLabel}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          color: AppColors.mutedInk, fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-              if (!selectionMode)
-                const Icon(Icons.chevron_right,
-                    color: AppColors.mutedInk, size: 18),
-            ],
-          ),
+          child: const Icon(Icons.chevron_left,
+              color: AppColors.white, size: 20),
         ),
       ),
     );
   }
 }
 
-class _MemberRow extends StatelessWidget {
-  const _MemberRow({
-    required this.member,
-    this.canManageMember = false,
-    this.canEditRole = false,
-    this.isSaving = false,
-    this.onRoleSelected,
-    this.onRemoveSelected,
+class _CoverBackground extends StatelessWidget {
+  const _CoverBackground({
+    required this.album,
+    required this.visibleFileCount,
+    required this.visibleMemberCount,
   });
 
-  final AlbumMember member;
-  final bool canManageMember;
-  final bool canEditRole;
-  final bool isSaving;
-  final ValueChanged<String>? onRoleSelected;
-  final VoidCallback? onRemoveSelected;
+  final Album album;
+  final int visibleFileCount;
+  final int visibleMemberCount;
 
   @override
   Widget build(BuildContext context) {
-    final normalizedRole = member.role.toLowerCase();
-
-    return AppCard(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.maroonFaint,
-            foregroundColor: AppColors.maroon,
-            child: Text(
-              member.title.substring(0, 1).toUpperCase(),
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: album.coverColors.isNotEmpty
+                  ? album.coverColors
+                  : [AppColors.deepMaroon, AppColors.velvetMaroon],
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  member.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 12),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  member.subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style:
-                      const TextStyle(color: AppColors.mutedInk, fontSize: 11),
-                ),
-              ],
+        ),
+        Positioned.fill(
+          child: Opacity(
+            opacity: 0.07,
+            child: GridPaper(
+              color: AppColors.white,
+              divisions: 1,
+              interval: 16,
+              subdivisions: 1,
             ),
           ),
-          RoleChip(label: member.roleLabel, selected: true),
-          if (canManageMember) ...[
-            const SizedBox(width: 4),
-            PopupMenuButton<String>(
-              enabled: !isSaving,
-              tooltip: 'Manage member',
-              icon: const Icon(
-                Icons.more_horiz,
-                color: AppColors.mutedInk,
-                size: 18,
+        ),
+        // Bottom scrim for text readability
+        const Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: SizedBox(
+            height: 110,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Color(0x55000000)],
+                ),
               ),
-              onSelected: (value) {
-                if (value == 'remove') {
-                  onRemoveSelected?.call();
-                  return;
-                }
-
-                if (value == normalizedRole) return;
-                onRoleSelected?.call(value);
-              },
-              itemBuilder: (context) => [
-                if (canEditRole) ...const [
-                  PopupMenuItem(value: 'admin', child: Text('Admin')),
-                  PopupMenuItem(
-                      value: 'contributor', child: Text('Contributor')),
-                  PopupMenuItem(value: 'viewer', child: Text('Viewer')),
-                  PopupMenuDivider(),
-                ],
-                const PopupMenuItem(
-                  value: 'remove',
-                  child: Text('Remove member'),
+            ),
+          ),
+        ),
+        // Album name + meta row
+        Positioned(
+          bottom: 16,
+          left: 16,
+          right: 16,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                album.name,
+                style: const TextStyle(
+                  fontFamily: AppTheme.headingFont,
+                  color: AppColors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.4,
+                  shadows: [
+                    Shadow(
+                        color: Colors.black26,
+                        offset: Offset(0, 1),
+                        blurRadius: 4),
+                  ],
                 ),
-              ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _HeaderMeta(
+                      icon: Icons.photo_outlined,
+                      label: '$visibleFileCount originals'),
+                  const SizedBox(width: 16),
+                  _HeaderMeta(
+                      icon: Icons.group_outlined,
+                      label: '$visibleMemberCount members'),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionStrip extends StatelessWidget {
+  const _ActionStrip({
+    required this.canUpload,
+    required this.selectionMode,
+    required this.selectedCount,
+    required this.canSave,
+    required this.onUpload,
+    required this.onSave,
+    required this.onMembers,
+  });
+
+  final bool canUpload;
+  final bool selectionMode;
+  final int selectedCount;
+  final bool canSave;
+  final VoidCallback onUpload;
+  final VoidCallback? onSave;
+  final VoidCallback onMembers;
+
+  @override
+  Widget build(BuildContext context) {
+    final saveLabel = selectionMode && selectedCount > 0
+        ? 'Save $selectedCount'
+        : 'Save All';
+
+    return Row(
+      children: [
+        if (canUpload) ...[
+          Expanded(
+            child: _ActionPill(
+              label: 'Upload',
+              icon: Icons.upload_outlined,
+              background: AppColors.velvetMaroon,
+              foreground: AppColors.pearlCream,
+              onTap: onUpload,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+        ],
+        Expanded(
+          child: _ActionPill(
+            label: saveLabel,
+            icon: Icons.save_alt_outlined,
+            background: AppColors.brightGold.withValues(alpha: 0.13),
+            foreground: AppColors.softGold,
+            border: Border.all(
+                color: AppColors.brightGold.withValues(alpha: 0.28),
+                width: 0.8),
+            onTap: canSave ? onSave : null,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        _ActionPill(
+          label: 'Members',
+          icon: Icons.group_outlined,
+          background: AppColors.velvetMaroon.withValues(alpha: 0.08),
+          foreground: AppColors.velvetMaroon,
+          onTap: onMembers,
+          compact: true,
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionPill extends StatelessWidget {
+  const _ActionPill({
+    required this.label,
+    required this.icon,
+    required this.background,
+    required this.foreground,
+    required this.onTap,
+    this.border,
+    this.compact = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color background;
+  final Color foreground;
+  final VoidCallback? onTap;
+  final Border? border;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDisabled = onTap == null;
+    final bg = isDisabled ? AppColors.creamLine : background;
+    final fg = isDisabled ? AppColors.featherTaupe : foreground;
+
+    return PressableScale(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      child: Container(
+        height: 42,
+        padding: compact
+            ? const EdgeInsets.symmetric(horizontal: 14)
+            : null,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          border: isDisabled ? null : border,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: fg, size: 15),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: fg,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectionBar extends StatelessWidget {
+  const _SelectionBar({
+    required this.selectedCount,
+    required this.onSave,
+    required this.onClear,
+  });
+
+  final int selectedCount;
+  final VoidCallback? onSave;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        border: const Border(
+            top: BorderSide(color: AppColors.creamLine, width: 0.8)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.midnightBurgundy.withValues(alpha: 0.10),
+            blurRadius: 24,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.fromLTRB(
+          AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.sm + bottomPad),
+      child: Row(
+        children: [
+          Text(
+            selectedCount > 0
+                ? '$selectedCount selected'
+                : 'Tap photos to select',
+            style: TextStyle(
+              color: selectedCount > 0
+                  ? AppColors.charcoalInk
+                  : AppColors.featherTaupe,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const Spacer(),
+          PressableScale(
+            onTap: onClear,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            child: Container(
+              height: 36,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.warmCream,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                border: Border.all(color: AppColors.creamLine),
+              ),
+              child: const Text(
+                'Clear',
+                style: TextStyle(
+                  color: AppColors.charcoalInk,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          PressableScale(
+            onTap: onSave,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            child: Container(
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: onSave != null
+                    ? AppColors.brightGold
+                    : AppColors.creamLine,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              ),
+              child: Text(
+                selectedCount > 0 ? 'Save $selectedCount' : 'Select photos',
+                style: TextStyle(
+                  color: onSave != null
+                      ? AppColors.deepMaroon
+                      : AppColors.featherTaupe,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -666,64 +742,16 @@ class _HeaderMeta extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon,
-            color: AppColors.warmCream.withValues(alpha: 0.60), size: 12),
+            color: AppColors.warmCream.withValues(alpha: 0.65), size: 12),
         const SizedBox(width: 4),
-        Text(label,
-            style: TextStyle(
-                color: AppColors.warmCream.withValues(alpha: 0.60),
-                fontSize: 11)),
-      ],
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.foreground,
-    this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color color;
-  final Color foreground;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: onTap == null ? AppColors.creamLine : color,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          height: 40,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            border: Border.all(
-                color: AppColors.maroon.withValues(alpha: 0.12), width: 0.5),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon,
-                  color: onTap == null ? AppColors.mutedInk : foreground,
-                  size: 14),
-              const SizedBox(width: 6),
-              Text(label,
-                  style: TextStyle(
-                      color: onTap == null ? AppColors.mutedInk : foreground,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500)),
-            ],
+        Text(
+          label,
+          style: TextStyle(
+            color: AppColors.warmCream.withValues(alpha: 0.65),
+            fontSize: 11,
           ),
         ),
-      ),
+      ],
     );
   }
 }
