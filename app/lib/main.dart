@@ -17,21 +17,27 @@ Future<void> main() async {
     );
   }
 
-  await SentryFlutter.init(
-    (options) {
-      options.dsn = env.sentryDsn;
-      // Sample 100% of errors, 20% of performance traces
-      options.tracesSampleRate = 0.20;
-      // Only send events in production
-      options.environment = env.appEnv;
-    },
-    appRunner: () => runApp(
-      ProviderScope(
-        overrides: [
-          appEnvProvider.overrideWithValue(env),
-        ],
-        child: const PotoosApp(),
-      ),
+  if (env.hasSentryConfig) {
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = env.sentryDsn;
+        options.environment = env.appEnv;
+        options.tracesSampleRate = 0.20;
+      },
+      appRunner: () => _runPotoosApp(env),
+    );
+  } else {
+    _runPotoosApp(env);
+  }
+}
+
+void _runPotoosApp(AppEnv env) {
+  runApp(
+    ProviderScope(
+      overrides: [
+        appEnvProvider.overrideWithValue(env),
+      ],
+      child: const PotoosApp(),
     ),
   );
 }

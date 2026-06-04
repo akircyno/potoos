@@ -42,6 +42,7 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
           GOOGLE_IOS_CLIENT_ID: ${{ secrets.GOOGLE_IOS_CLIENT_ID }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           {
             echo "APP_ENV=${APP_ENV}"
@@ -49,6 +50,7 @@ jobs:
             echo "SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}"
             echo "GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID}"
             echo "GOOGLE_IOS_CLIENT_ID=${GOOGLE_IOS_CLIENT_ID}"
+            echo "SENTRY_DSN=${SENTRY_DSN}"
           } > env.properties
 
       - name: Install dependencies

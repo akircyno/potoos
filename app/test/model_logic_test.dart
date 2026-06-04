@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:potoos/config/env.dart';
 import 'package:potoos/core/errors/app_error.dart';
 import 'package:potoos/features/albums/models/album.dart';
 import 'package:potoos/features/downloads/screens/save_all_screen.dart';
@@ -9,6 +10,33 @@ import 'package:potoos/features/auth/data/auth_repository.dart';
 import 'package:potoos/features/downloads/models/downloaded_file.dart';
 
 void main() {
+  group('AppEnv', () {
+    test('treats a blank Sentry DSN as disabled', () {
+      const env = AppEnv(
+        appEnv: 'test',
+        supabaseUrl: '',
+        supabaseAnonKey: '',
+        googleWebClientId: '',
+        googleIosClientId: '',
+      );
+
+      expect(env.hasSentryConfig, isFalse);
+    });
+
+    test('treats a populated Sentry DSN as enabled', () {
+      const env = AppEnv(
+        appEnv: 'production',
+        supabaseUrl: '',
+        supabaseAnonKey: '',
+        googleWebClientId: '',
+        googleIosClientId: '',
+        sentryDsn: 'https://public@example.ingest.sentry.io/1',
+      );
+
+      expect(env.hasSentryConfig, isTrue);
+    });
+  });
+
   group('Album role helpers', () {
     test('allow Admin and Contributor to upload', () {
       expect(_albumWithRole('Admin').canUpload, isTrue);

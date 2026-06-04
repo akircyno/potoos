@@ -26,6 +26,10 @@ class AppEnv {
     return supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
   }
 
+  bool get hasSentryConfig {
+    return sentryDsn.trim().isNotEmpty;
+  }
+
   static Future<AppEnv> load() async {
     // Note: GitHub Pages does not serve files whose names begin with a dot,
     // so the web runtime config is shipped as a non-hidden `env.properties`
@@ -38,7 +42,7 @@ class AppEnv {
       supabaseAnonKey: dotenv.maybeGet('SUPABASE_ANON_KEY', fallback: '') ?? '',
       googleWebClientId: dotenv.maybeGet('GOOGLE_WEB_CLIENT_ID', fallback: '') ?? '',
       googleIosClientId: dotenv.maybeGet('GOOGLE_IOS_CLIENT_ID', fallback: '') ?? '',
-      sentryDsn: dotenv.maybeGet('SENTRY_DSN', fallback: '') ?? '',
+      sentryDsn: (dotenv.maybeGet('SENTRY_DSN', fallback: '') ?? '').trim(),
     );
   }
 }
