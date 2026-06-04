@@ -23,9 +23,13 @@ class NotificationItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         border: Border.all(
-          color: unread ? AppColors.brightGold : AppColors.creamLine,
+          color: unread
+              ? AppColors.brightGold.withValues(alpha: 0.40)
+              : AppColors.creamLine,
+          width: 0.8,
         ),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        boxShadow: AppShadows.card,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

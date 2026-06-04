@@ -254,7 +254,8 @@ class _InvitesTab extends ConsumerWidget {
           loading: () => const Center(
             child: Padding(
               padding: EdgeInsets.all(24),
-              child: CircularProgressIndicator(color: AppColors.softGold),
+              child: CircularProgressIndicator(
+                  color: AppColors.brightGold, strokeWidth: 2),
             ),
           ),
           error: (error, _) => AlbumEmptyState(
@@ -267,10 +268,10 @@ class _InvitesTab extends ConsumerWidget {
           data: (albums) {
             if (albums.isEmpty) {
               return AlbumEmptyState(
-                title: 'No albums yet',
+                title: 'No spaces yet.',
                 message:
-                    'Create an album before inviting people to a private space.',
-                actionLabel: 'Create Album',
+                    'Create a space first, then invite the people who were actually there.',
+                actionLabel: 'Create a space',
                 onAction: () =>
                     Navigator.pushNamed(context, AppRoutes.createAlbum),
               );
@@ -284,17 +285,10 @@ class _InvitesTab extends ConsumerWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (adminAlbums.isEmpty)
-                  const AppCard(
-                    child: Text(
-                      'Only Admins can add members or change roles.',
-                      style: TextStyle(color: AppColors.mutedInk, height: 1.4),
-                    ),
-                  )
-                else ...[
-                  Text('Albums you manage',
+                if (adminAlbums.isNotEmpty) ...[
+                  Text('Spaces you manage.',
                       style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.sm),
                   for (final album in adminAlbums) ...[
                     _InviteAlbumRow(
                       album: album,
@@ -304,19 +298,20 @@ class _InvitesTab extends ConsumerWidget {
                         arguments: album,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: AppSpacing.sm),
                   ],
                 ],
                 if (sharedAlbums.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Text('Your access',
+                  if (adminAlbums.isNotEmpty)
+                    const SizedBox(height: AppSpacing.sm),
+                  Text('Spaces you\'re in.',
                       style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 4),
                   const Text(
-                    'Tap a row to open the Members screen and leave if needed.',
+                    'Open a space to see its members, or leave from the Members screen.',
                     style: TextStyle(color: AppColors.mutedInk, fontSize: 11),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.sm),
                   for (final album in sharedAlbums) ...[
                     _InviteAlbumRow(
                       album: album,
@@ -326,9 +321,18 @@ class _InvitesTab extends ConsumerWidget {
                         arguments: album,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: AppSpacing.sm),
                   ],
                 ],
+                if (adminAlbums.isEmpty && sharedAlbums.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.sm),
+                    child: Text(
+                      'You\'re a member in ${sharedAlbums.length} space${sharedAlbums.length == 1 ? '' : 's'} but don\'t manage any. Admins can invite and change roles.',
+                      style: const TextStyle(
+                          color: AppColors.featherTaupe, fontSize: 12, height: 1.5),
+                    ),
+                  ),
               ],
             );
           },
@@ -339,10 +343,7 @@ class _InvitesTab extends ConsumerWidget {
 }
 
 class _InviteAlbumRow extends StatelessWidget {
-  const _InviteAlbumRow({
-    required this.album,
-    required this.onTap,
-  });
+  const _InviteAlbumRow({required this.album, required this.onTap});
 
   final Album album;
   final VoidCallback onTap;
@@ -351,20 +352,23 @@ class _InviteAlbumRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       onTap: onTap,
+      padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.maroonFaint,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.group_add_outlined,
-              color: AppColors.maroon,
-              size: 20,
+          // Album thumbnail or gradient swatch
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            child: SizedBox(
+              width: 44,
+              height: 44,
+              child: album.coverThumbnailUrl != null
+                  ? Image.network(
+                      album.coverThumbnailUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          _AlbumSwatch(album: album),
+                    )
+                  : _AlbumSwatch(album: album),
             ),
           ),
           const SizedBox(width: 12),
@@ -377,22 +381,21 @@ class _InviteAlbumRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
+                      fontWeight: FontWeight.w700, fontSize: 13,
+                      color: AppColors.charcoalInk),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '${album.memberCount} members - Your role: ${album.role}',
+                  '${album.memberCount} member${album.memberCount == 1 ? '' : 's'} · ${album.role}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style:
-                      const TextStyle(color: AppColors.mutedInk, fontSize: 11),
+                  style: const TextStyle(
+                      color: AppColors.featherTaupe, fontSize: 11),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
           Text(
             album.canManageMembers ? 'Manage' : 'View',
             style: const TextStyle(
@@ -402,8 +405,27 @@ class _InviteAlbumRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 4),
-          const Icon(Icons.chevron_right, color: AppColors.brightGold, size: 18),
+          const Icon(Icons.chevron_right,
+              color: AppColors.brightGold, size: 18),
         ],
+      ),
+    );
+  }
+}
+
+class _AlbumSwatch extends StatelessWidget {
+  const _AlbumSwatch({required this.album});
+  final Album album;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: album.coverColors,
+        ),
       ),
     );
   }
@@ -429,7 +451,8 @@ class _NotificationsTab extends ConsumerWidget {
           loading: () => const Center(
             child: Padding(
               padding: EdgeInsets.all(24),
-              child: CircularProgressIndicator(color: AppColors.softGold),
+              child: CircularProgressIndicator(
+                  color: AppColors.brightGold, strokeWidth: 2),
             ),
           ),
           error: (error, _) => AlbumEmptyState(
@@ -442,25 +465,45 @@ class _NotificationsTab extends ConsumerWidget {
           data: (albums) {
             if (albums.isEmpty) {
               return const AlbumEmptyState(
-                title: 'No activity yet',
+                title: 'Nothing yet.',
                 message:
-                    'Create an album and upload originals to start building activity.',
+                    'Create a space, upload your first original, and it will show up here.',
               );
             }
 
+            final withFiles =
+                albums.where((a) => a.fileCount > 0).toList();
+            final empty =
+                albums.where((a) => a.fileCount == 0).toList();
+
             return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (final album in albums) ...[
-                  NotificationItem(
-                    title: album.fileCount > 0
-                        ? '${album.fileCount} originals protected'
-                        : 'Album ready',
-                    message:
-                        '${album.name} has ${album.memberCount} member${album.memberCount == 1 ? '' : 's'}. Your role is ${album.role}.',
-                    time: album.updatedLabel,
-                    unread: album.fileCount > 0,
-                  ),
-                  const SizedBox(height: 10),
+                if (withFiles.isNotEmpty) ...[
+                  for (final album in withFiles) ...[
+                    NotificationItem(
+                      title:
+                          '${album.fileCount} original${album.fileCount == 1 ? '' : 's'} in ${album.name}.',
+                      message:
+                          '${album.memberCount} member${album.memberCount == 1 ? '' : 's'} · Your role: ${album.role}',
+                      time: album.updatedLabel,
+                      unread: true,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
+                ],
+                if (empty.isNotEmpty) ...[
+                  if (withFiles.isNotEmpty)
+                    const SizedBox(height: AppSpacing.sm),
+                  for (final album in empty) ...[
+                    NotificationItem(
+                      title: '${album.name} is ready.',
+                      message: 'No files yet. Be the first to add something.',
+                      time: album.updatedLabel,
+                      unread: false,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
                 ],
               ],
             );
