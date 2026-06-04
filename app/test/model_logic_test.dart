@@ -123,9 +123,20 @@ void main() {
       );
     });
 
-    test('collapses non-AppError exceptions to a generic fallback', () {
+    test('returns connectivity message for network errors', () {
       expect(
         AppError.messageFor(Exception('ClientException: failed host lookup')),
+        'No internet connection. Check your connection and try again.',
+      );
+      expect(
+        AppError.messageFor(Exception('SocketException: connection refused')),
+        'No internet connection. Check your connection and try again.',
+      );
+    });
+
+    test('collapses unknown exceptions to a generic fallback', () {
+      expect(
+        AppError.messageFor(Exception('some random server error')),
         'Something went wrong. Please try again.',
       );
       expect(
