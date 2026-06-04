@@ -134,8 +134,8 @@ Update the status column as each step is completed.
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 11.1 | Full Supabase RLS policy audit | ⬜ | Verify every table has correct row-level security |
-| 11.2 | Confirm no private file URLs are publicly accessible | ⬜ | |
+| 11.1 | Full Supabase RLS policy audit | ✅ | All 6 tables audited. Two gaps fixed via SQL migration (albums UPDATE + user_profiles UPDATE) |
+| 11.2 | Confirm no private file URLs are publicly accessible | ⬜ | Drive thumbnails are compressed previews — originals require Drive API auth |
 | 11.3 | Rate limiting on Edge Functions | ⬜ | Prevent upload/invite spam |
 | 11.4 | File access permission check on every download | ⬜ | |
 | 11.5 | Penetration test key flows (invite, upload, download) | ⬜ | Manual or automated |
