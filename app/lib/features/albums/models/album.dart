@@ -10,6 +10,7 @@ class Album {
     required this.memberCount,
     required this.updatedLabel,
     required this.coverColors,
+    this.coverThumbnailUrl,
   });
 
   final String id;
@@ -20,6 +21,7 @@ class Album {
   final int memberCount;
   final String updatedLabel;
   final List<Color> coverColors;
+  final String? coverThumbnailUrl;
 
   String get normalizedRole => role.toLowerCase();
 
@@ -32,6 +34,7 @@ class Album {
     final id = album['id']?.toString() ?? '';
     final name = album['name']?.toString() ?? 'Untitled album';
     final updatedAt = DateTime.tryParse(album['updated_at']?.toString() ?? '');
+    final rawThumb = album['cover_thumbnail_url']?.toString();
 
     return Album(
       id: id,
@@ -42,6 +45,9 @@ class Album {
       memberCount: memberCount,
       updatedLabel: _updatedLabel(updatedAt),
       coverColors: _coverColorsFor(id),
+      coverThumbnailUrl: (rawThumb != null && rawThumb.isNotEmpty)
+          ? rawThumb
+          : null,
     );
   }
 

@@ -650,28 +650,48 @@ class _CoverBackground extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: album.coverColors.isNotEmpty
-                  ? album.coverColors
-                  : [AppColors.deepMaroon, AppColors.velvetMaroon],
+        // Background: thumbnail photo or gradient
+        if (album.coverThumbnailUrl != null)
+          Image.network(
+            album.coverThumbnailUrl!,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: album.coverColors.isNotEmpty
+                      ? album.coverColors
+                      : [AppColors.deepMaroon, AppColors.velvetMaroon],
+                ),
+              ),
+            ),
+          )
+        else
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: album.coverColors.isNotEmpty
+                    ? album.coverColors
+                    : [AppColors.deepMaroon, AppColors.velvetMaroon],
+              ),
             ),
           ),
-        ),
-        Positioned.fill(
-          child: Opacity(
-            opacity: 0.07,
-            child: GridPaper(
-              color: AppColors.white,
-              divisions: 1,
-              interval: 16,
-              subdivisions: 1,
+        // Grid texture (gradient only, skip on photo)
+        if (album.coverThumbnailUrl == null)
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.07,
+              child: GridPaper(
+                color: AppColors.white,
+                divisions: 1,
+                interval: 16,
+                subdivisions: 1,
+              ),
             ),
           ),
-        ),
         // Bottom scrim for text readability
         const Positioned(
           bottom: 0,

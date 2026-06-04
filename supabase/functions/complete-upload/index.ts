@@ -83,6 +83,8 @@ Deno.serve(async (req) => {
     return error("UPLOAD_FAILED", "Upload size did not match. Please try again.", 400);
   }
 
+  let thumbnailUrl: string | null = null;
+
   try {
     const metadata = await getDriveFileMetadata(providerFileId);
     const googleSize = parseGoogleDriveSize(metadata.size);
@@ -96,6 +98,8 @@ Deno.serve(async (req) => {
       await markUploadFailed(mediaFileId);
       return error("UPLOAD_FAILED", "Uploaded file type did not match. Please try again.", 400);
     }
+
+    thumbnailUrl = metadata.thumbnailLink ?? null;
   } catch (driveError) {
     console.error("complete-upload Google Drive confirmation failed", driveError);
     await markUploadFailed(mediaFileId);
@@ -124,6 +128,7 @@ Deno.serve(async (req) => {
       file_size_bytes: finalFileSizeBytes,
       upload_status: "completed",
       uploaded_at: uploadedAt,
+      ...(thumbnailUrl ? { thumbnail_url: thumbnailUrl } : {}),
     })
     .eq("id", mediaFileId)
     .select("id, upload_status, uploaded_at")
@@ -133,6 +138,19 @@ Deno.serve(async (req) => {
     console.error("complete-upload media update failed", mediaUpdateError?.message);
     await markUploadFailed(mediaFileId);
     return error("SERVER_ERROR", "Could not finish the upload. Please try again.", 500);
+  }
+
+  // Update album cover thumbnail to the most recent file's thumbnail
+  if (thumbnailUrl) {
+    const { error: coverError } = await supabaseAdmin
+      .from("albums")
+      .update({ cover_thumbnail_url: thumbnailUrl })
+      .eq("id", mediaFile.album_id);
+
+    if (coverError) {
+      console.warn("complete-upload cover thumbnail update failed", coverError.message);
+      // Non-fatal — upload still succeeded
+    }
   }
 
   await touchAlbum(mediaFile.album_id);

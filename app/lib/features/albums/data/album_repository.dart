@@ -46,7 +46,7 @@ class AlbumRepository {
       final albumIds = memberships.map((member) => member.albumId).toList();
       final albumRows = await supabaseService.client
           .from('albums')
-          .select('id, name, description, updated_at')
+          .select('id, name, description, updated_at, cover_thumbnail_url')
           .inFilter('id', albumIds)
           .eq('is_deleted', false)
           .eq('is_archived', false)

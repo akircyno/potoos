@@ -4,6 +4,7 @@ export type DriveFileMetadata = {
   mimeType: string;
   parents?: string[];
   size?: string;
+  thumbnailLink?: string;
 };
 
 type UploadSessionParams = {
@@ -55,7 +56,7 @@ export async function getGoogleAccessToken() {
 export async function getDriveFileMetadata(fileId: string): Promise<DriveFileMetadata> {
   const accessToken = await getGoogleAccessToken();
   const params = new URLSearchParams({
-    fields: "id,name,mimeType,parents,size",
+    fields: "id,name,mimeType,parents,size,thumbnailLink",
   });
 
   const response = await fetch(
