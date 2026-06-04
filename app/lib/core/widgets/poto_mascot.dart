@@ -78,10 +78,10 @@ class _PotoWaveState extends State<PotoWave> with TickerProviderStateMixin {
       CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
 
-    // 120ms per frame × 6 frames = 720ms per full wave cycle
+    // 80ms per frame × 12 frames = 960ms per full wave cycle
     _frameController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 720),
+      duration: const Duration(milliseconds: 960),
     )..repeat();
   }
 
