@@ -15,6 +15,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../models/album.dart';
 import '../providers/album_provider.dart';
 import '../widgets/album_card.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/poto_mascot.dart';
 import '../widgets/album_empty_state.dart';
 
@@ -86,12 +87,14 @@ class _AlbumsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final albumsAsync = ref.watch(albumListProvider);
+    final archivedAsync = ref.watch(archivedAlbumsProvider);
     final profile = ref.watch(currentUserProfileProvider);
     final albums = albumsAsync.when<List<Album>>(
       data: (albums) => albums,
       loading: () => const [],
       error: (_, __) => const [],
     );
+    final archived = archivedAsync.asData?.value ?? const [];
     final fileCount =
         albums.fold<int>(0, (total, album) => total + album.fileCount);
     final memberCount =
@@ -214,6 +217,47 @@ class _AlbumsTab extends ConsumerWidget {
                       ),
               ),
             ),
+
+            // ── Archived spaces ────────────────────────────────────────
+            if (archived.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Theme(
+                  data: Theme.of(context)
+                      .copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(
+                      'Archived (${archived.length})',
+                      style: const TextStyle(
+                        color: AppColors.featherTaupe,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    iconColor: AppColors.featherTaupe,
+                    collapsedIconColor: AppColors.featherTaupe,
+                    children: [
+                      for (final album in archived)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: _ArchivedAlbumRow(
+                            album: album,
+                            onRestore: () async {
+                              await ref
+                                  .read(albumManagementProvider.notifier)
+                                  .unarchive(albumId: album.id);
+                              if (context.mounted) {
+                                showAppToast(context,
+                                    message: '"${album.name}" restored.');
+                              }
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
         if (albums.isNotEmpty)
@@ -426,6 +470,91 @@ class _AlbumSwatch extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: album.coverColors,
+        ),
+      ),
+    );
+  }
+}
+
+class _ArchivedAlbumRow extends StatelessWidget {
+  const _ArchivedAlbumRow({required this.album, required this.onRestore});
+
+  final Album album;
+  final VoidCallback onRestore;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: 0.65,
+      child: AppCard(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              child: SizedBox(
+                width: 44,
+                height: 44,
+                child: album.coverThumbnailUrl != null
+                    ? Image.network(album.coverThumbnailUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            _AlbumSwatch(album: album))
+                    : _AlbumSwatch(album: album),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    album.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: AppColors.charcoalInk,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Archived',
+                    style: TextStyle(
+                      color: AppColors.featherTaupe,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            PressableScale(
+              onTap: onRestore,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              child: Container(
+                height: 30,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.velvetMaroon.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  border: Border.all(
+                    color: AppColors.velvetMaroon.withValues(alpha: 0.20),
+                    width: 0.8,
+                  ),
+                ),
+                child: const Text(
+                  'Restore',
+                  style: TextStyle(
+                    color: AppColors.velvetMaroon,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

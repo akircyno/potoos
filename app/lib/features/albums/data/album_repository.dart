@@ -104,8 +104,63 @@ class AlbumRepository {
   Future<void> archiveAlbum({required String albumId}) async {
     await edgeFunctionService.callFunction<Object?>(
       'archive-album',
-      body: {'album_id': albumId},
+      body: {'album_id': albumId, 'archive': true},
     );
+  }
+
+  Future<void> unarchiveAlbum({required String albumId}) async {
+    await edgeFunctionService.callFunction<Object?>(
+      'archive-album',
+      body: {'album_id': albumId, 'archive': false},
+    );
+  }
+
+  Future<List<Album>> fetchArchivedAlbums() async {
+    if (!supabaseService.isConfigured ||
+        supabaseService.currentSession == null) {
+      return const [];
+    }
+
+    final userId = supabaseService.currentSession!.user.id;
+
+    try {
+      final membershipRows = await supabaseService.client
+          .from('album_members')
+          .select('album_id, role')
+          .eq('user_id', userId)
+          .eq('is_active', true);
+
+      final albumIds = (membershipRows as List)
+          .map((r) => (r as Map)['album_id']?.toString())
+          .whereType<String>()
+          .toList();
+
+      if (albumIds.isEmpty) return const [];
+
+      final albumRows = await supabaseService.client
+          .from('albums')
+          .select('id, name, description, updated_at, cover_thumbnail_url')
+          .inFilter('id', albumIds)
+          .eq('is_deleted', false)
+          .eq('is_archived', true)
+          .order('updated_at', ascending: false);
+
+      final roleByAlbum = {
+        for (final row in membershipRows as List)
+          (row as Map)['album_id']?.toString() ?? '':
+              (row)['role']?.toString() ?? 'viewer',
+      };
+
+      return (albumRows as List).map((row) {
+        final album = Map<String, dynamic>.from(row as Map);
+        return Album.fromData(
+          album: album,
+          role: roleByAlbum[album['id']?.toString() ?? ''] ?? 'viewer',
+        );
+      }).toList();
+    } catch (_) {
+      return const [];
+    }
   }
 
   Future<void> deleteAlbum({required String albumId}) async {

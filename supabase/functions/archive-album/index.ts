@@ -29,8 +29,9 @@ Deno.serve(async (req) => {
   }
 
   const albumId = body.album_id as string;
+  // archive=true (default) archives; archive=false unarchives
+  const shouldArchive = body.archive !== false;
 
-  // Verify caller is admin of this album
   const { data: member, error: memberError } = await supabaseAdmin
     .from("album_members")
     .select("role")
@@ -45,20 +46,27 @@ Deno.serve(async (req) => {
   }
 
   if (!member || member.role !== "admin") {
-    return error("FORBIDDEN", "Only the album Admin can archive this space.", 403);
+    return error(
+      "FORBIDDEN",
+      "Only the album Admin can archive or restore this space.",
+      403,
+    );
   }
 
-  // Set is_archived = true
   const { error: updateError } = await supabaseAdmin
     .from("albums")
-    .update({ is_archived: true, updated_at: new Date().toISOString() })
+    .update({ is_archived: shouldArchive, updated_at: new Date().toISOString() })
     .eq("id", albumId)
     .eq("is_deleted", false);
 
   if (updateError) {
     console.error("archive-album update failed", updateError.message);
-    return error("SERVER_ERROR", "Could not archive the album. Please try again.", 500);
+    return error(
+      "SERVER_ERROR",
+      `Could not ${shouldArchive ? "archive" : "restore"} the album. Please try again.`,
+      500,
+    );
   }
 
-  return success({ album_id: albumId, archived: true });
+  return success({ album_id: albumId, archived: shouldArchive });
 });

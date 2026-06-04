@@ -6,6 +6,7 @@ import '../../../app/routes.dart';
 import '../../../app/theme.dart';
 import '../../../core/errors/app_error.dart';
 import '../../../core/widgets/app_screen.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/pressable_scale.dart';
 import '../../../core/widgets/poto_mascot.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -91,9 +92,20 @@ class AlbumDetailsScreen extends ConsumerWidget {
     final isAdmin = effectiveRole.toLowerCase() == 'admin';
     final canSave = !selectionMode || hasSelection;
 
-    // Navigate home after archive or delete completes
+    // React to management actions completing
     ref.listen(albumManagementProvider, (_, next) {
-      if (next.done && context.mounted) {
+      if (!next.done || !context.mounted) return;
+
+      // Show success toast first
+      if (next.successMessage != null) {
+        showAppToast(context, message: next.successMessage!);
+      }
+
+      // Rename → pop once (back to album list)
+      // Archive / Delete → clear nav stack back to home
+      if (next.action == AlbumManagementAction.rename) {
+        Navigator.pop(context);
+      } else {
         Navigator.pushNamedAndRemoveUntil(
             context, AppRoutes.home, (_) => false);
       }

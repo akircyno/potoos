@@ -156,7 +156,9 @@ class InviteMemberController extends Notifier<InviteMemberState> {
   }
 }
 
-// ── Album Management (Rename / Archive / Delete) ──────────────────────────
+// ── Album Management (Rename / Archive / Unarchive / Delete) ─────────────
+
+enum AlbumManagementAction { rename, archive, unarchive, delete }
 
 final albumManagementProvider =
     NotifierProvider.autoDispose<AlbumManagementController,
@@ -169,11 +171,15 @@ class AlbumManagementState {
     this.isBusy = false,
     this.errorMessage,
     this.done = false,
+    this.action,
+    this.successMessage,
   });
 
   final bool isBusy;
   final String? errorMessage;
   final bool done;
+  final AlbumManagementAction? action;
+  final String? successMessage;
 }
 
 class AlbumManagementController extends Notifier<AlbumManagementState> {
@@ -187,7 +193,11 @@ class AlbumManagementController extends Notifier<AlbumManagementState> {
           .read(albumRepositoryProvider)
           .renameAlbum(albumId: albumId, name: name);
       ref.invalidate(albumListProvider);
-      state = const AlbumManagementState(done: true);
+      state = AlbumManagementState(
+        done: true,
+        action: AlbumManagementAction.rename,
+        successMessage: 'Space renamed to "$name".',
+      );
     } catch (e) {
       state = AlbumManagementState(errorMessage: AppError.messageFor(e));
     }
@@ -198,7 +208,28 @@ class AlbumManagementController extends Notifier<AlbumManagementState> {
     try {
       await ref.read(albumRepositoryProvider).archiveAlbum(albumId: albumId);
       ref.invalidate(albumListProvider);
-      state = const AlbumManagementState(done: true);
+      ref.invalidate(archivedAlbumsProvider);
+      state = const AlbumManagementState(
+        done: true,
+        action: AlbumManagementAction.archive,
+        successMessage: 'Space archived. You can restore it from the Albums tab.',
+      );
+    } catch (e) {
+      state = AlbumManagementState(errorMessage: AppError.messageFor(e));
+    }
+  }
+
+  Future<void> unarchive({required String albumId}) async {
+    state = const AlbumManagementState(isBusy: true);
+    try {
+      await ref.read(albumRepositoryProvider).unarchiveAlbum(albumId: albumId);
+      ref.invalidate(albumListProvider);
+      ref.invalidate(archivedAlbumsProvider);
+      state = const AlbumManagementState(
+        done: true,
+        action: AlbumManagementAction.unarchive,
+        successMessage: 'Space restored.',
+      );
     } catch (e) {
       state = AlbumManagementState(errorMessage: AppError.messageFor(e));
     }
@@ -209,12 +240,25 @@ class AlbumManagementController extends Notifier<AlbumManagementState> {
     try {
       await ref.read(albumRepositoryProvider).deleteAlbum(albumId: albumId);
       ref.invalidate(albumListProvider);
-      state = const AlbumManagementState(done: true);
+      ref.invalidate(archivedAlbumsProvider);
+      state = const AlbumManagementState(
+        done: true,
+        action: AlbumManagementAction.delete,
+        successMessage: 'Space permanently deleted.',
+      );
     } catch (e) {
       state = AlbumManagementState(errorMessage: AppError.messageFor(e));
     }
   }
 }
+
+// ── Archived albums ───────────────────────────────────────────────────────
+
+final archivedAlbumsProvider = FutureProvider.autoDispose<List<Album>>((ref) {
+  final profile = ref.watch(currentUserProfileProvider);
+  if (profile == null) return const [];
+  return ref.watch(albumRepositoryProvider).fetchArchivedAlbums();
+});
 
 // ── Leave Album ────────────────────────────────────────────────────────────
 

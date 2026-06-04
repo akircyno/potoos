@@ -5,6 +5,7 @@ import { AlbumRole, getAlbumRole } from "../_shared/permissions.ts";
 import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
 import { touchAlbum } from "../_shared/albums.ts";
 import { isUuid } from "../_shared/validation.ts";
+import { sendInviteEmail } from "../_shared/email.ts";
 
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -40,9 +41,17 @@ Deno.serve(async (req) => {
     return error("FORBIDDEN", "Only album admins can invite people.", 403);
   }
 
+  // Fetch inviter display name for email (best-effort)
+  const { data: inviterProfile } = await supabaseAdmin
+    .from("user_profiles")
+    .select("display_name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const inviterDisplayName = inviterProfile?.display_name ?? "Someone";
+
   const { data: album, error: albumError } = await supabaseAdmin
     .from("albums")
-    .select("id, is_deleted")
+    .select("id, name, is_deleted")
     .eq("id", albumId)
     .eq("is_deleted", false)
     .maybeSingle();
@@ -55,6 +64,7 @@ Deno.serve(async (req) => {
   if (!album) {
     return error("ALBUM_NOT_FOUND", "This album is no longer available.", 404);
   }
+  const albumName = (album as Record<string, unknown>).name as string ?? "this space";
 
   const { data: invitedProfile, error: profileError } = await supabaseAdmin
     .from("user_profiles")
@@ -70,7 +80,7 @@ Deno.serve(async (req) => {
   }
 
   if (!invitedProfile) {
-    return error("USER_NOT_FOUND", "Ask this person to sign in to LitratoLink once before inviting them.", 404);
+    return error("USER_NOT_FOUND", "Ask this person to sign in to Potoos once before inviting them.", 404);
   }
 
   if (invitedProfile.id === user.id) {
@@ -112,6 +122,8 @@ Deno.serve(async (req) => {
     }
 
     await touchAlbum(albumId);
+    // Fire-and-forget — invite succeeds even if email fails
+    sendInviteEmail({ to: email, inviterName: inviterDisplayName, albumName: albumName, role }).catch(() => {});
 
     return success({ member: mapMember(updatedMember), action: "updated" });
   }
@@ -138,6 +150,7 @@ Deno.serve(async (req) => {
     }
 
     await touchAlbum(albumId);
+    sendInviteEmail({ to: email, inviterName: inviterDisplayName, albumName: albumName, role }).catch(() => {});
 
     return success({ member: mapMember(restoredMember), action: "restored" });
   }
@@ -161,6 +174,7 @@ Deno.serve(async (req) => {
   }
 
   await touchAlbum(albumId);
+  sendInviteEmail({ to: email, inviterName: inviterDisplayName, albumName: albumName, role }).catch(() => {});
 
   return success({ member: mapMember(member), action: "added" }, 201);
 });
