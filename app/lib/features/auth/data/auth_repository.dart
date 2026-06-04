@@ -60,6 +60,17 @@ class AuthRepository {
     if (!supabaseService.isConfigured) return;
     await supabaseService.client.auth.signOut();
   }
+
+  Future<void> deleteAccount() async {
+    await edgeFunctionService.callFunction<Object?>(
+      'delete-account',
+      body: {},
+    );
+    // Sign out locally after server-side deletion
+    if (supabaseService.isConfigured) {
+      await supabaseService.client.auth.signOut();
+    }
+  }
 }
 
 @visibleForTesting

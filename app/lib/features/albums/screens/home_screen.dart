@@ -812,8 +812,103 @@ class _ProfileTab extends ConsumerWidget {
             ),
           ),
         ),
+
+        const SizedBox(height: AppSpacing.xl),
+
+        // ── Delete account ────────────────────────────────────────────────
+        _DeleteAccountButton(ref: ref),
       ],
     );
+  }
+}
+
+class _DeleteAccountButton extends StatefulWidget {
+  const _DeleteAccountButton({required this.ref});
+  final WidgetRef ref;
+
+  @override
+  State<_DeleteAccountButton> createState() => _DeleteAccountButtonState();
+}
+
+class _DeleteAccountButtonState extends State<_DeleteAccountButton> {
+  bool _isDeleting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          height: 0.6,
+          color: AppColors.creamLine,
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        GestureDetector(
+          onTap: _isDeleting ? null : () => _confirmDelete(context),
+          child: Text(
+            _isDeleting ? 'Deleting account...' : 'Delete my account',
+            style: TextStyle(
+              color: _isDeleting
+                  ? AppColors.featherTaupe
+                  : AppColors.velvetMaroon.withValues(alpha: 0.60),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete your account?'),
+        content: const Text(
+          'This will permanently remove:\n'
+          '• All spaces you manage and their files\n'
+          '• Your membership from all other spaces\n'
+          '• Your profile and account\n\n'
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.velvetMaroon,
+              foregroundColor: AppColors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete everything'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    setState(() => _isDeleting = true);
+
+    try {
+      await widget.ref.read(deleteAccountProvider.notifier).deleteAccount();
+      if (context.mounted) {
+        Navigator.pushNamedAndRemoveUntil(
+          context, AppRoutes.login, (_) => false);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        setState(() => _isDeleting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppError.messageFor(e)),
+            backgroundColor: AppColors.velvetMaroon,
+          ),
+        );
+      }
+    }
   }
 }
 

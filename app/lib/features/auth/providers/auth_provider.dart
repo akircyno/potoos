@@ -112,6 +112,29 @@ class AuthController extends Notifier<AsyncValue<void>> {
   }
 }
 
+// ── Delete Account ─────────────────────────────────────────────────────────
+
+final deleteAccountProvider =
+    NotifierProvider.autoDispose<DeleteAccountController, AsyncValue<void>>(
+  DeleteAccountController.new,
+);
+
+class DeleteAccountController extends Notifier<AsyncValue<void>> {
+  @override
+  AsyncValue<void> build() => const AsyncData(null);
+
+  Future<void> deleteAccount() async {
+    state = const AsyncLoading();
+    try {
+      await ref.read(authRepositoryProvider).deleteAccount();
+      ref.read(currentUserProfileProvider.notifier).clear();
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+}
+
 class CurrentUserProfile extends Notifier<UserProfile?> {
   @override
   UserProfile? build() => null;
