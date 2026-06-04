@@ -10,6 +10,7 @@ import '../../../config/constants.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/widgets/poto_mascot.dart';
 import '../providers/auth_provider.dart';
+import 'onboarding_screen.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -79,17 +80,22 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     Timer(const Duration(milliseconds: 1800), () async {
       if (mounted) {
         final session = ref.read(supabaseServiceProvider).currentSession;
+
         if (session != null) {
           await ref
               .read(authControllerProvider.notifier)
               .loadCurrentUserProfile();
+          if (!mounted) return;
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+          return;
         }
 
+        // No session — show onboarding on first visit, login screen after
+        final seen = await hasSeenOnboarding();
         if (!mounted) return;
-
         Navigator.pushReplacementNamed(
           context,
-          session == null ? AppRoutes.login : AppRoutes.home,
+          seen ? AppRoutes.login : AppRoutes.onboarding,
         );
       }
     });

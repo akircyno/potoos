@@ -5,6 +5,7 @@ import '../features/albums/screens/create_album_screen.dart';
 import '../features/albums/screens/home_screen.dart';
 import '../features/albums/screens/members_screen.dart';
 import '../features/auth/screens/login_screen.dart';
+import '../features/auth/screens/onboarding_screen.dart';
 import '../features/auth/screens/splash_screen.dart';
 import '../features/downloads/screens/file_preview_screen.dart';
 import '../features/downloads/screens/save_all_screen.dart';
@@ -15,6 +16,7 @@ class AppRoutes {
   const AppRoutes._();
 
   static const splash = '/';
+  static const onboarding = '/onboarding';
   static const login = '/login';
   static const home = '/home';
   static const createAlbum = '/create-album';
@@ -31,6 +33,8 @@ class AppRoutes {
     switch (settings.name) {
       case splash:
         page = const SplashScreen();
+      case onboarding:
+        page = const OnboardingScreen();
       case login:
         page = const LoginScreen();
       case home:
@@ -56,7 +60,7 @@ class AppRoutes {
     }
 
     return switch (settings.name) {
-      splash || login => _fadeRoute(page, settings),
+      splash || login || onboarding => _fadeRoute(page, settings),
       upload || saveAll || createAlbum => _slideUpRoute(page, settings),
       _ => _slideRightRoute(page, settings),
     };
