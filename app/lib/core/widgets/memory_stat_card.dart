@@ -22,7 +22,7 @@ class MemoryStatCard extends StatelessWidget {
 
     return Expanded(
       child: Container(
-        height: 82,
+        height: 88,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppColors.warmCream,
