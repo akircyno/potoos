@@ -12,6 +12,7 @@ class AppEnv {
     required this.supabaseAnonKey,
     required this.googleWebClientId,
     required this.googleIosClientId,
+    this.sentryDsn = '',
   });
 
   final String appEnv;
@@ -19,6 +20,7 @@ class AppEnv {
   final String supabaseAnonKey;
   final String googleWebClientId;
   final String googleIosClientId;
+  final String sentryDsn;
 
   bool get hasSupabaseConfig {
     return supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
@@ -36,6 +38,7 @@ class AppEnv {
       supabaseAnonKey: dotenv.maybeGet('SUPABASE_ANON_KEY', fallback: '') ?? '',
       googleWebClientId: dotenv.maybeGet('GOOGLE_WEB_CLIENT_ID', fallback: '') ?? '',
       googleIosClientId: dotenv.maybeGet('GOOGLE_IOS_CLIENT_ID', fallback: '') ?? '',
+      sentryDsn: dotenv.maybeGet('SENTRY_DSN', fallback: '') ?? '',
     );
   }
 }

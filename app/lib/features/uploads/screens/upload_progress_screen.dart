@@ -207,12 +207,16 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
                   isError: hasError,
                   bottomPad: bottomPad,
                   onAction: hasError
-                      ? () => ref
-                          .read(uploadControllerProvider.notifier)
-                          .upload(
-                            albumId: album.id,
-                            files: files,
-                          )
+                      ? () {
+                          // Only retry the files that haven't completed yet —
+                          // skip the ones already secured successfully
+                          final remaining = state.completedCount > 0
+                              ? files.sublist(state.completedCount)
+                              : files;
+                          ref
+                              .read(uploadControllerProvider.notifier)
+                              .upload(albumId: album.id, files: remaining);
+                        }
                       : () => Navigator.pushNamedAndRemoveUntil(
                             context,
                             AppRoutes.albumDetails,

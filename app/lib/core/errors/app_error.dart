@@ -14,6 +14,20 @@ class AppError implements Exception {
   /// fallback so raw exception details never reach the UI.
   static String messageFor(Object? error) {
     if (error is AppError) return error.message;
+
+    // Detect common network/connectivity failures and give a helpful message
+    final raw = error.toString().toLowerCase();
+    if (raw.contains('socketexception') ||
+        raw.contains('failed host lookup') ||
+        raw.contains('network is unreachable') ||
+        raw.contains('connection refused') ||
+        raw.contains('network request failed') ||
+        raw.contains('no address associated') ||
+        raw.contains('connection timed out') ||
+        raw.contains('etimedout')) {
+      return 'No internet connection. Check your connection and try again.';
+    }
+
     return 'Something went wrong. Please try again.';
   }
 }
