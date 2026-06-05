@@ -19,6 +19,7 @@ import '../widgets/album_empty_state.dart';
 import '../widgets/gallery_tile.dart';
 import '../widgets/media_preview_image.dart';
 import '../widgets/media_video_preview.dart';
+import 'media_viewer_screen.dart';
 
 // Album management menu values
 enum _MenuAction { rename, archive, delete }
@@ -443,8 +444,11 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
                                           )
                                       : () => _pushAndRefresh(
                                             context,
-                                            routeName: AppRoutes.filePreview,
-                                            routeArguments: file,
+                                            routeName: AppRoutes.mediaViewer,
+                                            routeArguments: MediaViewerArgs(
+                                              files: files,
+                                              initialIndex: index,
+                                            ),
                                             album: album,
                                           ),
                                 );
