@@ -22,6 +22,7 @@ class UploadProgressScreen extends ConsumerStatefulWidget {
 class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
   UploadProgressArgs? _args;
   bool _started = false;
+  bool _retrying = false;
 
   @override
   void didChangeDependencies() {
@@ -203,15 +204,10 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
               if (!isUploading)
                 _BottomCTA(
                   isError: hasError,
+                  isBusy: _retrying,
                   bottomPad: bottomPad,
                   onAction: hasError
-                      ? () {
-                          // Only retry the files that haven't completed yet —
-                          // skip the ones already secured successfully
-                          ref
-                              .read(uploadControllerProvider.notifier)
-                              .retryFailed();
-                        }
+                      ? _retryFailed
                       : () => Navigator.pushNamedAndRemoveUntil(
                             context,
                             AppRoutes.albumDetails,
@@ -224,6 +220,19 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _retryFailed() async {
+    if (_retrying) return;
+
+    setState(() => _retrying = true);
+    try {
+      await ref.read(uploadControllerProvider.notifier).retryFailed();
+    } finally {
+      if (mounted) {
+        setState(() => _retrying = false);
+      }
+    }
   }
 
   double _progressFor(int i, UploadState state) {
@@ -588,11 +597,13 @@ class _FileRow extends StatelessWidget {
 class _BottomCTA extends StatelessWidget {
   const _BottomCTA({
     required this.isError,
+    required this.isBusy,
     required this.bottomPad,
     required this.onAction,
   });
 
   final bool isError;
+  final bool isBusy;
   final double bottomPad;
   final VoidCallback onAction;
 
@@ -614,7 +625,7 @@ class _BottomCTA extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md,
           AppSpacing.sm + bottomPad),
       child: PressableScale(
-        onTap: onAction,
+        onTap: isBusy ? null : onAction,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         child: Container(
           height: 54,
@@ -628,14 +639,29 @@ class _BottomCTA extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                isError ? Icons.refresh : Icons.check_circle_outline,
-                color: AppColors.pearlCream,
-                size: 18,
-              ),
+              if (isBusy)
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(AppColors.pearlCream),
+                  ),
+                )
+              else
+                Icon(
+                  isError ? Icons.refresh : Icons.check_circle_outline,
+                  color: AppColors.pearlCream,
+                  size: 18,
+                ),
               const SizedBox(width: AppSpacing.sm),
               Text(
-                isError ? 'Try Again' : 'Back to Album',
+                isBusy
+                    ? 'Retrying'
+                    : isError
+                        ? 'Try Again'
+                        : 'Back to Album',
                 style: const TextStyle(
                   color: AppColors.pearlCream,
                   fontSize: 15,

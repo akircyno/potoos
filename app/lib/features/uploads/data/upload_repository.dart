@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_error.dart';
 import '../../../core/services/edge_function_service.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/quality_test_log.dart';
 import '../models/upload_file.dart';
 import '../models/upload_session.dart';
@@ -15,14 +16,17 @@ import '../models/upload_session.dart';
 final uploadRepositoryProvider = Provider<UploadRepository>((ref) {
   return UploadRepository(
     ref.watch(edgeFunctionServiceProvider),
+    ref.watch(supabaseServiceProvider),
     Dio(),
   );
 });
 
 class UploadRepository {
-  const UploadRepository(this.edgeFunctionService, this.dio);
+  const UploadRepository(
+      this.edgeFunctionService, this.supabaseService, this.dio);
 
   final EdgeFunctionService edgeFunctionService;
+  final SupabaseService supabaseService;
   final Dio dio;
 
   static const _defaultDriveChunkSizeBytes = 8 * 1024 * 1024;
@@ -87,7 +91,7 @@ class UploadRepository {
 
     onProgress(0.05);
 
-    if (session.isGoogleDriveResumable) {
+    if (session.isDriveResumable) {
       return _uploadWithGoogleDriveResumableSession(
         session: session,
         file: file,
@@ -238,33 +242,21 @@ class UploadRepository {
   }) async {
     for (var attempt = 1; attempt <= _maxChunkAttempts; attempt++) {
       try {
-        final response = await dio.put<dynamic>(
-          session.uploadUrl,
-          data: chunk,
-          options: Options(
-            headers: _driveChunkHeaders(
-              mimeType: file.mimeType,
-              chunkLength: chunk.length,
-              chunkStart: chunkStart,
-              chunkEndInclusive: chunkEndInclusive,
-              totalBytes: totalBytes,
-            ),
-            responseType: ResponseType.json,
-            validateStatus: (_) => true,
-          ),
-          onSendProgress: (sent, _) {
-            final uploaded = (chunkStart + sent).clamp(0, totalBytes).toInt();
-            onProgress(uploaded / totalBytes);
-          },
+        final result = await _putDriveChunk(
+          session: session,
+          file: file,
+          chunk: chunk,
+          chunkStart: chunkStart,
+          chunkEndInclusive: chunkEndInclusive,
+          totalBytes: totalBytes,
+          onProgress: onProgress,
         );
 
-        final statusCode = response.statusCode ?? 0;
-        final result = _driveUploadResultFromResponse(response);
         final madeNoProgress =
-            statusCode == 308 && (result.nextOffset ?? 0) <= chunkStart;
+            result.statusCode == 308 && (result.nextOffset ?? 0) <= chunkStart;
 
         if (attempt < _maxChunkAttempts &&
-            (_isRetryableDriveStatus(statusCode) || madeNoProgress)) {
+            (_isRetryableDriveStatus(result.statusCode) || madeNoProgress)) {
           final statusResult = await _queryDriveUploadStatus(
             session: session,
             totalBytes: totalBytes,
@@ -278,6 +270,21 @@ class UploadRepository {
         }
 
         return result;
+      } on AppError catch (error) {
+        if (attempt < _maxChunkAttempts && error.code == 'NETWORK') {
+          final statusResult = await _queryDriveUploadStatus(
+            session: session,
+            totalBytes: totalBytes,
+          );
+          if (_canContinueFromDriveStatus(statusResult, chunkStart)) {
+            return statusResult!;
+          }
+
+          await _chunkRetryDelay(attempt);
+          continue;
+        }
+
+        rethrow;
       } on DioException catch (error) {
         if (attempt < _maxChunkAttempts && _isRetryableDioUpload(error)) {
           final statusResult = await _queryDriveUploadStatus(
@@ -302,33 +309,110 @@ class UploadRepository {
     );
   }
 
+  Future<_DriveUploadResult> _putDriveChunk({
+    required UploadSession session,
+    required UploadFile file,
+    required Uint8List chunk,
+    required int chunkStart,
+    required int chunkEndInclusive,
+    required int totalBytes,
+    required void Function(double progress) onProgress,
+  }) async {
+    if (session.isEdgeDriveResumable) {
+      final response = await dio.put<dynamic>(
+        _edgeFunctionUrl(session.uploadUrl),
+        data: chunk,
+        options: Options(
+          headers: _edgeDriveChunkHeaders(
+            session: session,
+            mimeType: file.mimeType,
+            chunkStart: chunkStart,
+            chunkEndInclusive: chunkEndInclusive,
+            totalBytes: totalBytes,
+          ),
+          responseType: ResponseType.json,
+          validateStatus: (_) => true,
+        ),
+        onSendProgress: (sent, _) {
+          final uploaded = (chunkStart + sent).clamp(0, totalBytes).toInt();
+          onProgress(uploaded / totalBytes);
+        },
+      );
+
+      return _edgeDriveUploadResultFromResponse(response);
+    }
+
+    final response = await dio.put<dynamic>(
+      session.uploadUrl,
+      data: chunk,
+      options: Options(
+        headers: _driveChunkHeaders(
+          mimeType: file.mimeType,
+          chunkLength: chunk.length,
+          chunkStart: chunkStart,
+          chunkEndInclusive: chunkEndInclusive,
+          totalBytes: totalBytes,
+        ),
+        responseType: ResponseType.json,
+        validateStatus: (_) => true,
+      ),
+      onSendProgress: (sent, _) {
+        final uploaded = (chunkStart + sent).clamp(0, totalBytes).toInt();
+        onProgress(uploaded / totalBytes);
+      },
+    );
+
+    return _driveUploadResultFromResponse(response);
+  }
+
   Future<_DriveUploadResult?> _queryDriveUploadStatus({
     required UploadSession session,
     required int totalBytes,
   }) async {
     try {
-      final response = await dio.put<dynamic>(
-        session.uploadUrl,
-        data: Uint8List(0),
-        options: Options(
-          headers: {
-            'Content-Range': 'bytes */$totalBytes',
-          },
-          responseType: ResponseType.json,
-          validateStatus: (_) => true,
-        ),
-      );
+      final Response<dynamic> response;
+      if (session.isEdgeDriveResumable) {
+        response = await dio.put<dynamic>(
+          _edgeFunctionUrl(session.uploadUrl),
+          data: Uint8List(0),
+          options: Options(
+            headers: _edgeDriveProbeHeaders(
+              session: session,
+              totalBytes: totalBytes,
+            ),
+            responseType: ResponseType.json,
+            validateStatus: (_) => true,
+          ),
+        );
+      } else {
+        response = await dio.put<dynamic>(
+          session.uploadUrl,
+          data: Uint8List(0),
+          options: Options(
+            headers: {
+              'Content-Range': 'bytes */$totalBytes',
+            },
+            responseType: ResponseType.json,
+            validateStatus: (_) => true,
+          ),
+        );
+      }
 
-      final statusCode = response.statusCode ?? 0;
+      final result = session.isEdgeDriveResumable
+          ? _edgeDriveUploadResultFromResponse(response)
+          : _driveUploadResultFromResponse(response);
+      final statusCode = result.statusCode;
       if (statusCode == 308 ||
           statusCode == 200 ||
           statusCode == 201 ||
           statusCode == 404) {
-        return _driveUploadResultFromResponse(response);
+        return result;
       }
 
       return null;
     } on DioException {
+      return null;
+    } on AppError {
       return null;
     }
   }
@@ -351,6 +435,62 @@ class UploadRepository {
     }
 
     return headers;
+  }
+
+  Map<String, String> _edgeDriveChunkHeaders({
+    required UploadSession session,
+    required String mimeType,
+    required int chunkStart,
+    required int chunkEndInclusive,
+    required int totalBytes,
+  }) {
+    return {
+      ..._edgeDriveBaseHeaders(session),
+      'Content-Type': mimeType,
+      'Content-Range': 'bytes $chunkStart-$chunkEndInclusive/$totalBytes',
+    };
+  }
+
+  Map<String, String> _edgeDriveProbeHeaders({
+    required UploadSession session,
+    required int totalBytes,
+  }) {
+    return {
+      ..._edgeDriveBaseHeaders(session),
+      'Content-Range': 'bytes */$totalBytes',
+    };
+  }
+
+  Map<String, String> _edgeDriveBaseHeaders(UploadSession session) {
+    final accessToken = supabaseService.currentSession?.accessToken;
+    final googleUploadUrl = session.requiredHeaders['X-Google-Upload-Url'];
+
+    if (accessToken == null || accessToken.isEmpty) {
+      throw const AppError('Please log in to continue.',
+          code: 'UNAUTHENTICATED');
+    }
+
+    if (googleUploadUrl == null || googleUploadUrl.isEmpty) {
+      throw const AppError(
+        'Upload session is incomplete. Please choose the original again and retry.',
+        code: 'UPLOAD_FAILED',
+      );
+    }
+
+    return {
+      'Authorization': 'Bearer $accessToken',
+      'X-Media-File-Id': session.mediaFileId,
+      'X-Storage-Object-Id': session.storageObjectId,
+      'X-Google-Upload-Url': googleUploadUrl,
+    };
+  }
+
+  String _edgeFunctionUrl(String functionName) {
+    final baseUrl = supabaseService.env.supabaseUrl.replaceFirst(
+      RegExp(r'/$'),
+      '',
+    );
+    return '$baseUrl/functions/v1/$functionName';
   }
 
   Future<CompletedUpload> _completeDirectUploadWithRetry({
@@ -447,7 +587,13 @@ class UploadRepository {
     final values = headers['range'];
     if (values == null || values.isEmpty) return null;
 
-    final match = RegExp(r'^bytes=0-(\d+)$').firstMatch(values.first.trim());
+    return _nextDriveOffsetFromRange(values.first);
+  }
+
+  int? _nextDriveOffsetFromRange(String? value) {
+    if (value == null) return null;
+
+    final match = RegExp(r'^bytes=0-(\d+)$').firstMatch(value.trim());
     if (match == null) return null;
 
     final lastByte = int.tryParse(match.group(1) ?? '');
@@ -464,6 +610,38 @@ class UploadRepository {
       statusCode: statusCode,
       nextOffset: statusCode == 308 ? _nextDriveOffset(response.headers) : null,
       data: response.data,
+    );
+  }
+
+  _DriveUploadResult _edgeDriveUploadResultFromResponse(
+    Response<dynamic> response,
+  ) {
+    final httpStatus = response.statusCode ?? 0;
+    final payload = response.data;
+
+    if (httpStatus < 200 || httpStatus >= 300) {
+      throw _appErrorFromEdgePayload(payload);
+    }
+
+    if (payload is! Map || payload['success'] != true) {
+      throw _appErrorFromEdgePayload(payload);
+    }
+
+    final data = payload['data'];
+    if (data is! Map) {
+      throw const AppError(
+        'Upload reached storage but could not be confirmed. Please try again.',
+        code: 'UPLOAD_FAILED',
+      );
+    }
+
+    final statusCode = int.tryParse(data['status_code']?.toString() ?? '') ?? 0;
+    final range = data['range']?.toString();
+
+    return _DriveUploadResult(
+      statusCode: statusCode,
+      nextOffset: statusCode == 308 ? _nextDriveOffsetFromRange(range) : null,
+      data: data['data'],
     );
   }
 
@@ -529,6 +707,28 @@ class UploadRepository {
 
     return const AppError(
       'Upload could not reach storage. Check your connection and try again.',
+      code: 'NETWORK',
+    );
+  }
+
+  AppError _appErrorFromEdgePayload(Object? payload) {
+    if (payload is Map) {
+      final message = payload['message']?.toString() ??
+          'Upload could not finish. Check your connection and try again.';
+      final rawCode = payload['error_code']?.toString() ?? 'UPLOAD_FAILED';
+      final code = rawCode == 'STORAGE_ERROR' &&
+              message.toLowerCase().contains('reach storage')
+          ? 'NETWORK'
+          : rawCode;
+
+      return AppError(
+        message,
+        code: code,
+      );
+    }
+
+    return const AppError(
+      'Upload could not finish. Check your connection and try again.',
       code: 'NETWORK',
     );
   }

@@ -26,6 +26,19 @@ class UploadSession {
         uri.host == 'www.googleapis.com';
   }
 
+  bool get isEdgeDriveResumable {
+    final googleUploadUrl = requiredHeaders['X-Google-Upload-Url'];
+    final googleUri = Uri.tryParse(googleUploadUrl ?? '');
+    return uploadStrategy == 'edge_drive_resumable' &&
+        uploadMethod.toUpperCase() == 'PUT' &&
+        uploadUrl == 'upload-drive-chunk' &&
+        googleUri != null &&
+        googleUri.scheme == 'https' &&
+        googleUri.host == 'www.googleapis.com';
+  }
+
+  bool get isDriveResumable => isGoogleDriveResumable || isEdgeDriveResumable;
+
   factory UploadSession.fromJson(Map<String, dynamic> json) {
     final headers =
         Map<String, dynamic>.from(json['required_headers'] as Map? ?? {});

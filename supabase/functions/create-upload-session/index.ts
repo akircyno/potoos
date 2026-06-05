@@ -167,12 +167,13 @@ Deno.serve(async (req) => {
     return success({
       media_file_id: mediaFile.id,
       storage_object_id: storageObject.id,
-      upload_url: uploadUrl,
+      upload_url: "upload-drive-chunk",
       upload_method: "PUT",
-      upload_strategy: "google_drive_resumable",
-      chunk_size_bytes: 8 * 1024 * 1024,
+      upload_strategy: "edge_drive_resumable",
+      chunk_size_bytes: 2 * 1024 * 1024,
       required_headers: {
         "Content-Type": mimeType,
+        "X-Google-Upload-Url": uploadUrl,
       },
     }, 201);
   } catch (uploadError) {

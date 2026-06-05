@@ -95,8 +95,29 @@ void main() {
       });
 
       expect(session.isGoogleDriveResumable, isTrue);
+      expect(session.isDriveResumable, isTrue);
       expect(session.chunkSizeBytes, 8388608);
       expect(session.requiredHeaders['Content-Type'], 'image/jpeg');
+    });
+
+    test('detects Edge-backed Drive resumable upload sessions', () {
+      final session = UploadSession.fromJson({
+        'media_file_id': 'media-id',
+        'storage_object_id': 'storage-id',
+        'upload_url': 'upload-drive-chunk',
+        'upload_method': 'PUT',
+        'upload_strategy': 'edge_drive_resumable',
+        'chunk_size_bytes': 2097152,
+        'required_headers': {
+          'Content-Type': 'video/mp4',
+          'X-Google-Upload-Url':
+              'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=abc',
+        },
+      });
+
+      expect(session.isEdgeDriveResumable, isTrue);
+      expect(session.isDriveResumable, isTrue);
+      expect(session.chunkSizeBytes, 2097152);
     });
 
     test('keeps legacy edge proxy sessions available as fallback', () {
@@ -109,6 +130,7 @@ void main() {
       });
 
       expect(session.isGoogleDriveResumable, isFalse);
+      expect(session.isDriveResumable, isFalse);
       expect(session.uploadStrategy, 'edge_function_proxy');
     });
   });
