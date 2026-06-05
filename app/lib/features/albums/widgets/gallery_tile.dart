@@ -52,7 +52,9 @@ class GalleryTile extends StatelessWidget {
       gradient: gradient,
     );
 
-    return Material(
+    return Hero(
+      tag: 'media-${file.id}',
+      child: Material(
       color: AppColors.white,
       borderRadius: BorderRadius.circular(0),
       clipBehavior: Clip.antiAlias,
@@ -170,6 +172,7 @@ class GalleryTile extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }
