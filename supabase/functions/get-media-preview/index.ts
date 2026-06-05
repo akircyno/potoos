@@ -1,7 +1,7 @@
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { error } from "../_shared/response.ts";
 import { getUserFromRequest } from "../_shared/auth.ts";
-import { downloadDriveThumbnailBytes } from "../_shared/googleDrive.ts";
+import { downloadDriveThumbnailBytes, getDriveFileMetadata, downloadDriveFileBytes } from "../_shared/googleDrive.ts";
 import { isAlbumMember } from "../_shared/permissions.ts";
 import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
 import { isUuid } from "../_shared/validation.ts";
@@ -68,7 +68,26 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const preview = await downloadDriveThumbnailBytes(storageObject.provider_file_id, large);
+    if (large) {
+      // Full-resolution path: download the actual original file from Drive.
+      // Thumbnails are capped regardless of sz=w2000; only ?alt=media gives HD.
+      const [metadata, bytes] = await Promise.all([
+        getDriveFileMetadata(storageObject.provider_file_id),
+        downloadDriveFileBytes(storageObject.provider_file_id),
+      ]);
+      return new Response(bytes, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": metadata.mimeType || "image/jpeg",
+          "Content-Length": bytes.byteLength.toString(),
+          "Cache-Control": "private, max-age=3600",
+        },
+      });
+    }
+
+    // Thumbnail path (gallery tiles, fast loading).
+    const preview = await downloadDriveThumbnailBytes(storageObject.provider_file_id);
     if (!preview) {
       return error("FILE_NOT_FOUND", "Preview is not ready yet.", 404);
     }
@@ -90,7 +109,7 @@ Deno.serve(async (req) => {
       },
     });
   } catch (previewError) {
-    console.error("get-media-preview thumbnail fetch failed", previewError);
+    console.error("get-media-preview full/thumb fetch failed", previewError);
     return error("STORAGE_ERROR", "Could not load the preview. Please try again.", 502);
   }
 });
