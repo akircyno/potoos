@@ -11,6 +11,7 @@ class Album {
     required this.updatedLabel,
     required this.coverColors,
     this.coverThumbnailUrl,
+    this.coverMediaFileId,
   });
 
   final String id;
@@ -22,6 +23,7 @@ class Album {
   final String updatedLabel;
   final List<Color> coverColors;
   final String? coverThumbnailUrl;
+  final String? coverMediaFileId;
 
   String get normalizedRole => role.toLowerCase();
 
@@ -30,6 +32,7 @@ class Album {
     required String role,
     int fileCount = 0,
     int memberCount = 1,
+    String? coverMediaFileId,
   }) {
     final id = album['id']?.toString() ?? '';
     final name = album['name']?.toString() ?? 'Untitled album';
@@ -45,9 +48,9 @@ class Album {
       memberCount: memberCount,
       updatedLabel: _updatedLabel(updatedAt),
       coverColors: _coverColorsFor(id),
-      coverThumbnailUrl: (rawThumb != null && rawThumb.isNotEmpty)
-          ? rawThumb
-          : null,
+      coverThumbnailUrl:
+          (rawThumb != null && rawThumb.isNotEmpty) ? rawThumb : null,
+      coverMediaFileId: _optionalText(coverMediaFileId),
     );
   }
 
@@ -99,5 +102,10 @@ class Album {
 
     if (id.isEmpty) return palettes.first;
     return palettes[id.hashCode.abs() % palettes.length];
+  }
+
+  static String? _optionalText(String? value) {
+    final text = value?.trim();
+    return text == null || text.isEmpty ? null : text;
   }
 }

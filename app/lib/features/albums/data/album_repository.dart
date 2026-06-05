@@ -56,6 +56,7 @@ class AlbumRepository {
           activeMembersOnly: true);
       final fileCounts = await _countRowsByAlbum('media_files', albumIds,
           completedMediaOnly: true);
+      final coverFileIds = await _latestCoverFileIdsByAlbum(albumIds);
       final roleByAlbum = {
         for (final member in memberships) member.albumId: member.role,
       };
@@ -69,6 +70,7 @@ class AlbumRepository {
           role: roleByAlbum[albumId] ?? 'viewer',
           fileCount: fileCounts[albumId] ?? 0,
           memberCount: memberCounts[albumId] ?? 1,
+          coverMediaFileId: coverFileIds[albumId],
         );
       }).toList();
     } catch (_) {
@@ -95,10 +97,10 @@ class AlbumRepository {
     required String albumId,
     required String name,
   }) async {
-    await supabaseService.client
-        .from('albums')
-        .update({'name': name.trim(), 'updated_at': DateTime.now().toIso8601String()})
-        .eq('id', albumId);
+    await supabaseService.client.from('albums').update({
+      'name': name.trim(),
+      'updated_at': DateTime.now().toIso8601String()
+    }).eq('id', albumId);
   }
 
   Future<void> archiveAlbum({required String albumId}) async {
@@ -150,12 +152,15 @@ class AlbumRepository {
           (row as Map)['album_id']?.toString() ?? '':
               (row)['role']?.toString() ?? 'viewer',
       };
+      final coverFileIds = await _latestCoverFileIdsByAlbum(albumIds);
 
       return (albumRows as List).map((row) {
         final album = Map<String, dynamic>.from(row as Map);
+        final albumId = album['id']?.toString() ?? '';
         return Album.fromData(
           album: album,
-          role: roleByAlbum[album['id']?.toString() ?? ''] ?? 'viewer',
+          role: roleByAlbum[albumId] ?? 'viewer',
+          coverMediaFileId: coverFileIds[albumId],
         );
       }).toList();
     } catch (_) {
@@ -180,7 +185,7 @@ class AlbumRepository {
       final rows = await supabaseService.client
           .from('media_files')
           .select(
-              'id, original_filename, file_type, mime_type, file_size_bytes, uploaded_at, uploader:user_profiles!media_files_uploader_id_fkey(email, display_name)')
+              'id, original_filename, file_type, mime_type, file_size_bytes, thumbnail_url, uploaded_at, uploader:user_profiles!media_files_uploader_id_fkey(email, display_name)')
           .eq('album_id', albumId)
           .eq('upload_status', 'completed')
           .eq('is_deleted', false)
@@ -292,5 +297,31 @@ class AlbumRepository {
     }
 
     return counts;
+  }
+
+  Future<Map<String, String>> _latestCoverFileIdsByAlbum(
+    List<String> albumIds,
+  ) async {
+    if (albumIds.isEmpty) return const {};
+
+    final rows = await supabaseService.client
+        .from('media_files')
+        .select('id, album_id, uploaded_at')
+        .inFilter('album_id', albumIds)
+        .eq('upload_status', 'completed')
+        .eq('is_deleted', false)
+        .isFilter('permanently_deleted_at', null)
+        .order('uploaded_at', ascending: false);
+
+    final coverFileIds = <String, String>{};
+    for (final row in rows as List) {
+      final data = Map<String, dynamic>.from(row as Map);
+      final albumId = data['album_id']?.toString();
+      final fileId = data['id']?.toString();
+      if (albumId == null || fileId == null) continue;
+      coverFileIds.putIfAbsent(albumId, () => fileId);
+    }
+
+    return coverFileIds;
   }
 }

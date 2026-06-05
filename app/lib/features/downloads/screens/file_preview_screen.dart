@@ -9,6 +9,7 @@ import '../../../core/widgets/app_screen.dart';
 import '../../../core/widgets/pressable_scale.dart';
 import '../../albums/models/media_file.dart';
 import '../../albums/widgets/gallery_tile.dart';
+import '../../albums/widgets/media_preview_image.dart';
 import '../models/downloaded_file.dart';
 import '../providers/download_provider.dart';
 
@@ -104,8 +105,7 @@ class FilePreviewScreen extends ConsumerWidget {
                           // Quality check (after download)
                           if (downloadState.downloadedFile != null) ...[
                             const SizedBox(height: AppSpacing.md),
-                            _QualityResult(
-                                file: downloadState.downloadedFile!),
+                            _QualityResult(file: downloadState.downloadedFile!),
                           ],
 
                           // Error message
@@ -115,8 +115,8 @@ class FilePreviewScreen extends ConsumerWidget {
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: AppColors.maroonFaint,
-                                borderRadius: BorderRadius.circular(
-                                    AppSpacing.radiusMd),
+                                borderRadius:
+                                    BorderRadius.circular(AppSpacing.radiusMd),
                                 border: Border.all(
                                     color: AppColors.velvetMaroon
                                         .withValues(alpha: 0.20)),
@@ -124,8 +124,7 @@ class FilePreviewScreen extends ConsumerWidget {
                               child: Row(
                                 children: [
                                   const Icon(Icons.info_outline,
-                                      color: AppColors.velvetMaroon,
-                                      size: 16),
+                                      color: AppColors.velvetMaroon, size: 16),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
@@ -223,48 +222,20 @@ class _PreviewHero extends StatelessWidget {
       width: double.infinity,
       child: Stack(
         children: [
-          // Gradient background
           Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: gradient,
-                ),
-              ),
+            child: MediaPreviewImage(
+              mediaFileId: file.id,
+              fallback: _PreviewFallback(file: file, gradient: gradient),
             ),
           ),
-
-          // Subtle grid paper texture
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.06,
-              child: GridPaper(
-                color: AppColors.white,
-                divisions: 1,
-                interval: 20,
-                subdivisions: 1,
-              ),
-            ),
-          ),
-
-          // Centered file icon
-          Center(
-            child: Icon(
-              fileTypeIcon(file),
-              color: AppColors.white.withValues(alpha: 0.55),
-              size: 72,
-            ),
-          ),
+          const Positioned.fill(child: _PreviewScrim()),
 
           // Format badge — top-left (below back button)
           Positioned(
             top: topPad + 56,
             left: 16,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               decoration: BoxDecoration(
                 color: file.isVideo
                     ? Colors.black.withValues(alpha: 0.55)
@@ -298,8 +269,7 @@ class _PreviewHero extends StatelessWidget {
             top: topPad + 56,
             right: 16,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.brightGold.withValues(alpha: 0.88),
                 borderRadius: BorderRadius.circular(999),
@@ -346,9 +316,7 @@ class _PreviewHero extends StatelessWidget {
                   color: AppColors.white,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  shadows: [
-                    Shadow(color: Colors.black45, blurRadius: 6)
-                  ],
+                  shadows: [Shadow(color: Colors.black45, blurRadius: 6)],
                 ),
               ),
             ),
@@ -360,6 +328,71 @@ class _PreviewHero extends StatelessWidget {
 }
 
 // ── Meta section ──────────────────────────────────────────────────────────────
+
+class _PreviewFallback extends StatelessWidget {
+  const _PreviewFallback({
+    required this.file,
+    required this.gradient,
+  });
+
+  final MediaFile file;
+  final List<Color> gradient;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradient,
+        ),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Opacity(
+            opacity: 0.06,
+            child: GridPaper(
+              color: AppColors.white,
+              divisions: 1,
+              interval: 20,
+              subdivisions: 1,
+            ),
+          ),
+          Center(
+            child: Icon(
+              fileTypeIcon(file),
+              color: AppColors.white.withValues(alpha: 0.55),
+              size: 72,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PreviewScrim extends StatelessWidget {
+  const _PreviewScrim();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.black.withValues(alpha: 0.08),
+            Colors.transparent,
+            Colors.black.withValues(alpha: 0.28),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _MetaSection extends StatelessWidget {
   const _MetaSection({required this.file});
@@ -373,8 +406,7 @@ class _MetaSection extends StatelessWidget {
         color: AppColors.white,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         border: Border.all(
-            color: AppColors.velvetMaroon.withValues(alpha: 0.08),
-            width: 0.8),
+            color: AppColors.velvetMaroon.withValues(alpha: 0.08), width: 0.8),
         boxShadow: AppShadows.card,
       ),
       child: Column(
@@ -588,8 +620,8 @@ class _DownloadBar extends StatelessWidget {
           ),
         ],
       ),
-      padding: EdgeInsets.fromLTRB(
-          AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.sm + bottomPad),
+      padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md,
+          AppSpacing.sm + bottomPad),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -639,12 +671,10 @@ class _DownloadBar extends StatelessWidget {
                         : AppColors.brightGold,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
                 border: isDone
-                    ? Border.all(
-                        color: AppColors.creamLine, width: 1.5)
+                    ? Border.all(color: AppColors.creamLine, width: 1.5)
                     : null,
-                boxShadow: (!isDownloading && !isDone)
-                    ? AppShadows.goldButton
-                    : null,
+                boxShadow:
+                    (!isDownloading && !isDone) ? AppShadows.goldButton : null,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,

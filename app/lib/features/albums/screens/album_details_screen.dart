@@ -17,6 +17,7 @@ import '../models/media_file.dart';
 import '../providers/album_provider.dart';
 import '../widgets/album_empty_state.dart';
 import '../widgets/gallery_tile.dart';
+import '../widgets/media_preview_image.dart';
 
 // Album management menu values
 enum _MenuAction { rename, archive, delete }
@@ -94,6 +95,9 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
         const <MediaFile>[];
     final hasSelection = selectedFiles.isNotEmpty;
     final filesForSave = hasSelection ? selectedFiles : loadedFiles ?? const [];
+    final coverMediaFileId = loadedFiles != null && loadedFiles.isNotEmpty
+        ? loadedFiles.first.id
+        : album.coverMediaFileId;
 
     final visibleFileCount = loadedFiles?.length ?? album.fileCount;
 
@@ -259,6 +263,7 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
                       stretchModes: const [StretchMode.zoomBackground],
                       background: _CoverBackground(
                         album: album,
+                        coverMediaFileId: coverMediaFileId,
                         visibleFileCount: visibleFileCount,
                         visibleMemberCount: visibleMemberCount,
                       ),
@@ -724,11 +729,13 @@ class _BackButton extends StatelessWidget {
 class _CoverBackground extends StatelessWidget {
   const _CoverBackground({
     required this.album,
+    required this.coverMediaFileId,
     required this.visibleFileCount,
     required this.visibleMemberCount,
   });
 
   final Album album;
+  final String? coverMediaFileId;
   final int visibleFileCount;
   final int visibleMemberCount;
 
@@ -737,37 +744,19 @@ class _CoverBackground extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Background: thumbnail photo or gradient
-        if (album.coverThumbnailUrl != null)
-          Image.network(
-            album.coverThumbnailUrl!,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: album.coverColors.isNotEmpty
-                      ? album.coverColors
-                      : [AppColors.deepMaroon, AppColors.velvetMaroon],
-                ),
-              ),
-            ),
-          )
-        else
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: album.coverColors.isNotEmpty
-                    ? album.coverColors
-                    : [AppColors.deepMaroon, AppColors.velvetMaroon],
-              ),
-            ),
-          ),
-        // Grid texture (gradient only, skip on photo)
-        if (album.coverThumbnailUrl == null)
+        // Background: authenticated preview or gradient
+        MediaPreviewImage(
+          mediaFileId: coverMediaFileId,
+          fallback: album.coverThumbnailUrl != null
+              ? Image.network(
+                  album.coverThumbnailUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _CoverGradient(album: album),
+                )
+              : _CoverGradient(album: album),
+        ),
+        // Grid texture (gradient only, skip on preview)
+        if (coverMediaFileId == null && album.coverThumbnailUrl == null)
           Positioned.fill(
             child: Opacity(
               opacity: 0.07,
@@ -837,6 +826,27 @@ class _CoverBackground extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CoverGradient extends StatelessWidget {
+  const _CoverGradient({required this.album});
+
+  final Album album;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: album.coverColors.isNotEmpty
+              ? album.coverColors
+              : [AppColors.deepMaroon, AppColors.velvetMaroon],
+        ),
+      ),
     );
   }
 }

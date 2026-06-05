@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 import '../models/media_file.dart';
+import 'media_preview_image.dart';
 
 IconData fileTypeIcon(MediaFile file) {
   if (file.isVideo) return Icons.movie_outlined;
@@ -45,6 +46,11 @@ class GalleryTile extends StatelessWidget {
     ];
     final gradient = palettes[file.id.hashCode.abs() % palettes.length];
 
+    final fallback = _GalleryFallback(
+      file: file,
+      gradient: gradient,
+    );
+
     return Material(
       color: AppColors.white,
       borderRadius: BorderRadius.circular(0),
@@ -54,21 +60,12 @@ class GalleryTile extends StatelessWidget {
         child: Stack(
           children: [
             Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: gradient,
-                  ),
-                ),
-                child: Icon(
-                  fileTypeIcon(file),
-                  color: AppColors.white.withValues(alpha: 0.50),
-                  size: 18,
-                ),
+              child: MediaPreviewImage(
+                mediaFileId: file.id,
+                fallback: fallback,
               ),
             ),
+            const Positioned.fill(child: _GalleryScrim()),
             if (!selectionMode)
               Positioned(
                 top: 4,
@@ -163,6 +160,55 @@ class GalleryTile extends StatelessWidget {
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GalleryFallback extends StatelessWidget {
+  const _GalleryFallback({
+    required this.file,
+    required this.gradient,
+  });
+
+  final MediaFile file;
+  final List<Color> gradient;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradient,
+        ),
+      ),
+      child: Icon(
+        fileTypeIcon(file),
+        color: AppColors.white.withValues(alpha: 0.50),
+        size: 18,
+      ),
+    );
+  }
+}
+
+class _GalleryScrim extends StatelessWidget {
+  const _GalleryScrim();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.black.withValues(alpha: 0.05),
+            Colors.transparent,
+            Colors.black.withValues(alpha: 0.35),
           ],
         ),
       ),

@@ -8,6 +8,7 @@ class MediaFile {
     required this.uploaderName,
     required this.uploadedLabel,
     required this.isVideo,
+    this.thumbnailUrl,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class MediaFile {
   final String uploaderName;
   final String uploadedLabel;
   final bool isVideo;
+  final String? thumbnailUrl;
 
   factory MediaFile.fromJson(Map<String, dynamic> json) {
     final fileType = json['file_type']?.toString() ?? 'photo';
@@ -40,7 +42,13 @@ class MediaFile {
       uploaderName: _uploaderName(uploaderMap),
       uploadedLabel: _uploadedLabel(uploadedAt),
       isVideo: fileType == 'video',
+      thumbnailUrl: _optionalText(json['thumbnail_url']),
     );
+  }
+
+  static String? _optionalText(Object? value) {
+    final text = value?.toString().trim();
+    return text == null || text.isEmpty ? null : text;
   }
 
   static String _uploaderName(Map<String, dynamic> uploader) {

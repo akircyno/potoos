@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme.dart';
 import '../../../core/widgets/app_card.dart';
 import '../models/album.dart';
+import 'media_preview_image.dart';
 
 class AlbumCard extends StatelessWidget {
   const AlbumCard({
@@ -31,19 +32,22 @@ class AlbumCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Background: thumbnail photo or gradient fallback
-                  if (album.coverThumbnailUrl != null)
-                    Image.network(
-                      album.coverThumbnailUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          _GradientCover(album: album),
-                    )
-                  else
-                    _GradientCover(album: album),
+                  // Background: authenticated preview or gradient fallback
+                  MediaPreviewImage(
+                    mediaFileId: album.coverMediaFileId,
+                    fallback: album.coverThumbnailUrl != null
+                        ? Image.network(
+                            album.coverThumbnailUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                _GradientCover(album: album),
+                          )
+                        : _GradientCover(album: album),
+                  ),
 
                   // Dark scrim so text is always readable over photos
-                  if (album.coverThumbnailUrl != null)
+                  if (album.coverMediaFileId != null ||
+                      album.coverThumbnailUrl != null)
                     DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -90,8 +94,7 @@ class AlbumCard extends StatelessWidget {
                     right: 16,
                     child: Text(
                       album.name,
-                      style:
-                          Theme.of(context).textTheme.titleLarge?.copyWith(
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: AppColors.white,
                         shadows: const [
                           Shadow(

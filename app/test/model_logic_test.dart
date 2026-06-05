@@ -53,6 +53,21 @@ void main() {
       expect(_albumWithRole('Contributor').canManageMembers, isFalse);
       expect(_albumWithRole('Viewer').canManageMembers, isFalse);
     });
+
+    test('keeps preview cover media id separate from cover URL', () {
+      final album = Album.fromData(
+        album: {
+          'id': 'album-id',
+          'name': 'Preview Album',
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        role: 'admin',
+        coverMediaFileId: 'media-id',
+      );
+
+      expect(album.coverMediaFileId, 'media-id');
+      expect(album.coverThumbnailUrl, isNull);
+    });
   });
 
   group('DownloadedFile quality check', () {
@@ -172,6 +187,7 @@ void main() {
         'original_filename': 'IMG_3778.JPG',
         'file_type': 'photo',
         'mime_type': 'image/jpeg',
+        'thumbnail_url': 'https://example.com/preview.jpg',
         'file_size_bytes': 1194062,
         'uploader': {
           'email': 'uploader@example.com',
@@ -181,6 +197,7 @@ void main() {
 
       expect(file.uploaderName, 'Ian Aquino');
       expect(file.fileSizeLabel, '1.1 MB');
+      expect(file.thumbnailUrl, 'https://example.com/preview.jpg');
     });
 
     test('falls back to uploader email when display name is hidden', () {

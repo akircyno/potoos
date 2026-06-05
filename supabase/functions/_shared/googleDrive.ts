@@ -7,6 +7,12 @@ export type DriveFileMetadata = {
   thumbnailLink?: string;
 };
 
+export type DriveThumbnailBytes = {
+  bytes: Uint8Array;
+  mimeType: string;
+  thumbnailLink: string;
+};
+
 type UploadSessionParams = {
   filename: string;
   mimeType: string;
@@ -93,6 +99,29 @@ export async function downloadDriveFileBytes(fileId: string) {
   }
 
   return new Uint8Array(await response.arrayBuffer());
+}
+
+export async function downloadDriveThumbnailBytes(fileId: string): Promise<DriveThumbnailBytes | null> {
+  const accessToken = await getGoogleAccessToken();
+  const metadata = await getDriveFileMetadata(fileId);
+
+  if (!metadata.thumbnailLink) return null;
+
+  const response = await fetch(metadata.thumbnailLink, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to download Google Drive thumbnail.");
+  }
+
+  return {
+    bytes: new Uint8Array(await response.arrayBuffer()),
+    mimeType: response.headers.get("Content-Type") ?? "image/jpeg",
+    thumbnailLink: metadata.thumbnailLink,
+  };
 }
 
 export async function createDriveFolder(name: string, parentId: string): Promise<DriveFileMetadata> {

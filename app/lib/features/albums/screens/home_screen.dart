@@ -15,6 +15,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../models/album.dart';
 import '../providers/album_provider.dart';
 import '../widgets/album_card.dart';
+import '../widgets/media_preview_image.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/poto_mascot.dart';
 import '../../../core/widgets/pwa_install_banner.dart';
@@ -68,8 +69,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.photo_album_outlined, color: AppColors.featherTaupe),
-            selectedIcon: Icon(Icons.photo_album, color: AppColors.velvetMaroon),
+            icon:
+                Icon(Icons.photo_album_outlined, color: AppColors.featherTaupe),
+            selectedIcon:
+                Icon(Icons.photo_album, color: AppColors.velvetMaroon),
             label: 'Albums',
           ),
           NavigationDestination(
@@ -79,7 +82,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           NavigationDestination(
             icon: Icon(Icons.notifications_none, color: AppColors.featherTaupe),
-            selectedIcon: Icon(Icons.notifications, color: AppColors.velvetMaroon),
+            selectedIcon:
+                Icon(Icons.notifications, color: AppColors.velvetMaroon),
             label: 'Activity',
           ),
           NavigationDestination(
@@ -193,7 +197,8 @@ class _AlbumsTab extends ConsumerWidget {
                 loading: () => const Center(
                   child: Padding(
                     padding: EdgeInsets.all(24),
-                    child: CircularProgressIndicator(color: AppColors.brightGold),
+                    child:
+                        CircularProgressIndicator(color: AppColors.brightGold),
                   ),
                 ),
                 error: (error, _) => AlbumEmptyState(
@@ -387,7 +392,9 @@ class _InvitesTab extends ConsumerWidget {
                     child: Text(
                       'You\'re a member in ${sharedAlbums.length} space${sharedAlbums.length == 1 ? '' : 's'} but don\'t manage any. Admins can invite and change roles.',
                       style: const TextStyle(
-                          color: AppColors.featherTaupe, fontSize: 12, height: 1.5),
+                          color: AppColors.featherTaupe,
+                          fontSize: 12,
+                          height: 1.5),
                     ),
                   ),
               ],
@@ -418,14 +425,17 @@ class _InviteAlbumRow extends StatelessWidget {
             child: SizedBox(
               width: 44,
               height: 44,
-              child: album.coverThumbnailUrl != null
-                  ? Image.network(
-                      album.coverThumbnailUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          _AlbumSwatch(album: album),
-                    )
-                  : _AlbumSwatch(album: album),
+              child: MediaPreviewImage(
+                mediaFileId: album.coverMediaFileId,
+                fallback: album.coverThumbnailUrl != null
+                    ? Image.network(
+                        album.coverThumbnailUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            _AlbumSwatch(album: album),
+                      )
+                    : _AlbumSwatch(album: album),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -438,7 +448,8 @@ class _InviteAlbumRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
                       color: AppColors.charcoalInk),
                 ),
                 const SizedBox(height: 3),
@@ -507,12 +518,17 @@ class _ArchivedAlbumRow extends StatelessWidget {
               child: SizedBox(
                 width: 44,
                 height: 44,
-                child: album.coverThumbnailUrl != null
-                    ? Image.network(album.coverThumbnailUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            _AlbumSwatch(album: album))
-                    : _AlbumSwatch(album: album),
+                child: MediaPreviewImage(
+                  mediaFileId: album.coverMediaFileId,
+                  fallback: album.coverThumbnailUrl != null
+                      ? Image.network(
+                          album.coverThumbnailUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              _AlbumSwatch(album: album),
+                        )
+                      : _AlbumSwatch(album: album),
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -613,10 +629,8 @@ class _NotificationsTab extends ConsumerWidget {
               );
             }
 
-            final withFiles =
-                albums.where((a) => a.fileCount > 0).toList();
-            final empty =
-                albums.where((a) => a.fileCount == 0).toList();
+            final withFiles = albums.where((a) => a.fileCount > 0).toList();
+            final empty = albums.where((a) => a.fileCount == 0).toList();
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -985,8 +999,7 @@ class _ProfileTab extends ConsumerWidget {
                 icon: Icons.shield_outlined,
                 label: 'Privacy Policy',
                 onTap: () => launchUrl(
-                  Uri.parse(
-                      'https://akircyno.github.io/potoos/privacy.html'),
+                  Uri.parse('https://akircyno.github.io/potoos/privacy.html'),
                   mode: LaunchMode.externalApplication,
                 ),
               ),
@@ -995,8 +1008,7 @@ class _ProfileTab extends ConsumerWidget {
                 icon: Icons.description_outlined,
                 label: 'Terms of Use',
                 onTap: () => launchUrl(
-                  Uri.parse(
-                      'https://akircyno.github.io/potoos/terms.html'),
+                  Uri.parse('https://akircyno.github.io/potoos/terms.html'),
                   mode: LaunchMode.externalApplication,
                 ),
               ),
@@ -1097,7 +1109,7 @@ class _DeleteAccountButtonState extends State<_DeleteAccountButton> {
       await widget.ref.read(deleteAccountProvider.notifier).deleteAccount();
       if (context.mounted) {
         Navigator.pushNamedAndRemoveUntil(
-          context, AppRoutes.login, (_) => false);
+            context, AppRoutes.login, (_) => false);
       }
     } catch (e) {
       if (context.mounted) {
@@ -1114,7 +1126,8 @@ class _DeleteAccountButtonState extends State<_DeleteAccountButton> {
 }
 
 class _LegalRow extends StatelessWidget {
-  const _LegalRow({required this.icon, required this.label, required this.onTap});
+  const _LegalRow(
+      {required this.icon, required this.label, required this.onTap});
 
   final IconData icon;
   final String label;
