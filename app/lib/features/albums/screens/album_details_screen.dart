@@ -13,6 +13,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../downloads/screens/save_all_screen.dart';
 import '../models/album.dart';
 import '../models/album_member.dart';
+import '../../uploads/providers/upload_provider.dart';
 import '../models/media_file.dart';
 import '../providers/album_provider.dart';
 import '../widgets/album_empty_state.dart';
@@ -127,6 +128,10 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
         ),
       );
     }
+
+    final uploadState = ref.watch(uploadControllerProvider);
+    final hasPausedUpload =
+        uploadState.isPaused && uploadState.albumId == album.id;
 
     final visibleMemberCount = loadedMembers?.length ?? album.memberCount;
     final currentMember = _currentMember(loadedMembers, currentProfile?.id);
@@ -457,14 +462,41 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
                           ),
                   ),
 
-                  // Bottom padding — extra clearance for the sticky selection bar
+                  // Bottom padding — extra clearance for selection bar / resume banner
                   SliverToBoxAdapter(
                     child: SizedBox(
-                        height: selectionMode && hasSelection ? 84 : 32),
+                      height: selectionMode && hasSelection
+                          ? 84
+                          : hasPausedUpload
+                              ? 96
+                              : 32,
+                    ),
                   ),
                 ],
               ),
             ),
+
+            // ── Resume upload banner ──────────────────────────────────────────
+            if (hasPausedUpload && !selectionMode)
+              Positioned(
+                bottom: MediaQuery.of(context).padding.bottom + 16,
+                left: AppSpacing.md,
+                right: AppSpacing.md,
+                child: _UploadResumeBanner(
+                  remainingCount: uploadState.remainingCount,
+                  onResume: () {
+                    final args = ref
+                        .read(uploadControllerProvider.notifier)
+                        .pausedArgs;
+                    if (args == null) return;
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.uploadProgress,
+                      arguments: args,
+                    );
+                  },
+                ),
+              ),
 
             // ── Sticky selection bar ──────────────────────────────────────────
             if (selectionMode)
@@ -1077,6 +1109,77 @@ class _SelectionBar extends StatelessWidget {
                   color: onSave != null
                       ? AppColors.deepMaroon
                       : AppColors.featherTaupe,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UploadResumeBanner extends StatelessWidget {
+  const _UploadResumeBanner({
+    required this.remainingCount,
+    required this.onResume,
+  });
+
+  final int remainingCount;
+  final VoidCallback onResume;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.deepMaroon,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        boxShadow: AppShadows.primaryButton,
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.pause_circle_outline,
+              color: AppColors.brightGold, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Upload paused.',
+                  style: TextStyle(
+                    color: AppColors.pearlCream,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  '$remainingCount file${remainingCount == 1 ? '' : 's'} remaining',
+                  style: TextStyle(
+                    color: AppColors.warmCream.withValues(alpha: 0.7),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          GestureDetector(
+            onTap: onResume,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: AppColors.brightGold,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              ),
+              child: const Text(
+                'Resume',
+                style: TextStyle(
+                  color: AppColors.deepMaroon,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),

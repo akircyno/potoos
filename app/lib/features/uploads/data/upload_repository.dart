@@ -56,6 +56,7 @@ class UploadRepository {
     required String albumId,
     required UploadFile file,
     UploadSession? existingSession,
+    CancelToken? cancelToken,
     void Function(UploadSession session)? onSessionCreated,
     required void Function(double progress) onProgress,
   }) async {
@@ -97,6 +98,7 @@ class UploadRepository {
         file: file,
         bytes: bytes,
         checksumHex: checksumHex,
+        cancelToken: cancelToken,
         onProgress: onProgress,
       );
     }
@@ -121,6 +123,7 @@ class UploadRepository {
     required UploadFile file,
     required Uint8List bytes,
     required String? checksumHex,
+    CancelToken? cancelToken,
     required void Function(double progress) onProgress,
   }) async {
     String providerFileId;
@@ -129,6 +132,7 @@ class UploadRepository {
       session: session,
       file: file,
       bytes: bytes,
+      cancelToken: cancelToken,
       onProgress: (p) => onProgress(0.05 + p.clamp(0.0, 1.0) * 0.88),
     );
 
@@ -149,6 +153,7 @@ class UploadRepository {
     required UploadSession session,
     required UploadFile file,
     required Uint8List bytes,
+    CancelToken? cancelToken,
     required void Function(double progress) onProgress,
   }) async {
     final totalBytes = bytes.length;
@@ -161,6 +166,7 @@ class UploadRepository {
     final startingStatus = await _queryDriveUploadStatus(
       session: session,
       totalBytes: totalBytes,
+      cancelToken: cancelToken,
     );
     if (startingStatus != null) {
       if (startingStatus.statusCode == 200 ||
@@ -193,6 +199,7 @@ class UploadRepository {
         chunkStart: chunkStart,
         chunkEndInclusive: chunkEndInclusive,
         totalBytes: totalBytes,
+        cancelToken: cancelToken,
         onProgress: onProgress,
       );
 
@@ -238,6 +245,7 @@ class UploadRepository {
     required int chunkStart,
     required int chunkEndInclusive,
     required int totalBytes,
+    CancelToken? cancelToken,
     required void Function(double progress) onProgress,
   }) async {
     for (var attempt = 1; attempt <= _maxChunkAttempts; attempt++) {
@@ -249,6 +257,7 @@ class UploadRepository {
           chunkStart: chunkStart,
           chunkEndInclusive: chunkEndInclusive,
           totalBytes: totalBytes,
+          cancelToken: cancelToken,
           onProgress: onProgress,
         );
 
@@ -260,6 +269,7 @@ class UploadRepository {
           final statusResult = await _queryDriveUploadStatus(
             session: session,
             totalBytes: totalBytes,
+            cancelToken: cancelToken,
           );
           if (_canContinueFromDriveStatus(statusResult, chunkStart)) {
             return statusResult!;
@@ -275,6 +285,7 @@ class UploadRepository {
           final statusResult = await _queryDriveUploadStatus(
             session: session,
             totalBytes: totalBytes,
+            cancelToken: cancelToken,
           );
           if (_canContinueFromDriveStatus(statusResult, chunkStart)) {
             return statusResult!;
@@ -286,10 +297,14 @@ class UploadRepository {
 
         rethrow;
       } on DioException catch (error) {
+        // Cancellation must propagate immediately — don't retry or convert.
+        if (error.type == DioExceptionType.cancel) rethrow;
+
         if (attempt < _maxChunkAttempts && _isRetryableDioUpload(error)) {
           final statusResult = await _queryDriveUploadStatus(
             session: session,
             totalBytes: totalBytes,
+            cancelToken: cancelToken,
           );
           if (_canContinueFromDriveStatus(statusResult, chunkStart)) {
             return statusResult!;
@@ -316,12 +331,14 @@ class UploadRepository {
     required int chunkStart,
     required int chunkEndInclusive,
     required int totalBytes,
+    CancelToken? cancelToken,
     required void Function(double progress) onProgress,
   }) async {
     if (session.isEdgeDriveResumable) {
       final response = await dio.put<dynamic>(
         _edgeFunctionUrl(session.uploadUrl),
         data: chunk,
+        cancelToken: cancelToken,
         options: Options(
           headers: _edgeDriveChunkHeaders(
             session: session,
@@ -345,6 +362,7 @@ class UploadRepository {
     final response = await dio.put<dynamic>(
       session.uploadUrl,
       data: chunk,
+      cancelToken: cancelToken,
       options: Options(
         headers: _driveChunkHeaders(
           mimeType: file.mimeType,
@@ -368,6 +386,7 @@ class UploadRepository {
   Future<_DriveUploadResult?> _queryDriveUploadStatus({
     required UploadSession session,
     required int totalBytes,
+    CancelToken? cancelToken,
   }) async {
     try {
       final Response<dynamic> response;
@@ -375,6 +394,7 @@ class UploadRepository {
         response = await dio.put<dynamic>(
           _edgeFunctionUrl(session.uploadUrl),
           data: Uint8List(0),
+          cancelToken: cancelToken,
           options: Options(
             headers: _edgeDriveProbeHeaders(
               session: session,
@@ -388,6 +408,7 @@ class UploadRepository {
         response = await dio.put<dynamic>(
           session.uploadUrl,
           data: Uint8List(0),
+          cancelToken: cancelToken,
           options: Options(
             headers: {
               'Content-Range': 'bytes */$totalBytes',
@@ -410,7 +431,9 @@ class UploadRepository {
       }
 
       return null;
-    } on DioException {
+    } on DioException catch (e) {
+      // Cancellation must propagate so the upload loop can transition to paused.
+      if (e.type == DioExceptionType.cancel) rethrow;
       return null;
     } on AppError {
       return null;

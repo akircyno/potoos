@@ -21,31 +21,29 @@ Deno.serve(async (req) => {
   }
 
   let body: Record<string, unknown>;
-
   try {
     body = await req.json();
   } catch {
     return error("INVALID_REQUEST", "Please send valid invite details.", 400);
   }
 
-  if (!isUuid(body.album_id) || !isValidEmail(body.email) || !isAlbumRole(body.role)) {
+  if (!isUuid(body.album_id) || !isValidEmail(body.email) || !isInviteRole(body.role)) {
     return error("INVALID_REQUEST", "Please send a valid email and role.", 400);
   }
 
-  const albumId = body.album_id;
-  const email = body.email.trim().toLowerCase();
-  const role = body.role;
+  const albumId = body.album_id as string;
+  const email = (body.email as string).trim().toLowerCase();
+  const role = body.role as AlbumRole;
 
   const inviterRole = await getAlbumRole(albumId, user.id);
   if (inviterRole !== "admin") {
     return error("FORBIDDEN", "Only album admins can invite people.", 403);
   }
 
-  // Fetch inviter display name for email (best-effort)
   const { data: inviterProfile } = await supabaseAdmin
     .from("user_profiles")
     .select("display_name")
-    .eq("user_id", user.id)
+    .eq("id", user.id)
     .maybeSingle();
   const inviterDisplayName = inviterProfile?.display_name ?? "Someone";
 
@@ -60,7 +58,6 @@ Deno.serve(async (req) => {
     console.error("invite-album-member album lookup failed", albumError.message);
     return error("SERVER_ERROR", "Could not load the album. Please try again.", 500);
   }
-
   if (!album) {
     return error("ALBUM_NOT_FOUND", "This album is no longer available.", 404);
   }
@@ -68,7 +65,7 @@ Deno.serve(async (req) => {
 
   const { data: invitedProfile, error: profileError } = await supabaseAdmin
     .from("user_profiles")
-    .select("id, email, display_name, avatar_url, is_active, is_banned")
+    .select("id, email, display_name, is_active, is_banned")
     .eq("email", email)
     .eq("is_active", true)
     .eq("is_banned", false)
@@ -78,15 +75,14 @@ Deno.serve(async (req) => {
     console.error("invite-album-member profile lookup failed", profileError.message);
     return error("SERVER_ERROR", "Could not find that person. Please try again.", 500);
   }
-
   if (!invitedProfile) {
     return error("USER_NOT_FOUND", "Ask this person to sign in to Potoos once before inviting them.", 404);
   }
-
   if (invitedProfile.id === user.id) {
     return error("INVALID_REQUEST", "You are already a member of this album.", 400);
   }
 
+  // ── Existing active membership: update role directly (no re-invite needed) ──
   const { data: existingMember, error: existingError } = await supabaseAdmin
     .from("album_members")
     .select("id, role, is_active")
@@ -101,15 +97,12 @@ Deno.serve(async (req) => {
 
   if (existingMember?.is_active) {
     if (existingMember.role === role) {
-      return error("ALREADY_EXISTS", "This person already has that role.", 409);
+      return error("ALREADY_EXISTS", "This person is already a member with that role.", 409);
     }
 
     const { data: updatedMember, error: updateError } = await supabaseAdmin
       .from("album_members")
-      .update({
-        role,
-        invited_by: user.id,
-      })
+      .update({ role, invited_by: user.id })
       .eq("id", existingMember.id)
       .select(
         "album_id, user_id, role, joined_at, profile:user_profiles!album_members_user_id_fkey(email, display_name, avatar_url)",
@@ -122,61 +115,53 @@ Deno.serve(async (req) => {
     }
 
     await touchAlbum(albumId);
-    // Fire-and-forget — invite succeeds even if email fails
-    sendInviteEmail({ to: email, inviterName: inviterDisplayName, albumName: albumName, role }).catch(() => {});
-
+    sendInviteEmail({ to: email, inviterName: inviterDisplayName, albumName, role }).catch(() => {});
     return success({ member: mapMember(updatedMember), action: "updated" });
   }
 
-  if (existingMember) {
-    const { data: restoredMember, error: restoreError } = await supabaseAdmin
-      .from("album_members")
-      .update({
-        role,
-        invited_by: user.id,
-        joined_at: new Date().toISOString(),
-        removed_at: null,
-        is_active: true,
-      })
-      .eq("id", existingMember.id)
-      .select(
-        "album_id, user_id, role, joined_at, profile:user_profiles!album_members_user_id_fkey(email, display_name, avatar_url)",
-      )
-      .single();
+  // ── Check for an already-pending invite ──────────────────────────────────
+  const { data: existingInvite } = await supabaseAdmin
+    .from("album_invites")
+    .select("id")
+    .eq("album_id", albumId)
+    .eq("invited_user_id", invitedProfile.id)
+    .eq("status", "pending")
+    .maybeSingle();
 
-    if (restoreError || !restoredMember) {
-      console.error("invite-album-member restore failed", restoreError?.message);
-      return error("SERVER_ERROR", "Could not invite this person. Please try again.", 500);
-    }
-
-    await touchAlbum(albumId);
-    sendInviteEmail({ to: email, inviterName: inviterDisplayName, albumName: albumName, role }).catch(() => {});
-
-    return success({ member: mapMember(restoredMember), action: "restored" });
+  if (existingInvite) {
+    return error("ALREADY_EXISTS", "An invite is already pending for this person.", 409);
   }
 
-  const { data: member, error: memberError } = await supabaseAdmin
-    .from("album_members")
+  // ── Create pending invite (new or previously-removed user) ───────────────
+  const { data: invite, error: inviteError } = await supabaseAdmin
+    .from("album_invites")
     .insert({
       album_id: albumId,
-      user_id: invitedProfile.id,
+      invited_user_id: invitedProfile.id,
+      invited_by_id: user.id,
+      invited_by_name: inviterDisplayName,
+      album_name: albumName,
       role,
-      invited_by: user.id,
+      status: "pending",
     })
-    .select(
-      "album_id, user_id, role, joined_at, profile:user_profiles!album_members_user_id_fkey(email, display_name, avatar_url)",
-    )
+    .select("id, album_id, invited_user_id, role, status, created_at")
     .single();
 
-  if (memberError || !member) {
-    console.error("invite-album-member insert failed", memberError?.message);
-    return error("SERVER_ERROR", "Could not invite this person. Please try again.", 500);
+  if (inviteError || !invite) {
+    console.error("invite-album-member invite insert failed", inviteError?.message);
+    return error("SERVER_ERROR", "Could not send the invite. Please try again.", 500);
   }
 
   await touchAlbum(albumId);
-  sendInviteEmail({ to: email, inviterName: inviterDisplayName, albumName: albumName, role }).catch(() => {});
+  sendInviteEmail({
+    to: email,
+    inviterName: inviterDisplayName,
+    albumName,
+    role,
+    inviteId: (invite as Record<string, unknown>).id as string,
+  }).catch(() => {});
 
-  return success({ member: mapMember(member), action: "added" }, 201);
+  return success({ invite, action: "invited" }, 201);
 });
 
 function isValidEmail(value: unknown): value is string {
@@ -185,13 +170,14 @@ function isValidEmail(value: unknown): value is string {
   return trimmed.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
 }
 
-function isAlbumRole(value: unknown): value is AlbumRole {
-  return value === "admin" || value === "contributor" || value === "viewer";
+// Admin role is excluded from the invite flow — assign admin via role-change
+// on an existing member.
+function isInviteRole(value: unknown): value is AlbumRole {
+  return value === "contributor" || value === "viewer";
 }
 
 function mapMember(row: Record<string, unknown>) {
   const profile = Array.isArray(row.profile) ? row.profile[0] : row.profile;
-
   return {
     album_id: row.album_id,
     user_id: row.user_id,

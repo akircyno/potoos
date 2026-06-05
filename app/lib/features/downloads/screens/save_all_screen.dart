@@ -100,7 +100,7 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
             ? PotoExpression.error
             : _isSaving
                 ? PotoExpression.working
-                : PotoExpression.idle;
+                : PotoExpression.saveAll;
 
     final statusTitle = _isComplete
         ? 'All $totalFiles original${totalFiles == 1 ? '' : 's'} are yours.'

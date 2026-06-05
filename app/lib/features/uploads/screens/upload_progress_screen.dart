@@ -33,10 +33,14 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
       if (!_started) {
         _started = true;
         Future.microtask(() {
-          ref.read(uploadControllerProvider.notifier).upload(
-                albumId: routeArgs.album.id,
-                files: routeArgs.files,
-              );
+          if (!mounted) return;
+          final uploadState = ref.read(uploadControllerProvider);
+          if (uploadState.isPaused &&
+              uploadState.albumId == routeArgs.album.id) {
+            ref.read(uploadControllerProvider.notifier).resume();
+          } else {
+            ref.read(uploadControllerProvider.notifier).upload(routeArgs);
+          }
         });
       }
     }
@@ -65,6 +69,7 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
     }
 
     final isUploading = state.isUploading;
+    final isPaused = state.isPaused;
     final isComplete = state.isComplete;
     final hasError = state.errorMessage != null;
     final totalCount = files.length;
@@ -72,25 +77,34 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
     final bottomPad = MediaQuery.of(context).padding.bottom;
 
     final expression = isComplete
-        ? PotoExpression.happy
+        ? PotoExpression.uploadSuccess
         : hasError
             ? PotoExpression.error
-            : PotoExpression.working;
+            : isPaused
+                ? PotoExpression.waiting
+                : PotoExpression.working;
 
     final statusTitle = isComplete
-        ? 'All $totalCount original${totalCount == 1 ? '' : 's'} are safe.'
+        ? 'All $totalCount file${totalCount == 1 ? '' : 's'} are safe.'
         : hasError
             ? 'Upload stopped.'
-            : '$completedCount of $totalCount secured so far.';
+            : isPaused
+                ? 'Upload paused.'
+                : '$completedCount of $totalCount secured so far.';
 
     final statusSub = isComplete
-        ? 'Poto kept every file exactly as you took it.'
+        ? 'Stored without changes.'
         : hasError
             ? state.errorMessage ?? 'Something went wrong. Tap Try Again.'
-            : 'Keep this screen open while uploading.';
+            : isPaused
+                ? 'Tap Resume on the album to continue.'
+                : 'Keep this screen open while uploading.';
 
     return PopScope(
       canPop: !isUploading,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && isUploading) _showLeaveDialog();
+      },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.light,
         child: Scaffold(
@@ -100,9 +114,8 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
               // ── Header ───────────────────────────────────────────────
               _Header(
                 albumName: album.name,
-                canClose: !isUploading,
                 onClose: isUploading
-                    ? null
+                    ? () => _showLeaveDialog()
                     : () => Navigator.pushNamedAndRemoveUntil(
                           context,
                           AppRoutes.albumDetails,
@@ -235,6 +248,35 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
     }
   }
 
+  Future<void> _showLeaveDialog() async {
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Upload in progress'),
+        content: const Text(
+          'Your files are still uploading. Leaving now will pause the upload.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Stay'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.maroon),
+            child: const Text('Leave anyway'),
+          ),
+        ],
+      ),
+    );
+
+    if (leave == true && mounted) {
+      // pause() only sets a flag + cancels the token — no need to await.
+      ref.read(uploadControllerProvider.notifier).pause();
+      Navigator.pop(context);
+    }
+  }
+
   double _progressFor(int i, UploadState state) {
     if (i < state.completedCount) return 1.0;
     if (i == state.currentFileIndex &&
@@ -264,13 +306,11 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
 class _Header extends StatelessWidget {
   const _Header({
     required this.albumName,
-    required this.canClose,
     required this.onClose,
   });
 
   final String albumName;
-  final bool canClose;
-  final VoidCallback? onClose;
+  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -285,20 +325,19 @@ class _Header extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           PressableScale(
-            onTap: canClose ? onClose : null,
+            onTap: onClose,
             borderRadius: BorderRadius.circular(10),
             child: Container(
               width: 32,
               height: 32,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color:
-                    AppColors.white.withValues(alpha: canClose ? 0.14 : 0.06),
+                color: AppColors.white.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.close,
-                color: AppColors.white.withValues(alpha: canClose ? 1.0 : 0.3),
+                color: AppColors.white,
                 size: 17,
               ),
             ),

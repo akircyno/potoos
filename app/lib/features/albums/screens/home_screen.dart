@@ -13,6 +13,7 @@ import '../../../core/widgets/notification_item.dart';
 import '../../../core/widgets/quality_promise_card.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/album.dart';
+import '../models/album_invite.dart';
 import '../providers/album_provider.dart';
 import '../widgets/album_card.dart';
 import '../widgets/media_preview_image.dart';
@@ -303,6 +304,20 @@ class _InvitesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final albumsAsync = ref.watch(albumListProvider);
+    final pendingInvitesAsync = ref.watch(pendingInvitesProvider);
+
+    ref.listen<InviteResponseState>(inviteResponseControllerProvider,
+        (prev, next) {
+      if (next.successMessage != null &&
+          next.successMessage != prev?.successMessage) {
+        showAppToast(context, message: next.successMessage!);
+      }
+      if (next.errorMessage != null &&
+          next.errorMessage != prev?.errorMessage) {
+        showAppToast(context,
+            message: next.errorMessage!, isError: true);
+      }
+    });
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
@@ -313,6 +328,28 @@ class _InvitesTab extends ConsumerWidget {
           showAvatar: false,
         ),
         const SizedBox(height: 14),
+        // ── Pending invites ────────────────────────────────────────────────
+        pendingInvitesAsync.when(
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (invites) {
+            if (invites.isEmpty) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Pending invites.',
+                    style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: AppSpacing.sm),
+                for (final invite in invites) ...[
+                  _PendingInviteCard(invite: invite),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+                const SizedBox(height: AppSpacing.sm),
+              ],
+            );
+          },
+        ),
+        // ── Spaces ─────────────────────────────────────────────────────────
         albumsAsync.when(
           loading: () => const Center(
             child: Padding(
@@ -403,6 +440,132 @@ class _InvitesTab extends ConsumerWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+class _PendingInviteCard extends ConsumerWidget {
+  const _PendingInviteCard({required this.invite});
+
+  final AlbumInvite invite;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isBusy = ref.watch(
+        inviteResponseControllerProvider.select((s) => s.isBusy));
+
+    return AppCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Album cover placeholder
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: AppColors.featherTaupe.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            ),
+            child: const Icon(Icons.photo_album_outlined,
+                color: AppColors.mutedInk, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  invite.albumName,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Invited by ${invite.inviterName}',
+                  style: const TextStyle(
+                      color: AppColors.mutedInk, fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  invite.roleLabel,
+                  style: const TextStyle(
+                      color: AppColors.featherTaupe, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: isBusy
+                ? null
+                : () => _confirmDecline(context, ref),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.maroon,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text('Decline',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          ),
+          const SizedBox(width: 4),
+          TextButton(
+            onPressed: isBusy
+                ? null
+                : () => ref
+                    .read(inviteResponseControllerProvider.notifier)
+                    .accept(
+                        inviteId: invite.id,
+                        albumName: invite.albumName),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.brightGold,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text('Join',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDecline(BuildContext context, WidgetRef ref) {
+    showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Decline invite?'),
+        content: Text(
+            'Decline the invite to "${invite.albumName}"? The admin will be notified.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref
+                  .read(inviteResponseControllerProvider.notifier)
+                  .decline(
+                      inviteId: invite.id,
+                      albumName: invite.albumName);
+            },
+            style:
+                TextButton.styleFrom(foregroundColor: AppColors.maroon),
+            child: const Text('Decline'),
+          ),
+        ],
+      ),
     );
   }
 }

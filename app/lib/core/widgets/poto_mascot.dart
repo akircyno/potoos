@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
 
-enum PotoExpression { idle, happy, working, waiting, error }
+enum PotoExpression { idle, happy, working, waiting, error, saveAll, uploadSuccess }
 
 extension _PotoAsset on PotoExpression {
   String get assetPath {
@@ -17,10 +17,13 @@ extension _PotoAsset on PotoExpression {
         return 'assets/mascot/poto_waiting.webp';
       case PotoExpression.error:
         return 'assets/mascot/poto_error.webp';
+      case PotoExpression.saveAll:
+        return 'assets/mascot/poto_save_all.webp';
+      case PotoExpression.uploadSuccess:
+        return 'assets/mascot/poto_upload_success.webp';
     }
   }
 
-  // Fallback to idle when a specific expression file fails
   String get fallbackAssetPath => 'assets/mascot/poto_idle.webp';
 
   String get fallbackEmoji {
@@ -35,6 +38,10 @@ extension _PotoAsset on PotoExpression {
         return '🌙';
       case PotoExpression.error:
         return '😔';
+      case PotoExpression.saveAll:
+        return '💾';
+      case PotoExpression.uploadSuccess:
+        return '✅';
     }
   }
 }

@@ -24,8 +24,14 @@ class InviteForm extends StatefulWidget {
 
 class _InviteFormState extends State<InviteForm> {
   final emailController = TextEditingController();
-  String role = 'Viewer';
+  String role = 'Contributor';
   String? handledSuccessMessage;
+
+  static const _roles = ['Contributor', 'Viewer'];
+  static const _roleDescriptions = {
+    'Contributor': 'Can upload, view, and download files.',
+    'Viewer': 'Can view and download files only.',
+  };
 
   @override
   void didUpdateWidget(covariant InviteForm oldWidget) {
@@ -35,7 +41,7 @@ class _InviteFormState extends State<InviteForm> {
     if (successMessage != null && successMessage != handledSuccessMessage) {
       handledSuccessMessage = successMessage;
       emailController.clear();
-      role = 'Viewer';
+      role = 'Contributor';
     }
   }
 
@@ -47,8 +53,6 @@ class _InviteFormState extends State<InviteForm> {
 
   @override
   Widget build(BuildContext context) {
-    final normalizedRole = role.toLowerCase();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -67,7 +71,7 @@ class _InviteFormState extends State<InviteForm> {
         Wrap(
           spacing: 8,
           children: [
-            for (final option in ['Admin', 'Contributor', 'Viewer'])
+            for (final option in _roles)
               RoleChip(
                 label: option,
                 selected: role == option,
@@ -75,17 +79,21 @@ class _InviteFormState extends State<InviteForm> {
               ),
           ],
         ),
+        const SizedBox(height: 6),
+        Text(
+          _roleDescriptions[role] ?? '',
+          style: const TextStyle(color: AppColors.mutedInk, fontSize: 12),
+        ),
         const SizedBox(height: 16),
         AppButton(
-          label: widget.isSending ? 'Saving...' : 'Add or Update Member',
+          label: widget.isSending ? 'Sending...' : 'Send Invite',
           icon: Icons.send_outlined,
           onPressed: widget.isSending
               ? null
               : () async {
                   final email = emailController.text.trim();
                   if (email.isEmpty) return;
-
-                  await widget.onInvite(email, normalizedRole);
+                  await widget.onInvite(email, role.toLowerCase());
                 },
         ),
         if (widget.successMessage != null) ...[
@@ -109,10 +117,6 @@ class _InviteFormState extends State<InviteForm> {
           ),
         ],
         const SizedBox(height: 8),
-        const Text(
-          'Admins can add members or update roles. Viewers can only view and download originals.',
-          style: TextStyle(color: AppColors.mutedInk, fontSize: 12),
-        ),
       ],
     );
   }

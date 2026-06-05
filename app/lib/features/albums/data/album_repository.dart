@@ -4,6 +4,7 @@ import '../../../core/errors/app_error.dart';
 import '../../../core/services/edge_function_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../models/album.dart';
+import '../models/album_invite.dart';
 import '../models/album_member.dart';
 import '../models/media_file.dart';
 
@@ -229,12 +230,13 @@ class AlbumRepository {
     }
   }
 
-  Future<AlbumMember> inviteAlbumMember({
+  /// Sends a pending invite. Returns the action string ('invited' or 'updated').
+  Future<String> inviteAlbumMember({
     required String albumId,
     required String email,
     required String role,
   }) {
-    return edgeFunctionService.callFunction<AlbumMember>(
+    return edgeFunctionService.callFunction<String>(
       'invite-album-member',
       body: {
         'album_id': albumId,
@@ -243,9 +245,47 @@ class AlbumRepository {
       },
       parser: (data) {
         final payload = Map<String, dynamic>.from(data as Map);
-        return AlbumMember.fromJson(
-            Map<String, dynamic>.from(payload['member'] as Map));
+        return payload['action']?.toString() ?? 'invited';
       },
+    );
+  }
+
+  Future<List<AlbumInvite>> fetchPendingInvites() async {
+    if (!supabaseService.isConfigured ||
+        supabaseService.currentSession == null) {
+      return const [];
+    }
+    final userId = supabaseService.currentSession!.user.id;
+    try {
+      final rows = await supabaseService.client
+          .from('album_invites')
+          .select(
+            'id, album_id, album_name, invited_by_name, role, status, created_at',
+          )
+          .eq('invited_user_id', userId)
+          .eq('status', 'pending')
+          .order('created_at', ascending: false);
+
+      return (rows as List)
+          .map((row) =>
+              AlbumInvite.fromJson(Map<String, dynamic>.from(row as Map)))
+          .toList();
+    } catch (_) {
+      throw const AppError('Could not load invites. Please try again.');
+    }
+  }
+
+  Future<void> acceptInvite(String inviteId) async {
+    await edgeFunctionService.callFunction<Object?>(
+      'accept-album-invite',
+      body: {'invite_id': inviteId},
+    );
+  }
+
+  Future<void> declineInvite(String inviteId) async {
+    await edgeFunctionService.callFunction<Object?>(
+      'decline-album-invite',
+      body: {'invite_id': inviteId},
     );
   }
 

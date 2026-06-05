@@ -8,6 +8,7 @@ import '../../../core/services/supabase_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/album_repository.dart';
 import '../models/album.dart';
+import '../models/album_invite.dart';
 import '../models/album_member.dart';
 import '../models/media_file.dart';
 
@@ -161,7 +162,7 @@ class InviteMemberController extends Notifier<InviteMemberState> {
     state = const InviteMemberState(isSending: true);
 
     try {
-      final member = await ref.read(albumRepositoryProvider).inviteAlbumMember(
+      final action = await ref.read(albumRepositoryProvider).inviteAlbumMember(
             albumId: albumId,
             email: email,
             role: role,
@@ -169,8 +170,13 @@ class InviteMemberController extends Notifier<InviteMemberState> {
 
       ref.invalidate(albumMembersProvider(albumId));
       ref.invalidate(albumListProvider);
+      final roleLabel = role.isNotEmpty
+          ? '${role[0].toUpperCase()}${role.substring(1).toLowerCase()}'
+          : 'Contributor';
       state = InviteMemberState(
-        successMessage: '${member.title} is now ${member.roleLabel}.',
+        successMessage: action == 'updated'
+            ? 'Role updated to $roleLabel.'
+            : 'Invite sent as $roleLabel.',
       );
     } catch (error) {
       state = InviteMemberState(errorMessage: AppError.messageFor(error));
@@ -292,6 +298,69 @@ class AlbumManagementController extends Notifier<AlbumManagementState> {
       );
     } catch (e) {
       state = AlbumManagementState(errorMessage: AppError.messageFor(e));
+    }
+  }
+}
+
+// ── Pending invites ───────────────────────────────────────────────────────
+
+final pendingInvitesProvider =
+    FutureProvider.autoDispose<List<AlbumInvite>>((ref) {
+  final profile = ref.watch(currentUserProfileProvider);
+  if (profile == null) return const [];
+  return ref.watch(albumRepositoryProvider).fetchPendingInvites();
+});
+
+final inviteResponseControllerProvider =
+    NotifierProvider.autoDispose<InviteResponseController,
+        InviteResponseState>(
+  InviteResponseController.new,
+);
+
+class InviteResponseState {
+  const InviteResponseState({
+    this.isBusy = false,
+    this.errorMessage,
+    this.successMessage,
+  });
+
+  final bool isBusy;
+  final String? errorMessage;
+  final String? successMessage;
+}
+
+class InviteResponseController extends Notifier<InviteResponseState> {
+  @override
+  InviteResponseState build() => const InviteResponseState();
+
+  Future<void> accept({
+    required String inviteId,
+    required String albumName,
+  }) async {
+    state = const InviteResponseState(isBusy: true);
+    try {
+      await ref.read(albumRepositoryProvider).acceptInvite(inviteId);
+      ref.invalidate(pendingInvitesProvider);
+      ref.invalidate(albumListProvider);
+      state = InviteResponseState(successMessage: 'You joined $albumName.');
+    } catch (e) {
+      state = InviteResponseState(errorMessage: AppError.messageFor(e));
+    }
+  }
+
+  Future<void> decline({
+    required String inviteId,
+    required String albumName,
+  }) async {
+    state = const InviteResponseState(isBusy: true);
+    try {
+      await ref.read(albumRepositoryProvider).declineInvite(inviteId);
+      ref.invalidate(pendingInvitesProvider);
+      state = InviteResponseState(
+        successMessage: 'You declined the invite to $albumName.',
+      );
+    } catch (e) {
+      state = InviteResponseState(errorMessage: AppError.messageFor(e));
     }
   }
 }
