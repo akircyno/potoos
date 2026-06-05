@@ -21,11 +21,41 @@ import '../widgets/gallery_tile.dart';
 // Album management menu values
 enum _MenuAction { rename, archive, delete }
 
-class AlbumDetailsScreen extends ConsumerWidget {
+class AlbumDetailsScreen extends ConsumerStatefulWidget {
   const AlbumDetailsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AlbumDetailsScreen> createState() => _AlbumDetailsScreenState();
+}
+
+class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
+    with WidgetsBindingObserver {
+  Album? _currentAlbum;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      final album = _currentAlbum;
+      if (album != null) {
+        _refreshAlbum(ref, album);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final routeAlbum = ModalRoute.of(context)?.settings.arguments;
     if (routeAlbum is! Album) {
       return Scaffold(
@@ -46,6 +76,9 @@ class AlbumDetailsScreen extends ConsumerWidget {
     }
 
     final album = routeAlbum;
+    _currentAlbum = album;
+    ref.watch(albumRealtimeRefreshProvider(album.id));
+
     final filesAsync = ref.watch(albumMediaFilesProvider(album.id));
     final membersAsync = ref.watch(albumMembersProvider(album.id));
     final currentProfile = ref.watch(currentUserProfileProvider);
@@ -60,8 +93,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
             .toList(growable: false) ??
         const <MediaFile>[];
     final hasSelection = selectedFiles.isNotEmpty;
-    final filesForSave =
-        hasSelection ? selectedFiles : loadedFiles ?? const [];
+    final filesForSave = hasSelection ? selectedFiles : loadedFiles ?? const [];
 
     final visibleFileCount = loadedFiles?.length ?? album.fileCount;
 
@@ -117,285 +149,303 @@ class AlbumDetailsScreen extends ConsumerWidget {
         backgroundColor: AppColors.warmCream,
         body: Stack(
           children: [
-            CustomScrollView(
-              slivers: [
-                // ── Cover header ─────────────────────────────────────────────
-                SliverAppBar(
-                  expandedHeight: 220,
-                  pinned: true,
-                  stretch: true,
-                  backgroundColor: album.coverColors.isNotEmpty
-                      ? album.coverColors.first
-                      : AppColors.deepMaroon,
-                  foregroundColor: AppColors.white,
-                  automaticallyImplyLeading: false,
-                  leading: const _BackButton(),
-                  title: Text(
-                    album.name,
-                    style: const TextStyle(
-                      fontFamily: AppTheme.headingFont,
-                      color: AppColors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
+            RefreshIndicator(
+              color: AppColors.brightGold,
+              backgroundColor: AppColors.white,
+              onRefresh: () => _refreshAlbum(ref, album),
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                slivers: [
+                  // ── Cover header ─────────────────────────────────────────────
+                  SliverAppBar(
+                    expandedHeight: 220,
+                    pinned: true,
+                    stretch: true,
+                    backgroundColor: album.coverColors.isNotEmpty
+                        ? album.coverColors.first
+                        : AppColors.deepMaroon,
+                    foregroundColor: AppColors.white,
+                    automaticallyImplyLeading: false,
+                    leading: const _BackButton(),
+                    title: Text(
+                      album.name,
+                      style: const TextStyle(
+                        fontFamily: AppTheme.headingFont,
+                        color: AppColors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  actions: [
-                    // Admin-only management menu
-                    if (isAdmin)
-                      PopupMenuButton<_MenuAction>(
-                        icon: const Icon(Icons.more_vert,
-                            color: AppColors.white, size: 20),
-                        shape: RoundedRectangleBorder(
+                    actions: [
+                      // Admin-only management menu
+                      if (isAdmin)
+                        PopupMenuButton<_MenuAction>(
+                          icon: const Icon(Icons.more_vert,
+                              color: AppColors.white, size: 20),
+                          shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppSpacing.radiusMd)),
+                          onSelected: (action) {
+                            switch (action) {
+                              case _MenuAction.rename:
+                                _showRenameSheet(context, ref, album);
+                              case _MenuAction.archive:
+                                _showArchiveDialog(context, ref, album);
+                              case _MenuAction.delete:
+                                _showDeleteDialog(context, ref, album);
+                            }
+                          },
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(
+                              value: _MenuAction.rename,
+                              child: Row(children: [
+                                Icon(Icons.edit_outlined, size: 16),
+                                SizedBox(width: 10),
+                                Text('Rename'),
+                              ]),
+                            ),
+                            PopupMenuItem(
+                              value: _MenuAction.archive,
+                              child: Row(children: [
+                                Icon(Icons.inventory_2_outlined, size: 16),
+                                SizedBox(width: 10),
+                                Text('Archive'),
+                              ]),
+                            ),
+                            PopupMenuDivider(),
+                            PopupMenuItem(
+                              value: _MenuAction.delete,
+                              child: Row(children: [
+                                Icon(Icons.delete_forever_outlined,
+                                    size: 16, color: AppColors.velvetMaroon),
+                                SizedBox(width: 10),
+                                Text('Delete permanently',
+                                    style: TextStyle(
+                                        color: AppColors.velvetMaroon)),
+                              ]),
+                            ),
+                          ],
+                        ),
+                      // Role badge
+                      Padding(
+                        padding: const EdgeInsets.only(right: 14, top: 8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withValues(alpha: 0.18),
+                            border: Border.all(
+                                color: AppColors.white.withValues(alpha: 0.28),
+                                width: 0.5),
                             borderRadius:
-                                BorderRadius.circular(AppSpacing.radiusMd)),
-                        onSelected: (action) {
-                          switch (action) {
-                            case _MenuAction.rename:
-                              _showRenameSheet(context, ref, album);
-                            case _MenuAction.archive:
-                              _showArchiveDialog(context, ref, album);
-                            case _MenuAction.delete:
-                              _showDeleteDialog(context, ref, album);
-                          }
-                        },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(
-                            value: _MenuAction.rename,
-                            child: Row(children: [
-                              Icon(Icons.edit_outlined, size: 16),
-                              SizedBox(width: 10),
-                              Text('Rename'),
-                            ]),
+                                BorderRadius.circular(AppSpacing.radiusPill),
                           ),
-                          PopupMenuItem(
-                            value: _MenuAction.archive,
-                            child: Row(children: [
-                              Icon(Icons.inventory_2_outlined, size: 16),
-                              SizedBox(width: 10),
-                              Text('Archive'),
-                            ]),
-                          ),
-                          PopupMenuDivider(),
-                          PopupMenuItem(
-                            value: _MenuAction.delete,
-                            child: Row(children: [
-                              Icon(Icons.delete_forever_outlined,
-                                  size: 16, color: AppColors.velvetMaroon),
-                              SizedBox(width: 10),
-                              Text('Delete permanently',
-                                  style: TextStyle(
-                                      color: AppColors.velvetMaroon)),
-                            ]),
-                          ),
-                        ],
-                      ),
-                    // Role badge
-                    Padding(
-                      padding: const EdgeInsets.only(right: 14, top: 8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.white.withValues(alpha: 0.18),
-                          border: Border.all(
-                              color: AppColors.white.withValues(alpha: 0.28),
-                              width: 0.5),
-                          borderRadius:
-                              BorderRadius.circular(AppSpacing.radiusPill),
-                        ),
-                        child: Text(
-                          effectiveRoleLabel.toUpperCase(),
-                          style: const TextStyle(
-                            color: AppColors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                  flexibleSpace: FlexibleSpaceBar(
-                    stretchModes: const [StretchMode.zoomBackground],
-                    background: _CoverBackground(
-                      album: album,
-                      visibleFileCount: visibleFileCount,
-                      visibleMemberCount: visibleMemberCount,
-                    ),
-                  ),
-                ),
-
-                // ── Action strip ──────────────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.md, AppSpacing.md, AppSpacing.md, 0),
-                    child: _ActionStrip(
-                      canUpload: canUpload,
-                      selectionMode: selectionMode,
-                      selectedCount: selectedFiles.length,
-                      canSave: canSave,
-                      onUpload: () => Navigator.pushNamed(
-                          context, AppRoutes.upload,
-                          arguments: album),
-                      onSave: canSave
-                          ? () => Navigator.pushNamed(
-                                context,
-                                AppRoutes.saveAll,
-                                arguments: SaveAllArgs(
-                                    album: album, files: filesForSave),
-                              )
-                          : null,
-                      onMembers: () => Navigator.pushNamed(
-                          context, AppRoutes.members,
-                          arguments: album),
-                    ),
-                  ),
-                ),
-
-                // ── Count + select toggle ─────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.md, AppSpacing.md, AppSpacing.md, 0),
-                    child: Row(
-                      children: [
-                        Expanded(
                           child: Text(
-                            selectionMode
-                                ? '${selectedIds.length} selected'
-                                : '$visibleFileCount originals',
+                            effectiveRoleLabel.toUpperCase(),
                             style: const TextStyle(
-                              color: AppColors.mutedInk,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              color: AppColors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
                             ),
                           ),
                         ),
-                        GestureDetector(
-                          onTap: loadedFiles == null || loadedFiles.isEmpty
-                              ? null
-                              : () {
-                                  final selNotifier = ref.read(
-                                      albumSelectionModeProvider(album.id)
-                                          .notifier);
-                                  final idsNotifier = ref.read(
-                                      selectedMediaIdsProvider(album.id)
-                                          .notifier);
-                                  final next = !selectionMode;
-                                  selNotifier.setEnabled(next);
-                                  if (!next) idsNotifier.clear();
-                                },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
+                      ),
+                    ],
+                    flexibleSpace: FlexibleSpaceBar(
+                      stretchModes: const [StretchMode.zoomBackground],
+                      background: _CoverBackground(
+                        album: album,
+                        visibleFileCount: visibleFileCount,
+                        visibleMemberCount: visibleMemberCount,
+                      ),
+                    ),
+                  ),
+
+                  // ── Action strip ──────────────────────────────────────────────
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md, AppSpacing.md, AppSpacing.md, 0),
+                      child: _ActionStrip(
+                        canUpload: canUpload,
+                        selectionMode: selectionMode,
+                        selectedCount: selectedFiles.length,
+                        canSave: canSave,
+                        onUpload: () => _pushAndRefresh(
+                          context,
+                          routeName: AppRoutes.upload,
+                          routeArguments: album,
+                          album: album,
+                        ),
+                        onSave: canSave
+                            ? () => _pushAndRefresh(
+                                  context,
+                                  routeName: AppRoutes.saveAll,
+                                  routeArguments: SaveAllArgs(
+                                      album: album, files: filesForSave),
+                                  album: album,
+                                )
+                            : null,
+                        onMembers: () => _pushAndRefresh(
+                          context,
+                          routeName: AppRoutes.members,
+                          routeArguments: album,
+                          album: album,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // ── Count + select toggle ─────────────────────────────────────
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md, AppSpacing.md, AppSpacing.md, 0),
+                      child: Row(
+                        children: [
+                          Expanded(
                             child: Text(
-                              selectionMode ? 'Done' : 'Select',
-                              style: TextStyle(
-                                color: (loadedFiles == null ||
-                                        loadedFiles.isEmpty)
-                                    ? AppColors.featherTaupe
-                                    : AppColors.brightGold,
+                              selectionMode
+                                  ? '${selectedIds.length} selected'
+                                  : '$visibleFileCount originals',
+                              style: const TextStyle(
+                                color: AppColors.mutedInk,
                                 fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // ── File grid ─────────────────────────────────────────────────
-                filesAsync.when(
-                  loading: () => const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.all(48),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.brightGold,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-                  error: (error, _) => SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
-                      child: AlbumEmptyState(
-                        title: 'Could not load files',
-                        message: AppError.messageFor(error),
-                        expression: PotoExpression.error,
-                        actionLabel: 'Try Again',
-                        onAction: () =>
-                            ref.invalidate(albumMediaFilesProvider(album.id)),
-                      ),
-                    ),
-                  ),
-                  data: (files) => files.isEmpty
-                      ? SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                                AppSpacing.md,
-                                AppSpacing.sm,
-                                AppSpacing.md,
-                                0),
-                            child: AlbumEmptyState(
-                              title: 'Nothing here yet.',
-                              message: canUpload
-                                  ? 'Be the first to add something. Poto is ready when you are.'
-                                  : 'Files will show up when someone uploads.',
-                              actionLabel: canUpload ? 'Upload' : null,
-                              onAction: canUpload
-                                  ? () => Navigator.pushNamed(
-                                      context, AppRoutes.upload,
-                                      arguments: album)
-                                  : null,
+                          GestureDetector(
+                            onTap: loadedFiles == null || loadedFiles.isEmpty
+                                ? null
+                                : () {
+                                    final selNotifier = ref.read(
+                                        albumSelectionModeProvider(album.id)
+                                            .notifier);
+                                    final idsNotifier = ref.read(
+                                        selectedMediaIdsProvider(album.id)
+                                            .notifier);
+                                    final next = !selectionMode;
+                                    selNotifier.setEnabled(next);
+                                    if (!next) idsNotifier.clear();
+                                  },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              child: Text(
+                                selectionMode ? 'Done' : 'Select',
+                                style: TextStyle(
+                                  color: (loadedFiles == null ||
+                                          loadedFiles.isEmpty)
+                                      ? AppColors.featherTaupe
+                                      : AppColors.brightGold,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
-                        )
-                      : SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(
-                              AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
-                          sliver: SliverGrid.builder(
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 2,
-                              mainAxisSpacing: 2,
-                              childAspectRatio: 1,
-                            ),
-                            itemCount: files.length,
-                            itemBuilder: (context, index) {
-                              final file = files[index];
-                              return GalleryTile(
-                                file: file,
-                                selectionMode: selectionMode,
-                                selected: selectedIds.contains(file.id),
-                                onTap: selectionMode
-                                    ? () => _toggleSelectedFile(
-                                          ref,
-                                          albumId: album.id,
-                                          fileId: file.id,
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ── File grid ─────────────────────────────────────────────────
+                  filesAsync.when(
+                    loading: () => const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(48),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.brightGold,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                    error: (error, _) => SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+                        child: AlbumEmptyState(
+                          title: 'Could not load files',
+                          message: AppError.messageFor(error),
+                          expression: PotoExpression.error,
+                          actionLabel: 'Try Again',
+                          onAction: () =>
+                              ref.invalidate(albumMediaFilesProvider(album.id)),
+                        ),
+                      ),
+                    ),
+                    data: (files) => files.isEmpty
+                        ? SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(AppSpacing.md,
+                                  AppSpacing.sm, AppSpacing.md, 0),
+                              child: AlbumEmptyState(
+                                title: 'Nothing here yet.',
+                                message: canUpload
+                                    ? 'Be the first to add something. Poto is ready when you are.'
+                                    : 'Files will show up when someone uploads.',
+                                actionLabel: canUpload ? 'Upload' : null,
+                                onAction: canUpload
+                                    ? () => _pushAndRefresh(
+                                          context,
+                                          routeName: AppRoutes.upload,
+                                          routeArguments: album,
+                                          album: album,
                                         )
-                                    : () => Navigator.pushNamed(
-                                        context, AppRoutes.filePreview,
-                                        arguments: file),
-                              );
-                            },
+                                    : null,
+                              ),
+                            ),
+                          )
+                        : SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(
+                                AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+                            sliver: SliverGrid.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 2,
+                                mainAxisSpacing: 2,
+                                childAspectRatio: 1,
+                              ),
+                              itemCount: files.length,
+                              itemBuilder: (context, index) {
+                                final file = files[index];
+                                return GalleryTile(
+                                  file: file,
+                                  selectionMode: selectionMode,
+                                  selected: selectedIds.contains(file.id),
+                                  onTap: selectionMode
+                                      ? () => _toggleSelectedFile(
+                                            ref,
+                                            albumId: album.id,
+                                            fileId: file.id,
+                                          )
+                                      : () => _pushAndRefresh(
+                                            context,
+                                            routeName: AppRoutes.filePreview,
+                                            routeArguments: file,
+                                            album: album,
+                                          ),
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                ),
+                  ),
 
-                // Bottom padding — extra clearance for the sticky selection bar
-                SliverToBoxAdapter(
-                  child:
-                      SizedBox(height: selectionMode && hasSelection ? 84 : 32),
-                ),
-              ],
+                  // Bottom padding — extra clearance for the sticky selection bar
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                        height: selectionMode && hasSelection ? 84 : 32),
+                  ),
+                ],
+              ),
             ),
 
             // ── Sticky selection bar ──────────────────────────────────────────
@@ -407,11 +457,12 @@ class AlbumDetailsScreen extends ConsumerWidget {
                 child: _SelectionBar(
                   selectedCount: selectedFiles.length,
                   onSave: hasSelection
-                      ? () => Navigator.pushNamed(
+                      ? () => _pushAndRefresh(
                             context,
-                            AppRoutes.saveAll,
-                            arguments: SaveAllArgs(
-                                album: album, files: selectedFiles),
+                            routeName: AppRoutes.saveAll,
+                            routeArguments:
+                                SaveAllArgs(album: album, files: selectedFiles),
+                            album: album,
                           )
                       : null,
                   onClear: () => ref
@@ -425,12 +476,42 @@ class AlbumDetailsScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _pushAndRefresh(
+    BuildContext context, {
+    required String routeName,
+    required Object routeArguments,
+    required Album album,
+  }) async {
+    await Navigator.pushNamed(
+      context,
+      routeName,
+      arguments: routeArguments,
+    );
+    if (!mounted) return;
+    await _refreshAlbum(ref, album);
+  }
+
   void _toggleSelectedFile(
     WidgetRef ref, {
     required String albumId,
     required String fileId,
   }) {
     ref.read(selectedMediaIdsProvider(albumId).notifier).toggle(fileId);
+  }
+
+  Future<void> _refreshAlbum(WidgetRef ref, Album album) async {
+    ref.invalidate(albumMediaFilesProvider(album.id));
+    ref.invalidate(albumMembersProvider(album.id));
+    ref.invalidate(albumListProvider);
+
+    try {
+      await Future.wait([
+        ref.read(albumMediaFilesProvider(album.id).future),
+        ref.read(albumMembersProvider(album.id).future),
+      ]);
+    } catch (_) {
+      // The refreshed provider will show the normal error state if it fails.
+    }
   }
 
   AlbumMember? _currentMember(List<AlbumMember>? members, String? profileId) {
@@ -497,8 +578,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
                   Expanded(
                     child: PressableScale(
                       onTap: () => Navigator.pop(sheetCtx),
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.radiusLg),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
                       child: Container(
                         height: 50,
                         alignment: Alignment.center,
@@ -530,8 +610,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
                             .read(albumManagementProvider.notifier)
                             .rename(albumId: album.id, name: name);
                       },
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.radiusLg),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
                       child: Container(
                         height: 50,
                         alignment: Alignment.center,
@@ -581,9 +660,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
       ),
     );
     if (confirmed == true && context.mounted) {
-      ref
-          .read(albumManagementProvider.notifier)
-          .archive(albumId: album.id);
+      ref.read(albumManagementProvider.notifier).archive(albumId: album.id);
     }
   }
 
@@ -612,9 +689,7 @@ class AlbumDetailsScreen extends ConsumerWidget {
       ),
     );
     if (confirmed == true && context.mounted) {
-      ref
-          .read(albumManagementProvider.notifier)
-          .delete(albumId: album.id);
+      ref.read(albumManagementProvider.notifier).delete(albumId: album.id);
     }
   }
 }
@@ -638,8 +713,8 @@ class _BackButton extends StatelessWidget {
             color: AppColors.white.withValues(alpha: 0.14),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.chevron_left,
-              color: AppColors.white, size: 20),
+          child:
+              const Icon(Icons.chevron_left, color: AppColors.white, size: 20),
         ),
       ),
     );
@@ -787,9 +862,8 @@ class _ActionStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final saveLabel = selectionMode && selectedCount > 0
-        ? 'Save $selectedCount'
-        : 'Save All';
+    final saveLabel =
+        selectionMode && selectedCount > 0 ? 'Save $selectedCount' : 'Save All';
 
     return Row(
       children: [
@@ -861,9 +935,7 @@ class _ActionPill extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
       child: Container(
         height: 42,
-        padding: compact
-            ? const EdgeInsets.symmetric(horizontal: 14)
-            : null,
+        padding: compact ? const EdgeInsets.symmetric(horizontal: 14) : null,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: bg,
@@ -919,8 +991,8 @@ class _SelectionBar extends StatelessWidget {
           ),
         ],
       ),
-      padding: EdgeInsets.fromLTRB(
-          AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.sm + bottomPad),
+      padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md,
+          AppSpacing.sm + bottomPad),
       child: Row(
         children: [
           Text(
@@ -941,8 +1013,7 @@ class _SelectionBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
             child: Container(
               height: 36,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: AppColors.warmCream,
@@ -968,9 +1039,8 @@ class _SelectionBar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: onSave != null
-                    ? AppColors.brightGold
-                    : AppColors.creamLine,
+                color:
+                    onSave != null ? AppColors.brightGold : AppColors.creamLine,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               ),
               child: Text(

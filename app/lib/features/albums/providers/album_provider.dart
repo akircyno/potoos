@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/app_error.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/album_repository.dart';
 import '../models/album.dart';
@@ -28,6 +32,46 @@ final albumMembersProvider = FutureProvider.autoDispose
   if (profile == null) return const [];
 
   return ref.watch(albumRepositoryProvider).fetchAlbumMembers(albumId);
+});
+
+final albumRealtimeRefreshProvider =
+    Provider.autoDispose.family<void, String>((ref, albumId) {
+  final profile = ref.watch(currentUserProfileProvider);
+  final supabaseService = ref.watch(supabaseServiceProvider);
+  if (profile == null || !supabaseService.isConfigured) return;
+
+  Timer? refreshDebounce;
+  void scheduleRefresh() {
+    refreshDebounce?.cancel();
+    refreshDebounce = Timer(const Duration(milliseconds: 600), () {
+      ref.invalidate(albumMediaFilesProvider(albumId));
+      ref.invalidate(albumListProvider);
+    });
+  }
+
+  final channel = supabaseService.client
+      .channel('album-media-files-$albumId')
+      .onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'media_files',
+        filter: PostgresChangeFilter(
+          type: PostgresChangeFilterType.eq,
+          column: 'album_id',
+          value: albumId,
+        ),
+        callback: (payload) {
+          if (_mediaChangeAffectsVisibleAlbumFiles(payload)) {
+            scheduleRefresh();
+          }
+        },
+      )
+      .subscribe();
+
+  ref.onDispose(() {
+    refreshDebounce?.cancel();
+    unawaited(supabaseService.client.removeChannel(channel));
+  });
 });
 
 final inviteMemberControllerProvider =
@@ -160,9 +204,8 @@ class InviteMemberController extends Notifier<InviteMemberState> {
 
 enum AlbumManagementAction { rename, archive, unarchive, delete }
 
-final albumManagementProvider =
-    NotifierProvider.autoDispose<AlbumManagementController,
-        AlbumManagementState>(
+final albumManagementProvider = NotifierProvider.autoDispose<
+    AlbumManagementController, AlbumManagementState>(
   AlbumManagementController.new,
 );
 
@@ -212,7 +255,8 @@ class AlbumManagementController extends Notifier<AlbumManagementState> {
       state = const AlbumManagementState(
         done: true,
         action: AlbumManagementAction.archive,
-        successMessage: 'Space archived. You can restore it from the Albums tab.',
+        successMessage:
+            'Space archived. You can restore it from the Albums tab.',
       );
     } catch (e) {
       state = AlbumManagementState(errorMessage: AppError.messageFor(e));
@@ -307,4 +351,18 @@ class LeaveAlbumController extends Notifier<LeaveAlbumState> {
       state = LeaveAlbumState(errorMessage: AppError.messageFor(error));
     }
   }
+}
+
+bool _mediaChangeAffectsVisibleAlbumFiles(PostgresChangePayload payload) {
+  final newRecord = payload.newRecord;
+  final oldRecord = payload.oldRecord;
+
+  bool isCompletedVisible(Map<String, dynamic> record) {
+    if (record.isEmpty) return false;
+    return record['upload_status'] == 'completed' &&
+        record['is_deleted'] != true &&
+        record['permanently_deleted_at'] == null;
+  }
+
+  return isCompletedVisible(newRecord) || isCompletedVisible(oldRecord);
 }
