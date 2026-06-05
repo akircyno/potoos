@@ -10,6 +10,7 @@ import '../../../core/widgets/pressable_scale.dart';
 import '../../albums/models/media_file.dart';
 import '../../albums/widgets/gallery_tile.dart';
 import '../../albums/widgets/media_preview_image.dart';
+import '../../albums/widgets/media_video_preview.dart';
 import '../models/downloaded_file.dart';
 import '../providers/download_provider.dart';
 
@@ -223,10 +224,16 @@ class _PreviewHero extends StatelessWidget {
       child: Stack(
         children: [
           Positioned.fill(
-            child: MediaPreviewImage(
-              mediaFileId: file.id,
-              fallback: _PreviewFallback(file: file, gradient: gradient),
-            ),
+            child: file.isVideo
+                ? MediaVideoPreview(
+                    mediaFileId: file.id,
+                    fallback: _PreviewFallback(file: file, gradient: gradient),
+                  )
+                : MediaPreviewImage(
+                    mediaFileId: file.id,
+                    thumbnailUrl: file.thumbnailUrl,
+                    fallback: _PreviewFallback(file: file, gradient: gradient),
+                  ),
           ),
           const Positioned.fill(child: _PreviewScrim()),
 

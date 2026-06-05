@@ -4,6 +4,7 @@ import '../../../app/theme.dart';
 import '../../../core/widgets/app_card.dart';
 import '../models/album.dart';
 import 'media_preview_image.dart';
+import 'media_video_preview.dart';
 
 class AlbumCard extends StatelessWidget {
   const AlbumCard({
@@ -33,17 +34,17 @@ class AlbumCard extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   // Background: authenticated preview or gradient fallback
-                  MediaPreviewImage(
-                    mediaFileId: album.coverMediaFileId,
-                    fallback: album.coverThumbnailUrl != null
-                        ? Image.network(
-                            album.coverThumbnailUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                _GradientCover(album: album),
-                          )
-                        : _GradientCover(album: album),
-                  ),
+                  if (album.coverIsVideo)
+                    MediaVideoPreview(
+                      mediaFileId: album.coverMediaFileId,
+                      fallback: _GradientCover(album: album),
+                    )
+                  else
+                    MediaPreviewImage(
+                      mediaFileId: album.coverMediaFileId,
+                      thumbnailUrl: album.coverThumbnailUrl,
+                      fallback: _GradientCover(album: album),
+                    ),
 
                   // Dark scrim so text is always readable over photos
                   if (album.coverMediaFileId != null ||

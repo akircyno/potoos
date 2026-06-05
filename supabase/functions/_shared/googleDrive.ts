@@ -10,7 +10,7 @@ export type DriveFileMetadata = {
 export type DriveThumbnailBytes = {
   bytes: Uint8Array;
   mimeType: string;
-  thumbnailLink: string;
+  thumbnailLink?: string;
 };
 
 type UploadSessionParams = {
@@ -101,11 +101,39 @@ export async function downloadDriveFileBytes(fileId: string) {
   return new Uint8Array(await response.arrayBuffer());
 }
 
+export async function fetchDriveFileContent(
+  fileId: string,
+  rangeHeader?: string | null,
+) {
+  const accessToken = await getGoogleAccessToken();
+  const encodedFileId = encodeURIComponent(fileId);
+  const headers = new Headers({
+    Authorization: `Bearer ${accessToken}`,
+  });
+
+  if (rangeHeader) {
+    headers.set("Range", rangeHeader);
+  }
+
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${encodedFileId}?alt=media`,
+    { headers },
+  );
+
+  if (!response.ok && response.status !== 206) {
+    throw new Error("Failed to stream Google Drive file bytes.");
+  }
+
+  return response;
+}
+
 export async function downloadDriveThumbnailBytes(fileId: string): Promise<DriveThumbnailBytes | null> {
   const accessToken = await getGoogleAccessToken();
   const metadata = await getDriveFileMetadata(fileId);
 
-  if (!metadata.thumbnailLink) return null;
+  if (!metadata.thumbnailLink) {
+    return await downloadDriveThumbnailEndpointBytes(accessToken, fileId);
+  }
 
   const response = await fetch(metadata.thumbnailLink, {
     headers: {
@@ -121,6 +149,30 @@ export async function downloadDriveThumbnailBytes(fileId: string): Promise<Drive
     bytes: new Uint8Array(await response.arrayBuffer()),
     mimeType: response.headers.get("Content-Type") ?? "image/jpeg",
     thumbnailLink: metadata.thumbnailLink,
+  };
+}
+
+async function downloadDriveThumbnailEndpointBytes(
+  accessToken: string,
+  fileId: string,
+): Promise<DriveThumbnailBytes | null> {
+  const response = await fetch(
+    `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1000`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+  if (!response.ok) return null;
+
+  const mimeType = response.headers.get("Content-Type") ?? "image/jpeg";
+  if (!mimeType.toLowerCase().startsWith("image/")) return null;
+
+  return {
+    bytes: new Uint8Array(await response.arrayBuffer()),
+    mimeType,
   };
 }
 

@@ -60,13 +60,17 @@ void main() {
           'id': 'album-id',
           'name': 'Preview Album',
           'updated_at': DateTime.now().toIso8601String(),
+          'cover_thumbnail_url': 'https://example.com/older-cover.jpg',
         },
         role: 'admin',
         coverMediaFileId: 'media-id',
+        coverThumbnailUrl: 'https://example.com/latest-upload.jpg',
+        coverIsVideo: true,
       );
 
       expect(album.coverMediaFileId, 'media-id');
-      expect(album.coverThumbnailUrl, isNull);
+      expect(album.coverThumbnailUrl, 'https://example.com/latest-upload.jpg');
+      expect(album.coverIsVideo, isTrue);
     });
   });
 

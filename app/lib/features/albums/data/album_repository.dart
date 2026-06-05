@@ -70,7 +70,9 @@ class AlbumRepository {
           role: roleByAlbum[albumId] ?? 'viewer',
           fileCount: fileCounts[albumId] ?? 0,
           memberCount: memberCounts[albumId] ?? 1,
-          coverMediaFileId: coverFileIds[albumId],
+          coverMediaFileId: coverFileIds[albumId]?.mediaFileId,
+          coverThumbnailUrl: coverFileIds[albumId]?.thumbnailUrl,
+          coverIsVideo: coverFileIds[albumId]?.isVideo ?? false,
         );
       }).toList();
     } catch (_) {
@@ -160,7 +162,9 @@ class AlbumRepository {
         return Album.fromData(
           album: album,
           role: roleByAlbum[albumId] ?? 'viewer',
-          coverMediaFileId: coverFileIds[albumId],
+          coverMediaFileId: coverFileIds[albumId]?.mediaFileId,
+          coverThumbnailUrl: coverFileIds[albumId]?.thumbnailUrl,
+          coverIsVideo: coverFileIds[albumId]?.isVideo ?? false,
         );
       }).toList();
     } catch (_) {
@@ -299,29 +303,53 @@ class AlbumRepository {
     return counts;
   }
 
-  Future<Map<String, String>> _latestCoverFileIdsByAlbum(
+  Future<Map<String, _AlbumCoverPreview>> _latestCoverFileIdsByAlbum(
     List<String> albumIds,
   ) async {
     if (albumIds.isEmpty) return const {};
 
     final rows = await supabaseService.client
         .from('media_files')
-        .select('id, album_id, uploaded_at')
+        .select('id, album_id, file_type, thumbnail_url, uploaded_at')
         .inFilter('album_id', albumIds)
         .eq('upload_status', 'completed')
         .eq('is_deleted', false)
         .isFilter('permanently_deleted_at', null)
         .order('uploaded_at', ascending: false);
 
-    final coverFileIds = <String, String>{};
+    final coverFileIds = <String, _AlbumCoverPreview>{};
     for (final row in rows as List) {
       final data = Map<String, dynamic>.from(row as Map);
       final albumId = data['album_id']?.toString();
       final fileId = data['id']?.toString();
       if (albumId == null || fileId == null) continue;
-      coverFileIds.putIfAbsent(albumId, () => fileId);
+      coverFileIds.putIfAbsent(
+        albumId,
+        () => _AlbumCoverPreview(
+          mediaFileId: fileId,
+          thumbnailUrl: _optionalText(data['thumbnail_url']),
+          isVideo: data['file_type']?.toString() == 'video',
+        ),
+      );
     }
 
     return coverFileIds;
   }
+
+  static String? _optionalText(Object? value) {
+    final text = value?.toString().trim();
+    return text == null || text.isEmpty ? null : text;
+  }
+}
+
+class _AlbumCoverPreview {
+  const _AlbumCoverPreview({
+    required this.mediaFileId,
+    required this.thumbnailUrl,
+    required this.isVideo,
+  });
+
+  final String mediaFileId;
+  final String? thumbnailUrl;
+  final bool isVideo;
 }

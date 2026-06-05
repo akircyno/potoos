@@ -12,6 +12,7 @@ class Album {
     required this.coverColors,
     this.coverThumbnailUrl,
     this.coverMediaFileId,
+    this.coverIsVideo = false,
   });
 
   final String id;
@@ -24,6 +25,7 @@ class Album {
   final List<Color> coverColors;
   final String? coverThumbnailUrl;
   final String? coverMediaFileId;
+  final bool coverIsVideo;
 
   String get normalizedRole => role.toLowerCase();
 
@@ -33,11 +35,14 @@ class Album {
     int fileCount = 0,
     int memberCount = 1,
     String? coverMediaFileId,
+    String? coverThumbnailUrl,
+    bool coverIsVideo = false,
   }) {
     final id = album['id']?.toString() ?? '';
     final name = album['name']?.toString() ?? 'Untitled album';
     final updatedAt = DateTime.tryParse(album['updated_at']?.toString() ?? '');
-    final rawThumb = album['cover_thumbnail_url']?.toString();
+    final rawThumb =
+        coverThumbnailUrl ?? album['cover_thumbnail_url']?.toString();
 
     return Album(
       id: id,
@@ -51,6 +56,7 @@ class Album {
       coverThumbnailUrl:
           (rawThumb != null && rawThumb.isNotEmpty) ? rawThumb : null,
       coverMediaFileId: _optionalText(coverMediaFileId),
+      coverIsVideo: coverIsVideo,
     );
   }
 

@@ -18,6 +18,7 @@ import '../providers/album_provider.dart';
 import '../widgets/album_empty_state.dart';
 import '../widgets/gallery_tile.dart';
 import '../widgets/media_preview_image.dart';
+import '../widgets/media_video_preview.dart';
 
 // Album management menu values
 enum _MenuAction { rename, archive, delete }
@@ -98,6 +99,12 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
     final coverMediaFileId = loadedFiles != null && loadedFiles.isNotEmpty
         ? loadedFiles.first.id
         : album.coverMediaFileId;
+    final coverThumbnailUrl = loadedFiles != null && loadedFiles.isNotEmpty
+        ? loadedFiles.first.thumbnailUrl
+        : album.coverThumbnailUrl;
+    final coverIsVideo = loadedFiles != null && loadedFiles.isNotEmpty
+        ? loadedFiles.first.isVideo
+        : album.coverIsVideo;
 
     final visibleFileCount = loadedFiles?.length ?? album.fileCount;
 
@@ -264,6 +271,8 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
                       background: _CoverBackground(
                         album: album,
                         coverMediaFileId: coverMediaFileId,
+                        coverThumbnailUrl: coverThumbnailUrl,
+                        coverIsVideo: coverIsVideo,
                         visibleFileCount: visibleFileCount,
                         visibleMemberCount: visibleMemberCount,
                       ),
@@ -730,12 +739,16 @@ class _CoverBackground extends StatelessWidget {
   const _CoverBackground({
     required this.album,
     required this.coverMediaFileId,
+    required this.coverThumbnailUrl,
+    required this.coverIsVideo,
     required this.visibleFileCount,
     required this.visibleMemberCount,
   });
 
   final Album album;
   final String? coverMediaFileId;
+  final String? coverThumbnailUrl;
+  final bool coverIsVideo;
   final int visibleFileCount;
   final int visibleMemberCount;
 
@@ -745,18 +758,19 @@ class _CoverBackground extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         // Background: authenticated preview or gradient
-        MediaPreviewImage(
-          mediaFileId: coverMediaFileId,
-          fallback: album.coverThumbnailUrl != null
-              ? Image.network(
-                  album.coverThumbnailUrl!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _CoverGradient(album: album),
-                )
-              : _CoverGradient(album: album),
-        ),
+        if (coverIsVideo)
+          MediaVideoPreview(
+            mediaFileId: coverMediaFileId,
+            fallback: _CoverGradient(album: album),
+          )
+        else
+          MediaPreviewImage(
+            mediaFileId: coverMediaFileId,
+            thumbnailUrl: coverThumbnailUrl,
+            fallback: _CoverGradient(album: album),
+          ),
         // Grid texture (gradient only, skip on preview)
-        if (coverMediaFileId == null && album.coverThumbnailUrl == null)
+        if (coverMediaFileId == null && coverThumbnailUrl == null)
           Positioned.fill(
             child: Opacity(
               opacity: 0.07,

@@ -71,10 +71,12 @@ Deno.serve(async (req) => {
       return error("FILE_NOT_FOUND", "Preview is not ready yet.", 404);
     }
 
-    await supabaseAdmin
-      .from("media_files")
-      .update({ thumbnail_url: preview.thumbnailLink })
-      .eq("id", mediaFileId);
+    if (preview.thumbnailLink) {
+      await supabaseAdmin
+        .from("media_files")
+        .update({ thumbnail_url: preview.thumbnailLink })
+        .eq("id", mediaFileId);
+    }
 
     return new Response(preview.bytes, {
       status: 200,

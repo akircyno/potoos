@@ -16,6 +16,7 @@ import '../models/album.dart';
 import '../providers/album_provider.dart';
 import '../widgets/album_card.dart';
 import '../widgets/media_preview_image.dart';
+import '../widgets/media_video_preview.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/poto_mascot.dart';
 import '../../../core/widgets/pwa_install_banner.dart';
@@ -425,17 +426,16 @@ class _InviteAlbumRow extends StatelessWidget {
             child: SizedBox(
               width: 44,
               height: 44,
-              child: MediaPreviewImage(
-                mediaFileId: album.coverMediaFileId,
-                fallback: album.coverThumbnailUrl != null
-                    ? Image.network(
-                        album.coverThumbnailUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            _AlbumSwatch(album: album),
-                      )
-                    : _AlbumSwatch(album: album),
-              ),
+              child: album.coverIsVideo
+                  ? MediaVideoPreview(
+                      mediaFileId: album.coverMediaFileId,
+                      fallback: _AlbumSwatch(album: album),
+                    )
+                  : MediaPreviewImage(
+                      mediaFileId: album.coverMediaFileId,
+                      thumbnailUrl: album.coverThumbnailUrl,
+                      fallback: _AlbumSwatch(album: album),
+                    ),
             ),
           ),
           const SizedBox(width: 12),
@@ -518,17 +518,16 @@ class _ArchivedAlbumRow extends StatelessWidget {
               child: SizedBox(
                 width: 44,
                 height: 44,
-                child: MediaPreviewImage(
-                  mediaFileId: album.coverMediaFileId,
-                  fallback: album.coverThumbnailUrl != null
-                      ? Image.network(
-                          album.coverThumbnailUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              _AlbumSwatch(album: album),
-                        )
-                      : _AlbumSwatch(album: album),
-                ),
+                child: album.coverIsVideo
+                    ? MediaVideoPreview(
+                        mediaFileId: album.coverMediaFileId,
+                        fallback: _AlbumSwatch(album: album),
+                      )
+                    : MediaPreviewImage(
+                        mediaFileId: album.coverMediaFileId,
+                        thumbnailUrl: album.coverThumbnailUrl,
+                        fallback: _AlbumSwatch(album: album),
+                      ),
               ),
             ),
             const SizedBox(width: 12),

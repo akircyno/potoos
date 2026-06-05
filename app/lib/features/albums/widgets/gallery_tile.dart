@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme.dart';
 import '../models/media_file.dart';
 import 'media_preview_image.dart';
+import 'media_video_preview.dart';
 
 IconData fileTypeIcon(MediaFile file) {
   if (file.isVideo) return Icons.movie_outlined;
@@ -60,10 +61,16 @@ class GalleryTile extends StatelessWidget {
         child: Stack(
           children: [
             Positioned.fill(
-              child: MediaPreviewImage(
-                mediaFileId: file.id,
-                fallback: fallback,
-              ),
+              child: file.isVideo
+                  ? MediaVideoPreview(
+                      mediaFileId: file.id,
+                      fallback: fallback,
+                    )
+                  : MediaPreviewImage(
+                      mediaFileId: file.id,
+                      thumbnailUrl: file.thumbnailUrl,
+                      fallback: fallback,
+                    ),
             ),
             const Positioned.fill(child: _GalleryScrim()),
             if (!selectionMode)
