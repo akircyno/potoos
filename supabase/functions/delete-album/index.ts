@@ -63,13 +63,15 @@ Deno.serve(async (req) => {
 
   const now = new Date().toISOString();
 
-  // 1. Delete the Drive folder (takes all files inside it with it)
+  // 1. Delete the Drive folder (takes all files inside it with it).
+  // Non-fatal: if Drive is unavailable or the folder is already gone we still
+  // clean up the database records so the album disappears from the app.
   if (album.storage_provider_id) {
     try {
       await deleteDriveItem(album.storage_provider_id);
+      console.log("delete-album: Drive folder deleted", album.storage_provider_id);
     } catch (driveErr) {
-      console.error("delete-album Drive folder deletion failed", driveErr);
-      return error("SERVER_ERROR", "Could not delete files from storage. Please try again.", 500);
+      console.error("delete-album: Drive deletion failed (continuing with DB cleanup)", driveErr);
     }
   }
 

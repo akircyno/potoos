@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_error.dart';
@@ -174,10 +175,18 @@ class AlbumRepository {
   }
 
   Future<void> deleteAlbum({required String albumId}) async {
-    await edgeFunctionService.callFunction<Object?>(
-      'delete-album',
-      body: {'album_id': albumId},
-    );
+    final userId = supabaseService.currentSession?.user.id;
+    debugPrint('[deleteAlbum] albumId=$albumId userId=$userId');
+    try {
+      await edgeFunctionService.callFunction<Object?>(
+        'delete-album',
+        body: {'album_id': albumId},
+      );
+      debugPrint('[deleteAlbum] success');
+    } catch (e) {
+      debugPrint('[deleteAlbum] failed: $e');
+      rethrow;
+    }
   }
 
   Future<List<MediaFile>> fetchAlbumMediaFiles(String albumId) async {

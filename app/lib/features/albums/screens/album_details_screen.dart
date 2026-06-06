@@ -143,10 +143,16 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
     final canSave = !selectionMode || hasSelection;
 
     // React to management actions completing
-    ref.listen(albumManagementProvider, (_, next) {
-      if (!next.done || !context.mounted) return;
+    ref.listen<AlbumManagementState>(albumManagementProvider, (prev, next) {
+      if (!context.mounted) return;
 
-      // Show success toast first
+      if (next.errorMessage != null &&
+          next.errorMessage != prev?.errorMessage) {
+        showAppToast(context, message: next.errorMessage!, isError: true);
+      }
+
+      if (!next.done) return;
+
       if (next.successMessage != null) {
         showAppToast(context, message: next.successMessage!);
       }
