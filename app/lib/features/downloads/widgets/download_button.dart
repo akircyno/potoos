@@ -15,7 +15,7 @@ class DownloadButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppButton(
-      label: isDownloading ? 'Downloading...' : 'Download Original',
+      label: isDownloading ? 'Downloading...' : 'Download File',
       icon: Icons.download_outlined,
       onPressed: isDownloading ? null : onPressed,
     );

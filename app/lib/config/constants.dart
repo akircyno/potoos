@@ -3,5 +3,5 @@ class AppText {
 
   static const appName = 'Potoos';
   static const tagline = 'Where your real memories live.';
-  static const qualityNote = 'Files stay in original quality.';
+  static const qualityNote = 'Files stay in full quality.';
 }

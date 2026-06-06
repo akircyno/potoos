@@ -138,7 +138,7 @@ class _Header extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Add Originals',
+                  'Add to Album',
                   style: TextStyle(
                     fontFamily: AppTheme.headingFont,
                     color: AppColors.pearlCream,
@@ -319,7 +319,7 @@ class _DropZone extends StatelessWidget {
           const PotoMascot(expression: PotoExpression.idle, size: 84),
           const SizedBox(height: AppSpacing.md),
           const Text(
-            'Add your originals',
+            'Add photos or videos',
             style: TextStyle(
               fontFamily: AppTheme.headingFont,
               fontSize: 18,
@@ -421,7 +421,7 @@ class _FilesSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${files.length} original${files.length == 1 ? '' : 's'} ready',
+                    '${files.length} ${files.length == 1 ? 'file' : 'files'} ready',
                     style: const TextStyle(
                       fontFamily: AppTheme.headingFont,
                       fontSize: 16,
@@ -491,7 +491,7 @@ class _FilesSection extends StatelessWidget {
               SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  'Nothing gets compressed. Every file uploads in full original quality.',
+                  'Nothing gets compressed. Every file uploads in full quality.',
                   style: TextStyle(
                     color: AppColors.charcoalInk,
                     fontSize: 12,
@@ -730,7 +730,7 @@ class _UploadCTA extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Text(
                 count > 0
-                    ? 'Upload $count Original${count == 1 ? '' : 's'}'
+                    ? 'Upload $count ${count == 1 ? 'File' : 'Files'}'
                     : 'Choose files to upload',
                 style: TextStyle(
                   color: isReady

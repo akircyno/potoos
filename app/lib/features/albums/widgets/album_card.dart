@@ -120,14 +120,16 @@ class AlbumCard extends StatelessWidget {
                 const Icon(Icons.photo_outlined,
                     color: AppColors.brightGold, size: 14),
                 const SizedBox(width: 4),
-                Text('${album.fileCount} originals',
+                Text(
+                    '${album.fileCount} ${album.fileCount == 1 ? 'file' : 'files'}',
                     style: const TextStyle(
                         color: AppColors.mutedInk, fontSize: 12)),
                 const SizedBox(width: 12),
                 const Icon(Icons.group_outlined,
                     color: AppColors.brightGold, size: 14),
                 const SizedBox(width: 4),
-                Text('${album.memberCount} members',
+                Text(
+                    '${album.memberCount} member${album.memberCount == 1 ? '' : 's'}',
                     style: const TextStyle(
                         color: AppColors.mutedInk, fontSize: 12)),
                 const Spacer(),

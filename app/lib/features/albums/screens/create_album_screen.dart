@@ -465,7 +465,7 @@ class _AlbumPreview extends StatelessWidget {
                       color: AppColors.brightGold.withValues(alpha: 0.8)),
                   const SizedBox(width: 4),
                   const Text(
-                    '0 originals',
+                    '0 files',
                     style: TextStyle(
                       color: AppColors.featherTaupe,
                       fontSize: 11,

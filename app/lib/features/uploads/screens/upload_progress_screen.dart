@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,7 +86,7 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
                 : PotoExpression.working;
 
     final statusTitle = isComplete
-        ? 'All $totalCount file${totalCount == 1 ? '' : 's'} are safe.'
+        ? uploadCompleteTitle(totalCount)
         : hasError
             ? 'Upload stopped.'
             : isPaused
@@ -300,6 +301,10 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
     return 'Queued';
   }
 }
+
+@visibleForTesting
+String uploadCompleteTitle(int count) =>
+    '$count file${count == 1 ? '' : 's'} uploaded.';
 
 // ── Header ────────────────────────────────────────────────────────────────────
 

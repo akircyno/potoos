@@ -42,7 +42,7 @@ class SelectedFileCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  file.localPath ?? 'Browser-selected original file',
+                  file.localPath ?? 'Browser-selected file',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: AppColors.mutedInk, fontSize: 12),

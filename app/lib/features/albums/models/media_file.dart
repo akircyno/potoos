@@ -35,7 +35,7 @@ class MediaFile {
     return MediaFile(
       id: json['id']?.toString() ?? '',
       originalFilename:
-          json['original_filename']?.toString() ?? 'Original file',
+          json['original_filename']?.toString() ?? 'File',
       fileType: _formatFileType(fileType),
       mimeType: json['mime_type']?.toString() ?? '',
       fileSizeLabel: _formatFileSize(size),
@@ -67,7 +67,7 @@ class MediaFile {
   }
 
   static String _formatFileSize(int? bytes) {
-    if (bytes == null || bytes <= 0) return 'Original';
+    if (bytes == null || bytes <= 0) return 'File';
     final mb = bytes / (1024 * 1024);
     if (mb < 1) return '${(bytes / 1024).toStringAsFixed(1)} KB';
     return '${mb.toStringAsFixed(1)} MB';

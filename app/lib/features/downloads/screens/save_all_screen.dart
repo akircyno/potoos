@@ -50,7 +50,7 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
 
     if (album == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Save Originals')),
+        appBar: AppBar(title: const Text('Save Files')),
         body: const AppScreen(
           children: [
             AppEmptyState(
@@ -71,7 +71,7 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
 
     if (accessUnavailable) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Save Originals')),
+        appBar: AppBar(title: const Text('Save Files')),
         body: AppScreen(
           children: [
             AppEmptyState(
@@ -103,12 +103,12 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
                 : PotoExpression.saveAll;
 
     final statusTitle = _isComplete
-        ? 'All $totalFiles original${totalFiles == 1 ? '' : 's'} are yours.'
+        ? 'All $totalFiles ${totalFiles == 1 ? 'file is' : 'files are'} yours.'
         : hasError
             ? 'Download stopped.'
             : _isSaving
                 ? '$_savedCount of $totalFiles packed so far.'
-                : 'Ready to save $totalFiles original${totalFiles == 1 ? '' : 's'}.';
+                : '$totalFiles ${totalFiles == 1 ? 'file' : 'files'} ready to save.';
 
     final statusSub = _isComplete
         ? 'Poto packed everything into one ZIP for you.'
@@ -116,7 +116,7 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
             ? _errorMessage!
             : _isSaving
                 ? 'Keep this screen open while downloading.'
-                : 'Your originals will be saved at full quality — no compression.';
+                : 'Your files will be saved at full quality — no compression.';
 
     return PopScope(
       canPop: !_isSaving,
@@ -222,7 +222,7 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
                         const AppEmptyState(
                           title: 'Nothing to save yet.',
                           message:
-                              'Upload some originals first, then come back here.',
+                              'Upload some files first, then come back here.',
                         )
                       else
                         Column(
@@ -311,9 +311,9 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
       }
 
       final zipBytes = Uint8List.fromList(ZipEncoder().encode(archive));
-      final zipName = '${safeZipName(album.name)}-originals.zip';
+      final zipName = '${safeZipName(album.name)}-files.zip';
       final savedPath = await FilePicker.saveFile(
-        dialogTitle: 'Save all original files',
+        dialogTitle: 'Save all files',
         fileName: zipName,
         bytes: zipBytes,
       );
@@ -389,7 +389,7 @@ String uniqueZipFilename(String filename, Set<String> usedNames) {
   final safeName = filename
       .replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_')
       .replaceAll(RegExp(r'^[-_\s.]+'), '');
-  final baseName = safeName.isEmpty ? 'original-file' : safeName;
+  final baseName = safeName.isEmpty ? 'file' : safeName;
   if (usedNames.add(baseName)) return baseName;
 
   final dotIndex = baseName.lastIndexOf('.');
@@ -457,7 +457,7 @@ class _Header extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Save Originals',
+                  'Save Files',
                   style: TextStyle(
                     fontFamily: AppTheme.headingFont,
                     color: AppColors.pearlCream,
@@ -828,12 +828,12 @@ class _BottomCTA extends StatelessWidget {
                     const SizedBox(width: AppSpacing.sm),
                     Text(
                       isSaving
-                          ? 'Packing originals...'
+                          ? 'Packing files...'
                           : hasError
                               ? 'Try Again'
                               : isEmpty
                                   ? 'Nothing to save'
-                                  : 'Save All Originals',
+                                  : 'Save All',
                       style: TextStyle(
                         color: onSave != null
                             ? AppColors.pearlCream

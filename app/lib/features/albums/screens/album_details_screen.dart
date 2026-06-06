@@ -331,7 +331,7 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
                             child: Text(
                               selectionMode
                                   ? '${selectedIds.length} selected'
-                                  : '$visibleFileCount originals',
+                                  : '$visibleFileCount ${visibleFileCount == 1 ? 'file' : 'files'}',
                               style: const TextStyle(
                                 color: AppColors.mutedInk,
                                 fontSize: 12,
@@ -865,11 +865,13 @@ class _CoverBackground extends StatelessWidget {
                 children: [
                   _HeaderMeta(
                       icon: Icons.photo_outlined,
-                      label: '$visibleFileCount originals'),
+                      label:
+                          '$visibleFileCount ${visibleFileCount == 1 ? 'file' : 'files'}'),
                   const SizedBox(width: 16),
                   _HeaderMeta(
                       icon: Icons.group_outlined,
-                      label: '$visibleMemberCount members'),
+                      label:
+                          '$visibleMemberCount member${visibleMemberCount == 1 ? '' : 's'}'),
                 ],
               ),
             ],

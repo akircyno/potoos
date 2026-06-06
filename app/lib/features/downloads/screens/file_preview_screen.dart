@@ -271,7 +271,7 @@ class _PreviewHero extends StatelessWidget {
             ),
           ),
 
-          // Original quality badge — top-right
+          // Full-quality badge — top-right
           Positioned(
             top: topPad + 56,
             right: 16,
@@ -288,7 +288,7 @@ class _PreviewHero extends StatelessWidget {
                       size: 10, color: AppColors.deepMaroon),
                   SizedBox(width: 4),
                   Text(
-                    'Original',
+                    'Full quality',
                     style: TextStyle(
                       color: AppColors.deepMaroon,
                       fontSize: 10,
@@ -563,7 +563,7 @@ class _QualityResult extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                ok ? 'Original size verified.' : 'Size mismatch detected.',
+                ok ? 'File size verified.' : 'Size mismatch detected.',
                 style: TextStyle(
                   color: iconColor,
                   fontSize: 13,
@@ -704,8 +704,8 @@ class _DownloadBar extends StatelessWidget {
                     isDone
                         ? 'Downloaded'
                         : isDownloading
-                            ? 'Downloading original...'
-                            : 'Download Original',
+                            ? 'Downloading file...'
+                            : 'Download File',
                     style: TextStyle(
                       color: isDone
                           ? AppColors.featherTaupe
@@ -726,7 +726,7 @@ class _DownloadBar extends StatelessWidget {
           if (!isDone && !isDownloading) ...[
             const SizedBox(height: 6),
             const Text(
-              'Full original quality — nothing compressed.',
+              'Full quality — nothing compressed.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.featherTaupe,

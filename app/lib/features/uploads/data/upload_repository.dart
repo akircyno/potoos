@@ -62,12 +62,12 @@ class UploadRepository {
   }) async {
     final bytes = file.bytes;
     if (bytes == null || bytes.isEmpty) {
-      throw const AppError('Could not read the selected original file.');
+      throw const AppError('Could not read the selected file.');
     }
 
     if (bytes.length != file.sizeBytes) {
       throw const AppError(
-        'Selected file size changed. Choose the original again and retry.',
+        'Selected file size changed. Choose the file again and retry.',
         code: 'UPLOAD_FAILED',
       );
     }
@@ -105,7 +105,7 @@ class UploadRepository {
 
     if (file.sizeBytes > _legacyProxyMaxBytes) {
       throw const AppError(
-        'This upload needs the latest original-file uploader. Refresh Potoos and try again.',
+        'This upload needs the latest file uploader. Refresh Potoos and try again.',
         code: 'UPLOAD_FAILED',
       );
     }
@@ -495,7 +495,7 @@ class UploadRepository {
 
     if (googleUploadUrl == null || googleUploadUrl.isEmpty) {
       throw const AppError(
-        'Upload session is incomplete. Please choose the original again and retry.',
+        'Upload session is incomplete. Please choose the file again and retry.',
         code: 'UPLOAD_FAILED',
       );
     }
@@ -706,7 +706,7 @@ class UploadRepository {
   AppError _appErrorFromDriveStatus(int statusCode) {
     if (statusCode == 404) {
       return const AppError(
-        'Upload session expired. Please choose the original again and retry.',
+        'Upload session expired. Please choose the file again and retry.',
         code: 'UPLOAD_FAILED',
       );
     }

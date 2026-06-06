@@ -39,7 +39,7 @@ const _pages = [
   _Page(
     expression: PotoExpression.happy,
     heading: 'Meet Poto.',
-    body: 'Your memory guardian. Here to keep every original exactly as you took it — no compression, no quality loss.',
+    body: 'Your memory guardian. Here to keep every photo or video exactly as you took it — no compression, no quality loss.',
   ),
   _Page(
     expression: PotoExpression.idle,

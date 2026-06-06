@@ -33,7 +33,7 @@ class DownloadRepository {
     );
 
     final savedPath = await FilePicker.saveFile(
-      dialogTitle: 'Save original file',
+      dialogTitle: 'Save file',
       fileName: original.filename,
       bytes: original.bytes,
     );

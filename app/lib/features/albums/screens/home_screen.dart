@@ -214,7 +214,7 @@ class _AlbumsTab extends ConsumerWidget {
                     ? AlbumEmptyState(
                         title: 'No albums yet',
                         message:
-                            'Create your first private album and start sharing original-quality memories.',
+                            'Create your first private album and start sharing full-quality memories.',
                         actionLabel: 'Create Album',
                         onAction: () =>
                             Navigator.pushNamed(context, AppRoutes.createAlbum),
@@ -787,7 +787,7 @@ class _NotificationsTab extends ConsumerWidget {
               return const AlbumEmptyState(
                 title: 'Nothing yet.',
                 message:
-                    'Create a space, upload your first original, and it will show up here.',
+                    'Create a space, upload your first file, and it will show up here.',
               );
             }
 
@@ -801,7 +801,7 @@ class _NotificationsTab extends ConsumerWidget {
                   for (final album in withFiles) ...[
                     NotificationItem(
                       title:
-                          '${album.fileCount} original${album.fileCount == 1 ? '' : 's'} in ${album.name}.',
+                          '${album.fileCount} file${album.fileCount == 1 ? '' : 's'} in ${album.name}.',
                       message:
                           '${album.memberCount} member${album.memberCount == 1 ? '' : 's'} · Your role: ${album.role}',
                       time: album.updatedLabel,
@@ -936,7 +936,7 @@ class _ProfileTab extends ConsumerWidget {
         Row(
           children: [
             MemoryStatCard(
-              label: 'originals',
+              label: 'files',
               value: '$fileCount',
               icon: Icons.photo_outlined,
               gold: true,
@@ -1058,7 +1058,7 @@ class _ProfileTab extends ConsumerWidget {
               const SizedBox(height: 8),
               _GuaranteeRow(
                 icon: Icons.download_outlined,
-                text: 'Download the exact original any time.',
+                text: 'Download any file at full quality.',
               ),
             ],
           ),
@@ -1074,7 +1074,7 @@ class _ProfileTab extends ConsumerWidget {
                   builder: (ctx) => AlertDialog(
                     title: const Text('Log out?'),
                     content: const Text(
-                        'Your albums and originals stay safe. Sign back in any time.'),
+                        'Your albums and files stay safe. Sign back in any time.'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(ctx).pop(false),

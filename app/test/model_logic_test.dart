@@ -9,6 +9,7 @@ import 'package:potoos/features/albums/models/media_file.dart';
 import 'package:potoos/features/auth/data/auth_repository.dart';
 import 'package:potoos/features/downloads/models/downloaded_file.dart';
 import 'package:potoos/features/uploads/models/upload_session.dart';
+import 'package:potoos/features/uploads/screens/upload_progress_screen.dart';
 
 void main() {
   group('AppEnv', () {
@@ -297,9 +298,20 @@ void main() {
       expect(uniqueZipFilename('photo.jpg', used), 'photo (3).jpg');
     });
 
-    test('falls back to original-file for empty or all-stripped names', () {
-      expect(uniqueZipFilename('', <String>{}), 'original-file');
-      expect(uniqueZipFilename('---', <String>{}), 'original-file');
+    test('falls back to file for empty or all-stripped names', () {
+      expect(uniqueZipFilename('', <String>{}), 'file');
+      expect(uniqueZipFilename('---', <String>{}), 'file');
+    });
+  });
+
+  group('uploadCompleteTitle', () {
+    test('uses singular grammar for one uploaded file', () {
+      expect(uploadCompleteTitle(1), '1 file uploaded.');
+    });
+
+    test('uses plural grammar for multiple uploaded files', () {
+      expect(uploadCompleteTitle(2), '2 files uploaded.');
+      expect(uploadCompleteTitle(15), '15 files uploaded.');
     });
   });
 
