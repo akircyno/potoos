@@ -4,6 +4,7 @@ import { getUserFromRequest } from "../_shared/auth.ts";
 import { getAlbumRole } from "../_shared/permissions.ts";
 import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
 import { touchAlbum } from "../_shared/albums.ts";
+import { logActivity } from "../_shared/activity.ts";
 import { isUuid } from "../_shared/validation.ts";
 
 Deno.serve(async (req) => {
@@ -95,6 +96,17 @@ Deno.serve(async (req) => {
   }
 
   await touchAlbum(albumId);
+
+  const { data: removedProfile } = await supabaseAdmin
+    .from("user_profiles")
+    .select("display_name")
+    .eq("id", targetUserId)
+    .maybeSingle();
+
+  await logActivity(albumId as string, user.id, "member_left", {
+    removed_user_id: targetUserId,
+    removed_display_name: (removedProfile as Record<string, unknown> | null)?.display_name ?? null,
+  });
 
   return success({
     album_id: albumId,

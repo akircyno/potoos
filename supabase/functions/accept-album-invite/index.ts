@@ -3,6 +3,7 @@ import { error, success } from "../_shared/response.ts";
 import { getUserFromRequest } from "../_shared/auth.ts";
 import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
 import { touchAlbum } from "../_shared/albums.ts";
+import { logActivity } from "../_shared/activity.ts";
 import { isUuid } from "../_shared/validation.ts";
 
 Deno.serve(async (req) => {
@@ -120,6 +121,7 @@ Deno.serve(async (req) => {
     .eq("id", inviteId);
 
   await touchAlbum(albumId);
+  await logActivity(albumId, user.id, "member_joined", { role });
 
   return success({ member, action: "accepted" });
 });

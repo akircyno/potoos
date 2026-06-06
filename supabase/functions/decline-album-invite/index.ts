@@ -4,6 +4,7 @@ import { getUserFromRequest } from "../_shared/auth.ts";
 import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
 import { isUuid } from "../_shared/validation.ts";
 import { sendDeclineNotificationEmail } from "../_shared/email.ts";
+import { logActivity } from "../_shared/activity.ts";
 
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -63,6 +64,10 @@ Deno.serve(async (req) => {
     console.error("decline-album-invite update failed", updateError.message);
     return error("SERVER_ERROR", "Could not decline the invite. Please try again.", 500);
   }
+
+  await logActivity(inv.album_id as string, user.id, "member_declined", {
+    album_name: inv.album_name,
+  });
 
   // Notify inviter — fetch their email and the decliner's name, then fire-and-forget.
   (async () => {

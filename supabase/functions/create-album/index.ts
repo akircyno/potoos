@@ -3,6 +3,7 @@ import { error, success } from "../_shared/response.ts";
 import { getUserFromRequest } from "../_shared/auth.ts";
 import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
 import { isValidAlbumName } from "../_shared/validation.ts";
+import { logActivity } from "../_shared/activity.ts";
 
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -110,6 +111,8 @@ Deno.serve(async (req) => {
 
     return error("SERVER_ERROR", "Could not finish creating the album. Please try again.", 500);
   }
+
+  await logActivity(album.id, user.id, "album_created", { album_name: name });
 
   return success({
     album_id: album.id,

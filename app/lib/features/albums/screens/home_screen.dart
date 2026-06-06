@@ -9,8 +9,9 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/pressable_scale.dart';
 import '../../../core/widgets/litrato_header.dart';
 import '../../../core/widgets/memory_stat_card.dart';
-import '../../../core/widgets/notification_item.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../activity/providers/activity_provider.dart';
+import '../../activity/widgets/activity_event_card.dart';
 import '../models/album.dart';
 import '../models/album_invite.dart';
 import '../providers/album_provider.dart';
@@ -39,6 +40,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final unreadAsync = ref.watch(unreadActivityCountProvider);
+    final unreadCount = unreadAsync.asData?.value ?? 0;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -48,7 +52,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               children: const [
                 _AlbumsTab(),
                 _InvitesTab(),
-                _NotificationsTab(),
+                _ActivityTab(),
                 _ProfileTab(),
               ],
             ),
@@ -64,30 +68,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
-        onDestinationSelected: (index) => setState(() => currentIndex = index),
+        onDestinationSelected: (index) {
+          setState(() => currentIndex = index);
+          if (index == 2) {
+            Future.microtask(
+              () => ref.read(activityFeedProvider.notifier).markRead(),
+            );
+          }
+        },
         backgroundColor: AppColors.warmCream,
         indicatorColor: AppColors.velvetMaroon.withValues(alpha: 0.08),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: const [
-          NavigationDestination(
+        destinations: [
+          const NavigationDestination(
             icon:
                 Icon(Icons.photo_album_outlined, color: AppColors.featherTaupe),
             selectedIcon:
                 Icon(Icons.photo_album, color: AppColors.velvetMaroon),
             label: 'Albums',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.mail_outline, color: AppColors.featherTaupe),
             selectedIcon: Icon(Icons.mail, color: AppColors.velvetMaroon),
             label: 'Invites',
           ),
           NavigationDestination(
-            icon: Icon(Icons.notifications_none, color: AppColors.featherTaupe),
-            selectedIcon:
-                Icon(Icons.notifications, color: AppColors.velvetMaroon),
+            icon: Badge(
+              isLabelVisible: unreadCount > 0,
+              label: Text(
+                unreadCount > 99 ? '99+' : '$unreadCount',
+                style: const TextStyle(fontSize: 10),
+              ),
+              backgroundColor: AppColors.velvetMaroon,
+              child: const Icon(Icons.notifications_none,
+                  color: AppColors.featherTaupe),
+            ),
+            selectedIcon: Badge(
+              isLabelVisible: unreadCount > 0,
+              label: Text(
+                unreadCount > 99 ? '99+' : '$unreadCount',
+                style: const TextStyle(fontSize: 10),
+              ),
+              backgroundColor: AppColors.velvetMaroon,
+              child: const Icon(Icons.notifications,
+                  color: AppColors.velvetMaroon),
+            ),
             label: 'Activity',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.person_outline, color: AppColors.featherTaupe),
             selectedIcon: Icon(Icons.person, color: AppColors.velvetMaroon),
             label: 'Profile',
@@ -746,14 +774,43 @@ class _ArchivedAlbumRow extends StatelessWidget {
   }
 }
 
-class _NotificationsTab extends ConsumerWidget {
-  const _NotificationsTab();
+class _ActivityTab extends ConsumerStatefulWidget {
+  const _ActivityTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final albumsAsync = ref.watch(albumListProvider);
+  ConsumerState<_ActivityTab> createState() => _ActivityTabState();
+}
+
+class _ActivityTabState extends ConsumerState<_ActivityTab> {
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      ref.read(activityFeedProvider.notifier).loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final feedState = ref.watch(activityFeedProvider);
+    final profile = ref.watch(currentUserProfileProvider);
+    final currentUserId = profile?.id ?? '';
 
     return ListView(
+      controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
       children: [
         const LitratoHeader(
@@ -762,66 +819,59 @@ class _NotificationsTab extends ConsumerWidget {
           showAvatar: false,
         ),
         const SizedBox(height: 14),
-        albumsAsync.when(
-          loading: () => const Center(
+        if (feedState.isLoading)
+          const Center(
             child: Padding(
               padding: EdgeInsets.all(24),
               child: CircularProgressIndicator(
                   color: AppColors.brightGold, strokeWidth: 2),
             ),
-          ),
-          error: (error, _) => AlbumEmptyState(
+          )
+        else if (feedState.errorMessage != null)
+          AlbumEmptyState(
             title: 'Activity unavailable',
-            message: AppError.messageFor(error),
+            message: feedState.errorMessage!,
             expression: PotoExpression.error,
             actionLabel: 'Try Again',
-            onAction: () => ref.invalidate(albumListProvider),
-          ),
-          data: (albums) {
-            if (albums.isEmpty) {
-              return const AlbumEmptyState(
-                title: 'Nothing yet.',
-                message:
-                    'Create a space, upload your first file, and it will show up here.',
-              );
-            }
-
-            final withFiles = albums.where((a) => a.fileCount > 0).toList();
-            final empty = albums.where((a) => a.fileCount == 0).toList();
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (withFiles.isNotEmpty) ...[
-                  for (final album in withFiles) ...[
-                    NotificationItem(
-                      title:
-                          '${album.fileCount} file${album.fileCount == 1 ? '' : 's'} in ${album.name}.',
-                      message:
-                          '${album.memberCount} member${album.memberCount == 1 ? '' : 's'} · Your role: ${album.role}',
-                      time: album.updatedLabel,
-                      unread: true,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                  ],
-                ],
-                if (empty.isNotEmpty) ...[
-                  if (withFiles.isNotEmpty)
-                    const SizedBox(height: AppSpacing.sm),
-                  for (final album in empty) ...[
-                    NotificationItem(
-                      title: '${album.name} is ready.',
-                      message: 'No files yet. Be the first to add something.',
-                      time: album.updatedLabel,
-                      unread: false,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                  ],
-                ],
+            onAction: () =>
+                ref.read(activityFeedProvider.notifier).loadInitial(),
+          )
+        else if (feedState.events.isEmpty)
+          const AlbumEmptyState(
+            title: 'Nothing yet.',
+            message: 'Upload some photos to get started.',
+          )
+        else
+          Column(
+            children: [
+              for (final event in feedState.events) ...[
+                ActivityEventCard(
+                  event: event,
+                  currentUserId: currentUserId,
+                ),
+                const SizedBox(height: AppSpacing.sm),
               ],
-            );
-          },
-        ),
+              if (feedState.isLoadingMore)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                        color: AppColors.brightGold, strokeWidth: 2),
+                  ),
+                ),
+              if (!feedState.hasMore && feedState.events.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: Text(
+                      'You\'re all caught up.',
+                      style: TextStyle(
+                          color: AppColors.featherTaupe, fontSize: 12),
+                    ),
+                  ),
+                ),
+            ],
+          ),
       ],
     );
   }

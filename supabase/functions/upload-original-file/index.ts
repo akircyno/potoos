@@ -4,6 +4,7 @@ import { getUserFromRequest } from "../_shared/auth.ts";
 import { uploadFileBytesToDrive } from "../_shared/googleDrive.ts";
 import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
 import { touchAlbum } from "../_shared/albums.ts";
+import { logActivity } from "../_shared/activity.ts";
 import { canUploadToAlbum } from "../_shared/permissions.ts";
 import { isUuid } from "../_shared/validation.ts";
 
@@ -149,6 +150,11 @@ Deno.serve(async (req) => {
     }
 
     await touchAlbum(mediaFile.album_id);
+    await logActivity(mediaFile.album_id, user.id, "file_uploaded", {
+      file_count: 1,
+      file_names: [mediaFile.original_filename],
+      media_file_id: mediaFileId,
+    });
 
     return success({
       media_file_id: completedFile.id,
