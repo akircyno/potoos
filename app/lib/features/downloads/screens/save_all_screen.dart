@@ -395,6 +395,28 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
     Share.downloadFallbackEnabled = false;
 
     try {
+      if (originals.length == 1) {
+        await _shareBatch(originals);
+        return;
+      }
+
+      try {
+        await _shareBatch(originals);
+      } on AppError catch (error) {
+        if (error.message == 'Save All was cancelled.') rethrow;
+        // Phone share sheets can refuse large multi-file payloads — fall back
+        // to sharing each file individually so they still reach Photos/Gallery.
+        for (final original in originals) {
+          await _shareBatch([original]);
+        }
+      }
+    } finally {
+      Share.downloadFallbackEnabled = previousFallback;
+    }
+  }
+
+  Future<void> _shareBatch(List<OriginalDownload> originals) async {
+    try {
       final result = await Share.shareXFiles(
         [
           for (final original in originals)
@@ -419,8 +441,6 @@ class _SaveAllScreenState extends ConsumerState<SaveAllScreen> {
       throw const AppError(
         'Could not open the phone save sheet. Try fewer files, or open Potoos in Safari or Chrome and try again.',
       );
-    } finally {
-      Share.downloadFallbackEnabled = previousFallback;
     }
   }
 
