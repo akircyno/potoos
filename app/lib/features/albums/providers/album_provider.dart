@@ -115,6 +115,11 @@ class SelectedMediaIds extends Notifier<Set<String>> {
     state = <String>{};
   }
 
+  void removeAll(Iterable<String> fileIds) {
+    if (fileIds.isEmpty) return;
+    state = <String>{...state}..removeAll(fileIds);
+  }
+
   void toggle(String fileId) {
     final nextSelection = <String>{...state};
     if (!nextSelection.add(fileId)) {

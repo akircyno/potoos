@@ -13,7 +13,9 @@ final userStorageUsedProvider = FutureProvider.autoDispose<int>((ref) async {
   final rows = await supabase.client
       .from('media_files')
       .select('file_size_bytes')
-      .eq('uploader_id', profile.id);
+      .eq('uploader_id', profile.id)
+      .eq('upload_status', 'completed')
+      .eq('is_deleted', false);
 
   int total = 0;
   for (final row in rows as List) {

@@ -1443,9 +1443,8 @@ class _StorageBar extends ConsumerWidget {
   }
 
   static String _formatGb(double gb) {
-    if (gb < 0.1) return '0.0 GB';
-    if (gb < 10) return gb.toStringAsFixed(1);
-    return gb.toStringAsFixed(0);
+    final precision = gb < 10 ? 1 : 0;
+    return '${gb.toStringAsFixed(precision)} GB';
   }
 }
 

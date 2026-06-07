@@ -215,6 +215,33 @@ class AlbumRepository {
     }
   }
 
+  /// Permanently removes the given files from an album (Drive item + database
+  /// record). Returns the IDs that were removed and the IDs that failed.
+  Future<({List<String> deletedIds, List<String> failedIds})> removeMediaFiles({
+    required String albumId,
+    required List<String> fileIds,
+  }) {
+    return edgeFunctionService.callFunction(
+      'delete-media-files',
+      body: {
+        'album_id': albumId,
+        'file_ids': fileIds,
+      },
+      parser: (data) {
+        final payload = Map<String, dynamic>.from(data as Map);
+        return (
+          deletedIds: _stringList(payload['deleted_ids']),
+          failedIds: _stringList(payload['failed_ids']),
+        );
+      },
+    );
+  }
+
+  static List<String> _stringList(Object? value) {
+    if (value is! List) return const [];
+    return value.map((item) => item.toString()).toList();
+  }
+
   Future<List<AlbumMember>> fetchAlbumMembers(String albumId) async {
     if (!supabaseService.isConfigured ||
         supabaseService.currentSession == null) {

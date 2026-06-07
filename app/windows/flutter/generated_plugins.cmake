@@ -4,6 +4,9 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
+  permission_handler_windows
+  sentry_flutter
+  share_plus
   url_launcher_windows
 )
 

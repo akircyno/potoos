@@ -223,28 +223,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                   fontWeight: FontWeight.w600,
                                 ),
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'A private space for the people who were actually there.\nEvery photo and video, exactly as you took it.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: AppColors.pearlCream
-                                  .withValues(alpha: 0.65),
-                              fontSize: 13,
-                              height: 1.65,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          const Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              _Pill(label: 'Just your people'),
-                              _Pill(label: 'No compression, ever'),
-                              _Pill(label: 'By invite only'),
-                            ],
-                          ),
                         ],
                       ),
                     ),
@@ -297,34 +275,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.pearlCream.withValues(alpha: 0.06),
-        border: Border.all(
-          color: AppColors.brightGold.withValues(alpha: 0.22),
-          width: 0.5,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: AppColors.pearlCream.withValues(alpha: 0.65),
-          fontSize: 11,
         ),
       ),
     );

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +14,7 @@ import '../../../core/widgets/pressable_scale.dart';
 import '../../../core/widgets/poto_mascot.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../downloads/screens/save_all_screen.dart';
+import '../data/album_repository.dart';
 import '../models/album.dart';
 import '../models/album_member.dart';
 import '../../uploads/providers/upload_provider.dart';
@@ -36,6 +39,7 @@ class AlbumDetailsScreen extends ConsumerStatefulWidget {
 class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
     with WidgetsBindingObserver {
   Album? _currentAlbum;
+  final Set<String> _removedFileIds = {};
 
   @override
   void initState() {
@@ -90,7 +94,14 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
     final selectionMode = ref.watch(albumSelectionModeProvider(album.id));
     final selectedIds = ref.watch(selectedMediaIdsProvider(album.id));
 
-    final loadedFiles = filesAsync.asData?.value;
+    final fetchedFiles = filesAsync.asData?.value;
+    final loadedFiles = fetchedFiles == null
+        ? null
+        : (_removedFileIds.isEmpty
+            ? fetchedFiles
+            : fetchedFiles
+                .where((f) => !_removedFileIds.contains(f.id))
+                .toList(growable: false));
     final loadedMembers = membersAsync.asData?.value;
 
     final selectedFiles = loadedFiles
@@ -139,6 +150,7 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
     final effectiveRole = currentMember?.role ?? album.role;
     final effectiveRoleLabel = _roleLabel(effectiveRole);
     final canUpload = _canUploadRole(effectiveRole);
+    final canRemoveFiles = _canUploadRole(effectiveRole);
     final isAdmin = effectiveRole.toLowerCase() == 'admin';
     final canSave = !selectionMode || hasSelection;
 
@@ -408,7 +420,14 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
                         ),
                       ),
                     ),
-                    data: (files) => files.isEmpty
+                    data: (files) {
+                      final visibleFiles = _removedFileIds.isEmpty
+                          ? files
+                          : files
+                              .where((f) => !_removedFileIds.contains(f.id))
+                              .toList(growable: false);
+
+                      return visibleFiles.isEmpty
                         ? SliverToBoxAdapter(
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(AppSpacing.md,
@@ -441,9 +460,9 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
                                 mainAxisSpacing: 2,
                                 childAspectRatio: 1,
                               ),
-                              itemCount: files.length,
+                              itemCount: visibleFiles.length,
                               itemBuilder: (context, index) {
-                                final file = files[index];
+                                final file = visibleFiles[index];
                                 return GalleryTile(
                                   file: file,
                                   selectionMode: selectionMode,
@@ -458,7 +477,7 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
                                             context,
                                             routeName: AppRoutes.mediaViewer,
                                             routeArguments: MediaViewerArgs(
-                                              files: files,
+                                              files: visibleFiles,
                                               initialIndex: index,
                                             ),
                                             album: album,
@@ -466,7 +485,8 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
                                 );
                               },
                             ),
-                          ),
+                          );
+                    },
                   ),
 
                   // Bottom padding — extra clearance for selection bar / resume banner
@@ -513,6 +533,15 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
                 right: 0,
                 child: _SelectionBar(
                   selectedCount: selectedFiles.length,
+                  canRemove: canRemoveFiles,
+                  onRemove: hasSelection
+                      ? () => _showRemoveFilesDialog(
+                            context,
+                            ref,
+                            album,
+                            selectedFiles,
+                          )
+                      : null,
                   onSave: hasSelection
                       ? () => _pushAndRefresh(
                             context,
@@ -747,6 +776,88 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
     );
     if (confirmed == true && context.mounted) {
       ref.read(albumManagementProvider.notifier).delete(albumId: album.id);
+    }
+  }
+
+  Future<void> _showRemoveFilesDialog(
+    BuildContext context,
+    WidgetRef ref,
+    Album album,
+    List<MediaFile> filesToRemove,
+  ) async {
+    final count = filesToRemove.length;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Remove ${pluralize(count, 'file', 'files')} from this album?',
+        ),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: _destructiveRed,
+              foregroundColor: AppColors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await _removeSelectedFiles(context, ref, album, filesToRemove);
+    }
+  }
+
+  Future<void> _removeSelectedFiles(
+    BuildContext context,
+    WidgetRef ref,
+    Album album,
+    List<MediaFile> filesToRemove,
+  ) async {
+    final fileIds = filesToRemove.map((f) => f.id).toList(growable: false);
+
+    ({List<String> deletedIds, List<String> failedIds})? result;
+    try {
+      result = await ref.read(albumRepositoryProvider).removeMediaFiles(
+            albumId: album.id,
+            fileIds: fileIds,
+          );
+    } catch (_) {
+      result = null;
+    }
+
+    if (!context.mounted) return;
+
+    final deletedIds = result?.deletedIds ?? const <String>[];
+    final failedIds = result?.failedIds ?? fileIds;
+
+    if (deletedIds.isNotEmpty) {
+      setState(() => _removedFileIds.addAll(deletedIds));
+      ref
+          .read(selectedMediaIdsProvider(album.id).notifier)
+          .removeAll(deletedIds);
+      unawaited(_refreshAlbum(ref, album));
+    }
+
+    if (failedIds.isEmpty) {
+      ref.read(albumSelectionModeProvider(album.id).notifier).setEnabled(false);
+      showAppToast(
+        context,
+        message: '${deletedIds.length} ${pluralize(deletedIds.length, 'file', 'files')} removed',
+      );
+    } else {
+      showAppToast(
+        context,
+        message: 'Some files could not be removed. Try again.',
+        isError: true,
+      );
     }
   }
 }
@@ -1028,14 +1139,20 @@ class _ActionPill extends StatelessWidget {
   }
 }
 
+const _destructiveRed = Color(0xFFFF3B30);
+
 class _SelectionBar extends StatelessWidget {
   const _SelectionBar({
     required this.selectedCount,
+    required this.canRemove,
+    required this.onRemove,
     required this.onSave,
     required this.onClear,
   });
 
   final int selectedCount;
+  final bool canRemove;
+  final VoidCallback? onRemove;
   final VoidCallback? onSave;
   final VoidCallback onClear;
 
@@ -1060,6 +1177,30 @@ class _SelectionBar extends StatelessWidget {
           AppSpacing.sm + bottomPad),
       child: Row(
         children: [
+          if (canRemove) ...[
+            PressableScale(
+              onTap: onRemove,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              child: Container(
+                height: 36,
+                width: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: onRemove != null
+                      ? _destructiveRed.withValues(alpha: 0.12)
+                      : AppColors.creamLine,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                ),
+                child: Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color:
+                      onRemove != null ? _destructiveRed : AppColors.featherTaupe,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+          ],
           Text(
             selectedCount > 0
                 ? '$selectedCount selected'
