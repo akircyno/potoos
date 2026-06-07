@@ -15,6 +15,7 @@ import '../../../core/widgets/poto_mascot.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../downloads/screens/save_all_screen.dart';
 import '../data/album_repository.dart';
+import '../data/media_preview_repository.dart';
 import '../models/album.dart';
 import '../models/album_member.dart';
 import '../../uploads/providers/upload_provider.dart';
@@ -40,6 +41,7 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
     with WidgetsBindingObserver {
   Album? _currentAlbum;
   final Set<String> _removedFileIds = {};
+  final Set<String> _preloadedFullResImageIds = {};
 
   @override
   void initState() {
@@ -121,6 +123,9 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
         : album.coverIsVideo;
 
     final visibleFileCount = loadedFiles?.length ?? album.fileCount;
+    if (loadedFiles != null && loadedFiles.isNotEmpty) {
+      _precacheFirstVisibleImages(ref, loadedFiles);
+    }
 
     if (loadedMembers != null && loadedMembers.isEmpty) {
       return Scaffold(
@@ -622,6 +627,34 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
       ]);
     } catch (_) {
       // The refreshed provider will show the normal error state if it fails.
+    }
+  }
+
+  void _precacheFirstVisibleImages(WidgetRef ref, List<MediaFile> files) {
+    final firstVisibleImages =
+        files.where((file) => !file.isVideo).take(6).toList(growable: false);
+
+    for (final file in firstVisibleImages) {
+      if (!_preloadedFullResImageIds.add(file.id)) continue;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        unawaited(
+          ref
+              .read(mediaFullResBytesProvider(file.id).future)
+              .then((bytes) async {
+            if (!mounted) return;
+            if (bytes == null || bytes.isEmpty) {
+              _preloadedFullResImageIds.remove(file.id);
+              return;
+            }
+            await precacheImage(MemoryImage(bytes), context);
+          }).catchError((_) {
+            _preloadedFullResImageIds.remove(file.id);
+          }),
+        );
+      });
     }
   }
 

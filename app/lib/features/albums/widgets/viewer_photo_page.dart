@@ -5,7 +5,6 @@ import 'dart:typed_data';
 
 import '../data/media_preview_repository.dart';
 import '../models/media_file.dart';
-import 'media_preview_image.dart';
 
 class ViewerPhotoPage extends ConsumerStatefulWidget {
   const ViewerPhotoPage({
@@ -18,12 +17,16 @@ class ViewerPhotoPage extends ConsumerStatefulWidget {
   });
 
   final MediaFile file;
+
   /// Called when scale changes so parent can toggle PageView physics.
   final ValueChanged<double> onScaleChanged;
+
   /// Called on any user interaction to reset the chrome hide timer.
   final VoidCallback onInteraction;
+
   /// Called when swipe-down threshold (100px) is exceeded.
   final VoidCallback onDismiss;
+
   /// Called during swipe-down drag to let parent fade background.
   final ValueChanged<double> onDragOffsetChanged;
 
@@ -208,8 +211,6 @@ class _ViewerPhotoPageState extends ConsumerState<ViewerPhotoPage>
   }
 }
 
-// Progressively loads the full-resolution image on top of the thumbnail.
-// The thumbnail shows instantly; the large version replaces it once fetched.
 class _FullResPhoto extends ConsumerWidget {
   const _FullResPhoto({required this.file});
   final MediaFile file;
@@ -219,20 +220,40 @@ class _FullResPhoto extends ConsumerWidget {
     final fullRes = ref.watch(mediaFullResBytesProvider(file.id));
     final Uint8List? bytes = fullRes.asData?.value;
 
-    if (bytes != null && bytes.isNotEmpty) {
-      return Image.memory(
-        bytes,
-        fit: BoxFit.contain,
-        gaplessPlayback: true,
-        filterQuality: FilterQuality.high,
-      );
-    }
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 150),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeOut,
+      child: bytes != null && bytes.isNotEmpty
+          ? Image.memory(
+              bytes,
+              key: ValueKey('full-res-${file.id}'),
+              fit: BoxFit.contain,
+              gaplessPlayback: true,
+              filterQuality: FilterQuality.high,
+            )
+          : const _ViewerPhotoLoading(),
+    );
+  }
+}
 
-    return MediaPreviewImage(
-      mediaFileId: file.id,
-      thumbnailUrl: file.thumbnailUrl,
-      fallback: const ColoredBox(color: Colors.black),
-      fit: BoxFit.contain,
+class _ViewerPhotoLoading extends StatelessWidget {
+  const _ViewerPhotoLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: Colors.black,
+      child: Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 2,
+          ),
+        ),
+      ),
     );
   }
 }

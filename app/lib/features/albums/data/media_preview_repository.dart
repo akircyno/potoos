@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -18,13 +19,27 @@ final mediaPreviewBytesProvider =
   return ref.watch(mediaPreviewRepositoryProvider).fetchPreview(mediaFileId);
 });
 
-final mediaFullResBytesProvider =
-    FutureProvider.autoDispose.family<Uint8List?, String>((ref, mediaFileId) {
-  if (mediaFileId.isEmpty) return Future.value(null);
-  return ref
+final mediaFullResBytesProvider = FutureProvider.autoDispose
+    .family<Uint8List?, String>((ref, mediaFileId) async {
+  if (mediaFileId.isEmpty) return null;
+  final bytes = await ref
       .watch(mediaPreviewRepositoryProvider)
       .fetchPreview(mediaFileId, large: true);
+
+  if (bytes != null && bytes.isNotEmpty) {
+    ref.cacheFor(const Duration(minutes: 2));
+  }
+
+  return bytes;
 });
+
+extension _CacheForExtension on Ref {
+  void cacheFor(Duration duration) {
+    final link = keepAlive();
+    final timer = Timer(duration, link.close);
+    onDispose(timer.cancel);
+  }
+}
 
 class MediaPreviewRepository {
   const MediaPreviewRepository(this.supabaseService, this.dio);
@@ -32,7 +47,8 @@ class MediaPreviewRepository {
   final SupabaseService supabaseService;
   final Dio dio;
 
-  Future<Uint8List?> fetchPreview(String mediaFileId, {bool large = false}) async {
+  Future<Uint8List?> fetchPreview(String mediaFileId,
+      {bool large = false}) async {
     if (!supabaseService.isConfigured) return null;
 
     final session = supabaseService.currentSession;
