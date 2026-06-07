@@ -59,7 +59,7 @@ jobs:
 
       - name: Build Flutter Web
         working-directory: app
-        run: flutter build web --release --base-href /potoos/
+        run: flutter build web --release --base-href /
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v4
