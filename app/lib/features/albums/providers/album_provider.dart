@@ -662,8 +662,22 @@ class PendingInvitesNotifier extends AsyncNotifier<List<AlbumInvite>> {
   @override
   Future<List<AlbumInvite>> build() {
     final profile = ref.watch(currentUserProfileProvider);
-    if (profile == null) return Future.value(const []);
-    return ref.read(albumRepositoryProvider).fetchPendingInvites();
+    if (profile == null) return Future.value(const <AlbumInvite>[]);
+    return ref.watch(albumRepositoryProvider).fetchPendingInvites();
+  }
+
+  void removeOptimistic(String inviteId) {
+    state = AsyncData(
+      (state.value ?? const <AlbumInvite>[])
+          .where((i) => i.id != inviteId)
+          .toList(),
+    );
+  }
+
+  void addOptimistic(AlbumInvite invite) {
+    final current = state.value ?? const <AlbumInvite>[];
+    if (current.any((i) => i.id == invite.id)) return;
+    state = AsyncData(<AlbumInvite>[...current, invite]);
   }
 }
 
