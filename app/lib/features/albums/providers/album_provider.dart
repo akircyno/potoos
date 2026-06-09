@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -482,7 +483,7 @@ class AlbumListNotifier extends AsyncNotifier<List<Album>> {
   Future<List<Album>> build() {
     final profile = ref.watch(currentUserProfileProvider);
     if (profile == null) return Future.value(const []);
-    return ref.read(albumRepositoryProvider).fetchMyAlbums();
+    return ref.watch(albumRepositoryProvider).fetchMyAlbums();
   }
 
   // ── Optimistic create ─────────────────────────────────────────────────────
@@ -531,6 +532,7 @@ class AlbumListNotifier extends AsyncNotifier<List<Album>> {
     final original = _findById(albumId);
     final index = _indexOfId(albumId);
     if (original == null) return;
+    assert(index >= 0, 'archiveAlbum: album found by ID but indexOfId returned -1');
     _removeAt(index);
 
     try {
@@ -549,6 +551,7 @@ class AlbumListNotifier extends AsyncNotifier<List<Album>> {
     required String albumId,
     required Album album,
   }) async {
+    assert(albumId == album.id, 'unarchiveAlbum: albumId and album.id do not match');
     _addToFront(album);
 
     try {
@@ -567,6 +570,7 @@ class AlbumListNotifier extends AsyncNotifier<List<Album>> {
     final original = _findById(albumId);
     final index = _indexOfId(albumId);
     if (original == null) return;
+    assert(index >= 0, 'leaveAlbum: album found by ID but indexOfId returned -1');
     _removeAt(index);
 
     try {
@@ -622,13 +626,8 @@ class AlbumListNotifier extends AsyncNotifier<List<Album>> {
     state = AsyncData(list);
   }
 
-  Album? _findById(String id) {
-    try {
-      return (state.value ?? const []).firstWhere((a) => a.id == id);
-    } catch (_) {
-      return null;
-    }
-  }
+  Album? _findById(String id) =>
+      (state.value ?? const <Album>[]).firstWhereOrNull((a) => a.id == id);
 
   int _indexOfId(String id) =>
       (state.value ?? const []).indexWhere((a) => a.id == id);
