@@ -12,6 +12,29 @@ import '../models/album_invite.dart';
 import '../models/album_member.dart';
 import '../models/media_file.dart';
 
+/// Signals rollback errors from optimistic mutations to listening screens.
+final albumMutationErrorProvider =
+    NotifierProvider<AlbumMutationErrorNotifier, String?>(
+  AlbumMutationErrorNotifier.new,
+);
+
+// ── New AsyncNotifierProvider declarations ────────────────────────────────────
+
+final albumListNotifierProvider =
+    AsyncNotifierProvider<AlbumListNotifier, List<Album>>(
+  AlbumListNotifier.new,
+);
+
+final archivedAlbumsNotifierProvider =
+    AsyncNotifierProvider.autoDispose<ArchivedAlbumsNotifier, List<Album>>(
+  ArchivedAlbumsNotifier.new,
+);
+
+final pendingInvitesNotifierProvider =
+    AsyncNotifierProvider.autoDispose<PendingInvitesNotifier, List<AlbumInvite>>(
+  PendingInvitesNotifier.new,
+);
+
 final albumListProvider = FutureProvider.autoDispose<List<Album>>((ref) {
   final profile = ref.watch(currentUserProfileProvider);
   if (profile == null) return const [];
@@ -440,6 +463,40 @@ class LeaveAlbumController extends Notifier<LeaveAlbumState> {
     } catch (error) {
       state = LeaveAlbumState(errorMessage: AppError.messageFor(error));
     }
+  }
+}
+
+// ── Stub notifier implementations (full bodies added in subsequent tasks) ─────
+
+class AlbumMutationErrorNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+}
+
+class AlbumListNotifier extends AsyncNotifier<List<Album>> {
+  @override
+  Future<List<Album>> build() {
+    final profile = ref.watch(currentUserProfileProvider);
+    if (profile == null) return Future.value(const []);
+    return ref.read(albumRepositoryProvider).fetchMyAlbums();
+  }
+}
+
+class ArchivedAlbumsNotifier extends AsyncNotifier<List<Album>> {
+  @override
+  Future<List<Album>> build() {
+    final profile = ref.watch(currentUserProfileProvider);
+    if (profile == null) return Future.value(const []);
+    return ref.read(albumRepositoryProvider).fetchArchivedAlbums();
+  }
+}
+
+class PendingInvitesNotifier extends AsyncNotifier<List<AlbumInvite>> {
+  @override
+  Future<List<AlbumInvite>> build() {
+    final profile = ref.watch(currentUserProfileProvider);
+    if (profile == null) return Future.value(const []);
+    return ref.read(albumRepositoryProvider).fetchPendingInvites();
   }
 }
 
