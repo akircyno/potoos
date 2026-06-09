@@ -13,7 +13,11 @@ import '../models/album_member.dart';
 import '../models/media_file.dart';
 
 /// Signals rollback errors from optimistic mutations to listening screens.
-final albumMutationErrorProvider = Provider<String?>((ref) => null);
+/// Screens listen, show a toast, then clear back to null.
+final albumMutationErrorProvider =
+    NotifierProvider<_AlbumMutationErrorNotifier, String?>(
+  _AlbumMutationErrorNotifier.new,
+);
 
 // ── New AsyncNotifierProvider declarations ────────────────────────────────────
 
@@ -461,6 +465,14 @@ class LeaveAlbumController extends Notifier<LeaveAlbumState> {
       state = LeaveAlbumState(errorMessage: AppError.messageFor(error));
     }
   }
+}
+
+class _AlbumMutationErrorNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void setError(String message) => state = message;
+  void clear() => state = null;
 }
 
 // ── Stub notifier implementations (full bodies added in subsequent tasks) ─────
