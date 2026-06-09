@@ -1,12 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/routes.dart';
 import '../../../app/theme.dart';
-import '../../../core/errors/app_error.dart';
 import '../../../core/widgets/pressable_scale.dart';
-import '../data/album_repository.dart';
 import '../providers/album_provider.dart';
 
 class CreateAlbumScreen extends ConsumerStatefulWidget {
@@ -20,7 +19,6 @@ class _CreateAlbumScreenState extends ConsumerState<CreateAlbumScreen> {
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
   final _nameFocus = FocusNode();
-  bool _isLoading = false;
   String _previewName = '';
 
   @override
@@ -87,7 +85,6 @@ class _CreateAlbumScreenState extends ConsumerState<CreateAlbumScreen> {
                     TextField(
                       controller: _nameController,
                       focusNode: _nameFocus,
-                      enabled: !_isLoading,
                       textCapitalization: TextCapitalization.sentences,
                       style: const TextStyle(
                         fontSize: 17,
@@ -127,7 +124,6 @@ class _CreateAlbumScreenState extends ConsumerState<CreateAlbumScreen> {
                     const SizedBox(height: AppSpacing.sm),
                     TextField(
                       controller: _descController,
-                      enabled: !_isLoading,
                       maxLines: 3,
                       textCapitalization: TextCapitalization.sentences,
                       style: const TextStyle(
@@ -199,39 +195,35 @@ class _CreateAlbumScreenState extends ConsumerState<CreateAlbumScreen> {
               padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm,
                   AppSpacing.md, AppSpacing.sm + bottomPad),
               child: PressableScale(
-                onTap: (_isLoading || !hasName) ? null : _createAlbum,
+                onTap: !hasName ? null : _createAlbum,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
                 child: Container(
                   height: 54,
                   width: double.infinity,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: (_isLoading || !hasName)
+                    color: !hasName
                         ? AppColors.creamLine
                         : AppColors.velvetMaroon,
                     borderRadius:
                         BorderRadius.circular(AppSpacing.radiusLg),
-                    boxShadow: (!_isLoading && hasName)
-                        ? AppShadows.primaryButton
-                        : null,
+                    boxShadow: hasName ? AppShadows.primaryButton : null,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        _isLoading
-                            ? Icons.hourglass_top_rounded
-                            : Icons.add_circle_outline,
-                        color: (_isLoading || !hasName)
+                        Icons.add_circle_outline,
+                        color: !hasName
                             ? AppColors.featherTaupe
                             : AppColors.pearlCream,
                         size: 18,
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
-                        _isLoading ? 'Creating...' : 'Create Space',
+                        'Create Space',
                         style: TextStyle(
-                          color: (_isLoading || !hasName)
+                          color: !hasName
                               ? AppColors.featherTaupe
                               : AppColors.pearlCream,
                           fontSize: 15,
@@ -257,31 +249,13 @@ class _CreateAlbumScreenState extends ConsumerState<CreateAlbumScreen> {
     if (name.isEmpty) return;
 
     _nameFocus.unfocus();
-    setState(() => _isLoading = true);
-
-    try {
-      final album = await ref.read(albumRepositoryProvider).createAlbum(
+    Navigator.pop(context);
+    unawaited(
+      ref.read(albumListNotifierProvider.notifier).createAlbum(
             name: name,
             description: description.isEmpty ? null : description,
-          );
-      ref.invalidate(albumListProvider);
-
-      if (mounted) {
-        Navigator.pushReplacementNamed(
-          context,
-          AppRoutes.albumDetails,
-          arguments: album,
-        );
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppError.messageFor(error))),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+          ),
+    );
   }
 }
 
