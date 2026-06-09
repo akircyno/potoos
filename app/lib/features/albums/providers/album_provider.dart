@@ -642,7 +642,19 @@ class ArchivedAlbumsNotifier extends AsyncNotifier<List<Album>> {
   Future<List<Album>> build() {
     final profile = ref.watch(currentUserProfileProvider);
     if (profile == null) return Future.value(const []);
-    return ref.read(albumRepositoryProvider).fetchArchivedAlbums();
+    return ref.watch(albumRepositoryProvider).fetchArchivedAlbums();
+  }
+
+  void addAlbum(Album album) {
+    final current = state.value ?? const <Album>[];
+    if (current.any((a) => a.id == album.id)) return;
+    state = AsyncData(<Album>[album, ...current]);
+  }
+
+  void removeAlbum(String albumId) {
+    state = AsyncData(
+      (state.value ?? const <Album>[]).where((a) => a.id != albumId).toList(),
+    );
   }
 }
 
