@@ -114,4 +114,50 @@ class Album {
     final text = value?.trim();
     return text == null || text.isEmpty ? null : text;
   }
+
+  Album copyWith({
+    String? id,
+    String? name,
+    String? description,
+    String? role,
+    int? fileCount,
+    int? memberCount,
+    String? updatedLabel,
+    List<Color>? coverColors,
+    String? coverThumbnailUrl,
+    String? coverMediaFileId,
+    bool? coverIsVideo,
+  }) {
+    return Album(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      role: role ?? this.role,
+      fileCount: fileCount ?? this.fileCount,
+      memberCount: memberCount ?? this.memberCount,
+      updatedLabel: updatedLabel ?? this.updatedLabel,
+      coverColors: coverColors ?? this.coverColors,
+      coverThumbnailUrl: coverThumbnailUrl ?? this.coverThumbnailUrl,
+      coverMediaFileId: coverMediaFileId ?? this.coverMediaFileId,
+      coverIsVideo: coverIsVideo ?? this.coverIsVideo,
+    );
+  }
+
+  factory Album.optimistic({
+    required String id,
+    required String name,
+    String? description,
+    String role = 'Admin',
+  }) {
+    return Album(
+      id: id,
+      name: name,
+      description: description,
+      role: role,
+      fileCount: 0,
+      memberCount: 1,
+      updatedLabel: 'Just now',
+      coverColors: _coverColorsFor(id),
+    );
+  }
 }

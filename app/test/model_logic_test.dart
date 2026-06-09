@@ -75,6 +75,50 @@ void main() {
     });
   });
 
+  group('Album.copyWith', () {
+    test('produces a new instance with only the named fields changed', () {
+      final original = Album(
+        id: 'id-1',
+        name: 'Summer',
+        role: 'Admin',
+        fileCount: 5,
+        memberCount: 3,
+        updatedLabel: '2d ago',
+        coverColors: const [Color(0xFF6B1C2E), Color(0xFFC4973A)],
+      );
+
+      final renamed = original.copyWith(name: 'Winter');
+
+      expect(renamed.id, 'id-1');
+      expect(renamed.name, 'Winter');
+      expect(renamed.fileCount, 5);
+      expect(renamed.role, 'Admin');
+    });
+  });
+
+  group('Album.optimistic', () {
+    test('builds a placeholder album with temp id and zero counts', () {
+      final album = Album.optimistic(id: 'temp-123', name: 'Road Trip');
+
+      expect(album.id, 'temp-123');
+      expect(album.name, 'Road Trip');
+      expect(album.fileCount, 0);
+      expect(album.memberCount, 1);
+      expect(album.role, 'Admin');
+      expect(album.updatedLabel, 'Just now');
+      expect(album.coverColors, isNotEmpty);
+    });
+
+    test('accepts custom role for invite-based optimistic albums', () {
+      final album = Album.optimistic(
+        id: 'album-abc',
+        name: 'Friends',
+        role: 'Contributor',
+      );
+      expect(album.role, 'Contributor');
+    });
+  });
+
   group('DownloadedFile quality check', () {
     test('matches when downloaded size equals expected size', () {
       const file = DownloadedFile(
