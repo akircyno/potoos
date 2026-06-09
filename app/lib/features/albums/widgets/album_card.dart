@@ -15,7 +15,7 @@ class AlbumCard extends StatelessWidget {
   });
 
   final Album album;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

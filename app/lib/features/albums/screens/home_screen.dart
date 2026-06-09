@@ -245,11 +245,13 @@ class _AlbumsTab extends ConsumerWidget {
                           for (final album in albums) ...[
                             AlbumCard(
                               album: album,
-                              onTap: () => Navigator.pushNamed(
-                                context,
-                                AppRoutes.albumDetails,
-                                arguments: album,
-                              ),
+                              onTap: album.id.startsWith('temp-')
+                                  ? null
+                                  : () => Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.albumDetails,
+                                      arguments: album,
+                                    ),
                             ),
                             const SizedBox(height: 12),
                           ],
@@ -420,11 +422,13 @@ class _InvitesTab extends ConsumerWidget {
                   for (final album in adminAlbums) ...[
                     _InviteAlbumRow(
                       album: album,
-                      onTap: () => Navigator.pushNamed(
-                        context,
-                        AppRoutes.albumDetails,
-                        arguments: album,
-                      ),
+                      onTap: album.id.startsWith('temp-')
+                          ? null
+                          : () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.albumDetails,
+                              arguments: album,
+                            ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                   ],
@@ -443,11 +447,13 @@ class _InvitesTab extends ConsumerWidget {
                   for (final album in sharedAlbums) ...[
                     _InviteAlbumRow(
                       album: album,
-                      onTap: () => Navigator.pushNamed(
-                        context,
-                        AppRoutes.members,
-                        arguments: album,
-                      ),
+                      onTap: album.id.startsWith('temp-')
+                          ? null
+                          : () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.members,
+                              arguments: album,
+                            ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                   ],
@@ -598,7 +604,7 @@ class _InviteAlbumRow extends StatelessWidget {
   const _InviteAlbumRow({required this.album, required this.onTap});
 
   final Album album;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
