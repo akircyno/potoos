@@ -136,8 +136,16 @@ class _AlbumsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final albumsAsync = ref.watch(albumListProvider);
-    final archivedAsync = ref.watch(archivedAlbumsProvider);
+    final albumsAsync = ref.watch(albumListNotifierProvider);
+
+    ref.listen<String?>(albumMutationErrorProvider, (prev, next) {
+      if (next != null && context.mounted) {
+        showAppToast(context, message: next, isError: true);
+        ref.read(albumMutationErrorProvider.notifier).clear();
+      }
+    });
+
+    final archivedAsync = ref.watch(archivedAlbumsNotifierProvider);
     final profile = ref.watch(currentUserProfileProvider);
     final albums = albumsAsync.when<List<Album>>(
       data: (albums) => albums,
@@ -221,7 +229,7 @@ class _AlbumsTab extends ConsumerWidget {
                   message: AppError.messageFor(error),
                   expression: PotoExpression.error,
                   actionLabel: 'Try Again',
-                  onAction: () => ref.invalidate(albumListProvider),
+                  onAction: () => ref.invalidate(albumListNotifierProvider),
                 ),
                 data: (albums) => albums.isEmpty
                     ? AlbumEmptyState(
@@ -316,8 +324,8 @@ class _InvitesTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final albumsAsync = ref.watch(albumListProvider);
-    final pendingInvitesAsync = ref.watch(pendingInvitesProvider);
+    final albumsAsync = ref.watch(albumListNotifierProvider);
+    final pendingInvitesAsync = ref.watch(pendingInvitesNotifierProvider);
 
     ref.listen<InviteResponseState>(inviteResponseControllerProvider,
         (prev, next) {
@@ -329,6 +337,13 @@ class _InvitesTab extends ConsumerWidget {
           next.errorMessage != prev?.errorMessage) {
         showAppToast(context,
             message: next.errorMessage!, isError: true);
+      }
+    });
+
+    ref.listen<String?>(albumMutationErrorProvider, (prev, next) {
+      if (next != null && context.mounted) {
+        showAppToast(context, message: next, isError: true);
+        ref.read(albumMutationErrorProvider.notifier).clear();
       }
     });
 
@@ -376,7 +391,7 @@ class _InvitesTab extends ConsumerWidget {
             message: AppError.messageFor(error),
             expression: PotoExpression.error,
             actionLabel: 'Try Again',
-            onAction: () => ref.invalidate(albumListProvider),
+            onAction: () => ref.invalidate(albumListNotifierProvider),
           ),
           data: (albums) {
             if (albums.isEmpty) {
@@ -874,7 +889,7 @@ class _ProfileTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(currentUserProfileProvider);
-    final albumsAsync = ref.watch(albumListProvider);
+    final albumsAsync = ref.watch(albumListNotifierProvider);
     final albums = albumsAsync.asData?.value ?? const <Album>[];
     final fileCount =
         albums.fold<int>(0, (total, album) => total + album.fileCount);
