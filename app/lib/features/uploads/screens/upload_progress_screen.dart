@@ -190,20 +190,23 @@ class _UploadProgressScreenState extends ConsumerState<UploadProgressScreen> {
                       Column(
                         children: [
                           for (var i = 0; i < files.length; i++)
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(bottom: AppSpacing.sm),
-                              child: _FileRow(
-                                file: files[i],
-                                progress: _progressFor(i, state),
-                                status: _statusFor(i, state),
-                                isDone: i < completedCount,
-                                isActive:
-                                    i == state.currentFileIndex && isUploading,
-                                isWaiting: i > state.currentFileIndex ||
-                                    (state.currentFileIndex < 0 && !isComplete),
-                                isFailed:
-                                    i == state.currentFileIndex && hasError,
+                            _StaggeredFileRow(
+                              index: i,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.only(bottom: AppSpacing.sm),
+                                child: _FileRow(
+                                  file: files[i],
+                                  progress: _progressFor(i, state),
+                                  status: _statusFor(i, state),
+                                  isDone: i < completedCount,
+                                  isActive:
+                                      i == state.currentFileIndex && isUploading,
+                                  isWaiting: i > state.currentFileIndex ||
+                                      (state.currentFileIndex < 0 && !isComplete),
+                                  isFailed:
+                                      i == state.currentFileIndex && hasError,
+                                ),
                               ),
                             ),
                         ],
@@ -718,4 +721,44 @@ class _BottomCTA extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Staggered fade-in for file rows ───────────────────────────────────────────
+
+class _StaggeredFileRow extends StatefulWidget {
+  const _StaggeredFileRow({required this.index, required this.child});
+
+  final int index;
+  final Widget child;
+
+  @override
+  State<_StaggeredFileRow> createState() => _StaggeredFileRowState();
+}
+
+class _StaggeredFileRowState extends State<_StaggeredFileRow>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+    );
+    _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    Future.delayed(Duration(milliseconds: widget.index * 50), () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FadeTransition(opacity: _opacity, child: widget.child);
 }
