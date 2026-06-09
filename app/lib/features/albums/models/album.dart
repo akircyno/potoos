@@ -153,7 +153,7 @@ class Album {
       id: id,
       name: name,
       description: description,
-      role: role,
+      role: _formatRole(role),
       fileCount: 0,
       memberCount: 1,
       updatedLabel: 'Just now',
