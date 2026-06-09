@@ -484,6 +484,158 @@ class AlbumListNotifier extends AsyncNotifier<List<Album>> {
     if (profile == null) return Future.value(const []);
     return ref.read(albumRepositoryProvider).fetchMyAlbums();
   }
+
+  // ── Optimistic create ─────────────────────────────────────────────────────
+  Future<void> createAlbum({required String name, String? description}) async {
+    final tempId = 'temp-${DateTime.now().millisecondsSinceEpoch}';
+    final temp = Album.optimistic(id: tempId, name: name, description: description);
+    _addToFront(temp);
+
+    try {
+      final real = await ref.read(albumRepositoryProvider).createAlbum(
+            name: name,
+            description: description,
+          );
+      _replace(tempId, real);
+    } catch (e) {
+      _remove(tempId);
+      _setError("Couldn't create album. Try again.");
+    }
+  }
+
+  // ── Optimistic rename ─────────────────────────────────────────────────────
+  Future<void> renameAlbum({
+    required String albumId,
+    required String name,
+  }) async {
+    final original = _findById(albumId);
+    if (original == null) return;
+    state = AsyncData((state.value ?? const [])
+        .map((a) => a.id == albumId ? a.copyWith(name: name) : a)
+        .toList());
+
+    try {
+      await ref
+          .read(albumRepositoryProvider)
+          .renameAlbum(albumId: albumId, name: name);
+    } catch (e) {
+      state = AsyncData((state.value ?? const [])
+          .map((a) => a.id == albumId ? original : a)
+          .toList());
+      _setError("Couldn't save changes.");
+    }
+  }
+
+  // ── Optimistic archive ────────────────────────────────────────────────────
+  Future<void> archiveAlbum({required String albumId}) async {
+    final original = _findById(albumId);
+    final index = _indexOfId(albumId);
+    if (original == null) return;
+    _removeAt(index);
+
+    try {
+      await ref
+          .read(albumRepositoryProvider)
+          .archiveAlbum(albumId: albumId);
+      ref.invalidate(archivedAlbumsNotifierProvider);
+    } catch (e) {
+      _reinsertAt(index, original);
+      _setError("Couldn't archive the space. Try again.");
+    }
+  }
+
+  // ── Optimistic unarchive ──────────────────────────────────────────────────
+  Future<void> unarchiveAlbum({
+    required String albumId,
+    required Album album,
+  }) async {
+    _addToFront(album);
+
+    try {
+      await ref
+          .read(albumRepositoryProvider)
+          .unarchiveAlbum(albumId: albumId);
+      ref.invalidate(archivedAlbumsNotifierProvider);
+    } catch (e) {
+      _remove(albumId);
+      _setError("Couldn't restore the space. Try again.");
+    }
+  }
+
+  // ── Optimistic leave ──────────────────────────────────────────────────────
+  Future<void> leaveAlbum({required String albumId}) async {
+    final original = _findById(albumId);
+    final index = _indexOfId(albumId);
+    if (original == null) return;
+    _removeAt(index);
+
+    try {
+      await ref.read(albumRepositoryProvider).leaveAlbum(albumId: albumId);
+    } catch (e) {
+      _reinsertAt(index, original);
+      _setError("Couldn't leave the space. Try again.");
+    }
+  }
+
+  // ── Optimistic join from invite ───────────────────────────────────────────
+  void addOptimisticAlbum(AlbumInvite invite) {
+    final current = state.value ?? const [];
+    if (current.any((a) => a.id == invite.albumId)) return;
+    final temp = Album.optimistic(
+      id: invite.albumId,
+      name: invite.albumName,
+      role: invite.roleLabel,
+    );
+    state = AsyncData([...current, temp]);
+  }
+
+  void removeOptimisticAlbum(String albumId) => _remove(albumId);
+
+  // ── Private helpers ───────────────────────────────────────────────────────
+
+  void _addToFront(Album album) {
+    state = AsyncData([album, ...(state.value ?? const [])]);
+  }
+
+  void _remove(String id) {
+    state = AsyncData(
+        (state.value ?? const []).where((a) => a.id != id).toList());
+  }
+
+  void _removeAt(int index) {
+    if (index < 0) return;
+    final list = <Album>[...(state.value ?? const <Album>[])];
+    if (index >= list.length) return;
+    list.removeAt(index);
+    state = AsyncData(list);
+  }
+
+  void _replace(String tempId, Album real) {
+    state = AsyncData((state.value ?? const [])
+        .map((a) => a.id == tempId ? real : a)
+        .toList());
+  }
+
+  void _reinsertAt(int index, Album album) {
+    final list = <Album>[...(state.value ?? const <Album>[])];
+    list.insert(index.clamp(0, list.length), album);
+    state = AsyncData(list);
+  }
+
+  Album? _findById(String id) {
+    try {
+      return (state.value ?? const []).firstWhere((a) => a.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  int _indexOfId(String id) =>
+      (state.value ?? const []).indexWhere((a) => a.id == id);
+
+  void _setError(String message) {
+    ref.read(albumMutationErrorProvider.notifier).setError(message);
+  }
 }
 
 class ArchivedAlbumsNotifier extends AsyncNotifier<List<Album>> {
