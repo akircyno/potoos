@@ -212,7 +212,7 @@ class UploadController extends Notifier<UploadState> {
     }
 
     ref.invalidate(albumMediaFilesProvider(albumId));
-    ref.invalidate(albumListProvider);
+    ref.invalidate(albumListNotifierProvider);
     state = state.copyWith(isUploading: false, isPaused: false, progress: 1);
   }
 }
