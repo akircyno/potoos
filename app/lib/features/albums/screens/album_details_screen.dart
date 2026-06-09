@@ -618,7 +618,7 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
   Future<void> _refreshAlbum(WidgetRef ref, Album album) async {
     ref.invalidate(albumMediaFilesProvider(album.id));
     ref.invalidate(albumMembersProvider(album.id));
-    ref.invalidate(albumListProvider);
+    ref.invalidate(albumListNotifierProvider);
 
     try {
       await Future.wait([
@@ -951,6 +951,12 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
   ) async {
     final fileIds = filesToRemove.map((f) => f.id).toList(growable: false);
 
+    // Optimistic: hide files immediately on confirmation
+    setState(() => _removedFileIds.addAll(fileIds));
+    ref
+        .read(selectedMediaIdsProvider(album.id).notifier)
+        .removeAll(fileIds);
+
     ({List<String> deletedIds, List<String> failedIds})? result;
     String? errorMessage;
     try {
@@ -968,30 +974,30 @@ class _AlbumDetailsScreenState extends ConsumerState<AlbumDetailsScreen>
     final deletedIds = result?.deletedIds ?? const <String>[];
     final failedIds = result?.failedIds ?? fileIds;
 
-    if (deletedIds.isNotEmpty) {
-      setState(() => _removedFileIds.addAll(deletedIds));
+    if (failedIds.isNotEmpty) {
+      // Rollback: restore files that failed to delete
+      setState(() => _removedFileIds.removeAll(failedIds));
+      showAppToast(
+        context,
+        message: errorMessage ??
+            (deletedIds.isEmpty
+                ? "Couldn't delete file. Try again."
+                : 'Some files could not be removed. Try again.'),
+        isError: true,
+      );
+    } else {
       ref
-          .read(selectedMediaIdsProvider(album.id).notifier)
-          .removeAll(deletedIds);
-      unawaited(_refreshAlbum(ref, album));
-    }
-
-    if (failedIds.isEmpty) {
-      ref.read(albumSelectionModeProvider(album.id).notifier).setEnabled(false);
+          .read(albumSelectionModeProvider(album.id).notifier)
+          .setEnabled(false);
       showAppToast(
         context,
         message:
             '${deletedIds.length} ${pluralize(deletedIds.length, 'file', 'files')} removed',
       );
-    } else {
-      showAppToast(
-        context,
-        message: errorMessage ??
-            (deletedIds.isEmpty
-                ? 'Could not remove the selected files. Try again.'
-                : 'Some files could not be removed. Try again.'),
-        isError: true,
-      );
+    }
+
+    if (deletedIds.isNotEmpty) {
+      unawaited(_refreshAlbum(ref, album));
     }
   }
 }
