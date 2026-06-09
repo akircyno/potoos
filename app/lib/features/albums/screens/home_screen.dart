@@ -278,7 +278,7 @@ class _AlbumsTab extends ConsumerWidget {
                             onRestore: () async {
                               await ref
                                   .read(albumManagementProvider.notifier)
-                                  .unarchive(albumId: album.id);
+                                  .unarchive(albumId: album.id, album: album);
                               if (context.mounted) {
                                 showAppToast(context,
                                     message: '"${album.name}" restored.');
@@ -534,9 +534,7 @@ class _PendingInviteCard extends ConsumerWidget {
                 ? null
                 : () => ref
                     .read(inviteResponseControllerProvider.notifier)
-                    .accept(
-                        inviteId: invite.id,
-                        albumName: invite.albumName),
+                    .accept(invite: invite),
             style: TextButton.styleFrom(
               foregroundColor: AppColors.brightGold,
               padding:
@@ -569,9 +567,7 @@ class _PendingInviteCard extends ConsumerWidget {
               Navigator.pop(ctx);
               ref
                   .read(inviteResponseControllerProvider.notifier)
-                  .decline(
-                      inviteId: invite.id,
-                      albumName: invite.albumName);
+                  .decline(invite: invite);
             },
             style:
                 TextButton.styleFrom(foregroundColor: AppColors.maroon),

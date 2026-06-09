@@ -270,61 +270,43 @@ class AlbumManagementController extends Notifier<AlbumManagementState> {
   AlbumManagementState build() => const AlbumManagementState();
 
   Future<void> rename({required String albumId, required String name}) async {
-    state = const AlbumManagementState(isBusy: true);
-    try {
-      await ref
-          .read(albumRepositoryProvider)
-          .renameAlbum(albumId: albumId, name: name);
-      ref.invalidate(albumListProvider);
-      state = AlbumManagementState(
-        done: true,
-        action: AlbumManagementAction.rename,
-        successMessage: 'Space renamed to "$name".',
-      );
-    } catch (e) {
-      state = AlbumManagementState(errorMessage: AppError.messageFor(e));
-    }
+    state = AlbumManagementState(
+      done: true,
+      action: AlbumManagementAction.rename,
+      successMessage: 'Space renamed to "$name".',
+    );
+    unawaited(
+      ref.read(albumListNotifierProvider.notifier).renameAlbum(albumId: albumId, name: name),
+    );
   }
 
   Future<void> archive({required String albumId}) async {
-    state = const AlbumManagementState(isBusy: true);
-    try {
-      await ref.read(albumRepositoryProvider).archiveAlbum(albumId: albumId);
-      ref.invalidate(albumListProvider);
-      ref.invalidate(archivedAlbumsProvider);
-      state = const AlbumManagementState(
-        done: true,
-        action: AlbumManagementAction.archive,
-        successMessage:
-            'Space archived. You can restore it from the Albums tab.',
-      );
-    } catch (e) {
-      state = AlbumManagementState(errorMessage: AppError.messageFor(e));
-    }
+    state = const AlbumManagementState(
+      done: true,
+      action: AlbumManagementAction.archive,
+      successMessage: 'Space archived. You can restore it from the Albums tab.',
+    );
+    unawaited(
+      ref.read(albumListNotifierProvider.notifier).archiveAlbum(albumId: albumId),
+    );
   }
 
-  Future<void> unarchive({required String albumId}) async {
-    state = const AlbumManagementState(isBusy: true);
-    try {
-      await ref.read(albumRepositoryProvider).unarchiveAlbum(albumId: albumId);
-      ref.invalidate(albumListProvider);
-      ref.invalidate(archivedAlbumsProvider);
-      state = const AlbumManagementState(
-        done: true,
-        action: AlbumManagementAction.unarchive,
-        successMessage: 'Space restored.',
-      );
-    } catch (e) {
-      state = AlbumManagementState(errorMessage: AppError.messageFor(e));
-    }
+  Future<void> unarchive({required String albumId, required Album album}) async {
+    state = const AlbumManagementState(
+      done: true,
+      action: AlbumManagementAction.unarchive,
+      successMessage: 'Space restored.',
+    );
+    unawaited(
+      ref.read(albumListNotifierProvider.notifier).unarchiveAlbum(albumId: albumId, album: album),
+    );
   }
 
   Future<void> delete({required String albumId}) async {
     state = const AlbumManagementState(isBusy: true);
     try {
       await ref.read(albumRepositoryProvider).deleteAlbum(albumId: albumId);
-      ref.invalidate(albumListProvider);
-      ref.invalidate(archivedAlbumsProvider);
+      ref.invalidate(albumListNotifierProvider);
       state = const AlbumManagementState(
         done: true,
         action: AlbumManagementAction.delete,
@@ -366,34 +348,45 @@ class InviteResponseController extends Notifier<InviteResponseState> {
   @override
   InviteResponseState build() => const InviteResponseState();
 
-  Future<void> accept({
-    required String inviteId,
-    required String albumName,
-  }) async {
-    state = const InviteResponseState(isBusy: true);
+  Future<void> accept({required AlbumInvite invite}) async {
+    ref.read(pendingInvitesNotifierProvider.notifier).removeOptimistic(invite.id);
+    ref.read(albumListNotifierProvider.notifier).addOptimisticAlbum(invite);
+    state = InviteResponseState(successMessage: 'You joined ${invite.albumName}.');
+    unawaited(_doAccept(invite));
+  }
+
+  Future<void> _doAccept(AlbumInvite invite) async {
     try {
-      await ref.read(albumRepositoryProvider).acceptInvite(inviteId);
-      ref.invalidate(pendingInvitesProvider);
-      ref.invalidate(albumListProvider);
-      state = InviteResponseState(successMessage: 'You joined $albumName.');
+      await ref.read(albumRepositoryProvider).acceptInvite(invite.id);
     } catch (e) {
-      state = InviteResponseState(errorMessage: AppError.messageFor(e));
+      try {
+        ref.read(pendingInvitesNotifierProvider.notifier).addOptimistic(invite);
+      } catch (_) {}
+      try {
+        ref.read(albumListNotifierProvider.notifier).removeOptimisticAlbum(invite.albumId);
+      } catch (_) {}
+      try {
+        ref.read(albumMutationErrorProvider.notifier).setError("Couldn't join the space. Try again.");
+      } catch (_) {}
     }
   }
 
-  Future<void> decline({
-    required String inviteId,
-    required String albumName,
-  }) async {
-    state = const InviteResponseState(isBusy: true);
+  Future<void> decline({required AlbumInvite invite}) async {
+    ref.read(pendingInvitesNotifierProvider.notifier).removeOptimistic(invite.id);
+    state = InviteResponseState(successMessage: 'You declined the invite to ${invite.albumName}.');
+    unawaited(_doDecline(invite));
+  }
+
+  Future<void> _doDecline(AlbumInvite invite) async {
     try {
-      await ref.read(albumRepositoryProvider).declineInvite(inviteId);
-      ref.invalidate(pendingInvitesProvider);
-      state = InviteResponseState(
-        successMessage: 'You declined the invite to $albumName.',
-      );
+      await ref.read(albumRepositoryProvider).declineInvite(invite.id);
     } catch (e) {
-      state = InviteResponseState(errorMessage: AppError.messageFor(e));
+      try {
+        ref.read(pendingInvitesNotifierProvider.notifier).addOptimistic(invite);
+      } catch (_) {}
+      try {
+        ref.read(albumMutationErrorProvider.notifier).setError("Couldn't decline the invite. Try again.");
+      } catch (_) {}
     }
   }
 }
@@ -406,7 +399,7 @@ final uniquePeopleCountProvider = FutureProvider.autoDispose<int>((ref) {
   final profile = ref.watch(currentUserProfileProvider);
   if (profile == null) return 0;
 
-  ref.watch(albumListProvider);
+  ref.watch(albumListNotifierProvider);
 
   return ref.watch(albumRepositoryProvider).fetchUniquePeopleCount();
 });
@@ -456,15 +449,10 @@ class LeaveAlbumController extends Notifier<LeaveAlbumState> {
   LeaveAlbumState build() => const LeaveAlbumState();
 
   Future<void> leave({required String albumId}) async {
-    state = const LeaveAlbumState(isLeaving: true);
-
-    try {
-      await ref.read(albumRepositoryProvider).leaveAlbum(albumId: albumId);
-      ref.invalidate(albumListProvider);
-      state = const LeaveAlbumState(left: true);
-    } catch (error) {
-      state = LeaveAlbumState(errorMessage: AppError.messageFor(error));
-    }
+    state = const LeaveAlbumState(left: true);
+    unawaited(
+      ref.read(albumListNotifierProvider.notifier).leaveAlbum(albumId: albumId),
+    );
   }
 }
 
